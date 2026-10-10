@@ -1,3 +1,4 @@
+import { SCORES, musicStep, type Drum, type Inst } from './music';
 interface Voice { source: AudioScheduledSourceNode; nodes: AudioNode[]; released: boolean; music: boolean; }
 const bounded = (value:number,min:number,max:number,fallback=min) => Number.isFinite(value)?Math.max(min,Math.min(max,value)):fallback;
 const read = (key:string,fallback:string) => {try{return localStorage.getItem(key)??fallback;}catch{return fallback;}};
@@ -5,7 +6,11 @@ export const audioSettings = {
  get muted(){return read('morly-muted','no')==='yes';},
  get music(){return bounded(Number(read('morly-music','.55')),0,1,.55);},
  get sfx(){return bounded(Number(read('morly-sfx','.9')),0,1,.9);},
- set(key:'morly-music'|'morly-sfx'|'morly-muted',value:string){try{localStorage.setItem(key,value);window.dispatchEvent(new StorageEvent('storage',{key,newValue:value}));}catch{/* private mode */}},
+ get voice(){return bounded(Number(read('morly-voice','.9')),0,1,.9);},
+ /** Provisional synthetic voices (the system's TTS) when a line has no recording yet. */
+ get tts(){return read('morly-tts','yes')==='yes';},
+ get subtitles(){return read('morly-subtitles','yes')==='yes';},
+ set(key:'morly-music'|'morly-sfx'|'morly-muted'|'morly-voice'|'morly-tts'|'morly-subtitles',value:string){try{localStorage.setItem(key,value);window.dispatchEvent(new StorageEvent('storage',{key,newValue:value}));}catch{/* private mode */}},
 };
 
 /** Engine character per car: tanks growl low, light hatchbacks buzz high. */
@@ -17,32 +22,22 @@ const ENGINES:Record<string,{base:number;range:number;filter:number;wave:Oscilla
  'orange-seed':{base:56,range:66,filter:300,wave:'square',gears:5},
  'black-diamond':{base:64,range:78,filter:340,wave:'square',gears:5},
 };
-/** Original, short loops per world: tempo, scale (Hz), bass line and lead pattern. */
-const SONGS:Record<string,{bpm:number;scale:number[];bass:number[];lead:number[];swing:number}> = {
- 'la-salle':{bpm:132,scale:[262,294,330,392,440,523,587,659],bass:[0,0,3,3,4,4,3,1],lead:[4,6,5,4,2,4,3,1,4,6,7,6,5,3,4,-1],swing:0},
- oriental:{bpm:140,scale:[220,247,262,294,330,349,392,440],bass:[0,0,4,4,5,5,4,3],lead:[0,2,4,5,4,2,0,-1,5,4,2,4,5,7,5,-1],swing:.08},
- managua:{bpm:124,scale:[196,220,247,294,330,392,440,494],bass:[0,0,5,5,3,3,4,4],lead:[4,5,4,2,1,2,4,-1,5,6,5,4,2,1,0,-1],swing:0},
- 'hipa-hipa':{bpm:128,scale:[174,196,220,262,294,349,392,440],bass:[0,0,0,0,5,5,3,4],lead:[7,-1,5,-1,7,6,5,4,3,-1,4,5,4,3,1,-1],swing:0},
- masaya:{bpm:118,scale:[147,165,175,196,220,233,262,294],bass:[0,0,2,2,5,5,4,4],lead:[4,3,2,-1,4,5,6,5,4,-1,2,3,4,2,0,-1],swing:0},
- 'san-juan':{bpm:116,scale:[247,277,311,330,370,415,440,494],bass:[0,0,3,3,4,4,0,0],lead:[2,4,5,4,2,-1,4,5,7,5,4,-1,2,1,0,-1],swing:.12},
-};
-
 /** Original arcade soundtrack and material sounds, synthesized on device. No files, no licences. */
 export class GameAudio {
  context:AudioContext|null=null;
  muted=audioSettings.muted;
- private master:GainNode|null=null;private musicBus:GainNode|null=null;private sfxBus:GainNode|null=null;
+ private master:GainNode|null=null;private musicBus:GainNode|null=null;private sfxBus:GainNode|null=null;private musicDuck:GainNode|null=null;voiceBus:GainNode|null=null;
  private engineA:OscillatorNode|null=null;private engineB:OscillatorNode|null=null;private engineGain:GainNode|null=null;private engineFilter:BiquadFilterNode|null=null;
  private skidGain:GainNode|null=null;private skidFilter:BiquadFilterNode|null=null;private rumbleGain:GainNode|null=null;
  private compressor:DynamicsCompressorNode|null=null;
  private voices=new Set<Voice>();
  private noiseBuffer:AudioBuffer|null=null;
- private scheduler:ReturnType<typeof setInterval>|undefined;private nextBeat=0;private beat=0;private song=SONGS['la-salle'];private intensity=0;
+ private scheduler:ReturnType<typeof setInterval>|undefined;private nextBeat=0;private beat=0;private score=SCORES['la-salle'];private level=0;private tension=0;private speedRatio=0;private boosting=false;private stepLength=.1;
  private disposed=false;
  private unlock=()=>{if(this.context?.state==='suspended')this.context.resume().catch(()=>{});};
  private storage=(event:StorageEvent)=>{if(event.key==='morly-muted')this.muted=event.newValue==='yes';this.applyLevels();};
  private visibility=()=>this.applyLevels();
- constructor(private trackId='la-salle'){this.song=SONGS[trackId]??SONGS['la-salle'];}
+ constructor(private trackId='la-salle'){this.score=SCORES[trackId]??SCORES['la-salle'];}
 
  start(){
   if(this.disposed)return;
@@ -51,10 +46,10 @@ export class GameAudio {
   if(!C)return;
   try{this.context=new C();}catch{return;}
   const c=this.context;
-  this.master=c.createGain();this.musicBus=c.createGain();this.sfxBus=c.createGain();
+  this.master=c.createGain();this.musicBus=c.createGain();this.sfxBus=c.createGain();this.musicDuck=c.createGain();this.voiceBus=c.createGain();
   this.compressor=c.createDynamicsCompressor();
   this.compressor.threshold.value=-14;this.compressor.knee.value=10;this.compressor.ratio.value=4;this.compressor.attack.value=.004;this.compressor.release.value=.14;
-  this.musicBus.connect(this.master);this.sfxBus.connect(this.master);this.master.connect(this.compressor);this.compressor.connect(c.destination);
+  this.musicBus.connect(this.musicDuck);this.musicDuck.connect(this.master);this.sfxBus.connect(this.master);this.voiceBus.connect(this.master);this.master.connect(this.compressor);this.compressor.connect(c.destination);
   this.noiseBuffer=c.createBuffer(1,c.sampleRate,c.sampleRate);
   const data=this.noiseBuffer.getChannelData(0);for(let i=0;i<data.length;i++)data[i]=Math.random()*2-1;
   // Engine: two detuned oscillators through a low-pass, pitch follows simulated gears.
@@ -81,7 +76,7 @@ export class GameAudio {
   source.onended=release;return release;
  }
  private count(music:boolean){let n=0;for(const v of this.voices)if(v.music===music)n++;return n;}
- private canPlay(music=false){return !this.disposed&&!this.muted&&this.context?.state==='running'&&this.master!==null&&this.count(music)<(music?10:16);}
+ private canPlay(music=false){return !this.disposed&&!this.muted&&this.context?.state==='running'&&this.master!==null&&this.count(music)<(music?40:16);}
 
  tone(freq:number,duration=.1,type:OscillatorType='sine',delay=0,pan=0,volume=.4,endFrequency?:number,music=false,at?:number){
   if(!this.canPlay(music))return;
@@ -103,24 +98,73 @@ export class GameAudio {
 
  /** Look-ahead scheduler: sixteenth notes placed on the audio clock, steady even if frames drop. */
  private schedule(){
-  if(!this.context||document.hidden)return;const c=this.context,step=60/(this.song.bpm*(1+this.intensity*.06))/4;
+  if(!this.context||document.hidden)return;const c=this.context,step=60/(this.score.bpm*(this.level>=2?1.06:1))/4;this.stepLength=step;
   if(this.nextBeat<c.currentTime-.2)this.nextBeat=c.currentTime+.05;
-  while(this.nextBeat<c.currentTime+.18){this.musicStep(this.beat++,this.nextBeat);this.nextBeat+=step*(this.beat%2?1+this.song.swing:1-this.song.swing);}
+  while(this.nextBeat<c.currentTime+.18){this.playStep(this.beat++,this.nextBeat,step);this.nextBeat+=step*(this.beat%2?1+this.score.swing:1-this.score.swing);}
  }
- private musicStep(beat:number,at:number){
-  if(!this.canPlay(true))return;const s=this.song,bar=Math.floor(beat/16)%8,sixteenth=beat%16,root=s.scale[s.bass[bar]]/2;
-  if(sixteenth%4===0)this.tone(70,.12,'sine',0,0,.32,34,true,at);
-  if(sixteenth%8===4)this.noise(.11,'bandpass',1500,0,.16,0,undefined,true,at);
-  if(sixteenth%2===1)this.noise(.03,'highpass',7000,.15,.06,0,undefined,true,at);
-  if(sixteenth%4===2||sixteenth%4===0)this.tone(root/2,.14,'triangle',0,-.05,.2,undefined,true,at);
-  const note=s.lead[(Math.floor(beat/2))%16];
-  if(beat%2===0&&note>=0&&(this.intensity>0||beat%4===0))this.tone(s.scale[note]*(this.intensity>.5?2:1),.12,'square',0,.12,.05,undefined,true,at);
-  if(sixteenth===0&&bar%2===0)this.tone(s.scale[(s.bass[bar]+2)%8],.4,'triangle',0,-.2,.05,undefined,true,at);
+ private playStep(beat:number,at:number,step:number){
+  if(!this.canPlay(true))return;
+  const out=musicStep(this.score,beat,{level:this.level,tension:this.tension,speed:this.speedRatio,boost:this.boosting});
+  for(const n of out.notes)this.instrument(n.inst,n.freq,n.len*step,n.vol,n.pan,at);
+  for(const d of out.drums)this.drum(d.drum,d.vol,d.pan,at);
  }
- setTrack(id:string){this.song=SONGS[id]??this.song;}
+ /** Small synth voices for the score: each instrument is a recipe of oscillators, envelope and filter. */
+ private synth(at:number,len:number,pan:number,vol:number,parts:{type:OscillatorType;ratio:number;gain:number;detune?:number}[],env:{a:number;d:number;s:number;r:number},freq:number,filter?:{type:BiquadFilterType;freq:number;q?:number;open?:number}){
+  if(!this.canPlay(true)||!this.musicBus)return;
+  const c=this.context!,end=at+len+env.r,g=c.createGain(),p=c.createStereoPanner(),nodes:AudioNode[]=[g,p];p.pan.value=bounded(pan,-1,1,0);let head:AudioNode=g;
+  if(filter){const f=c.createBiquadFilter();f.type=filter.type;f.Q.value=filter.q??.7;f.frequency.setValueAtTime(filter.open?filter.freq*.35:filter.freq,at);if(filter.open)f.frequency.exponentialRampToValueAtTime(filter.freq,at+filter.open);f.connect(g);head=f;nodes.push(f);}
+  const peak=bounded(vol,.0005,.4,.05),hold=Math.min(Math.max(env.a+env.d,len),len+env.r*.5);
+  g.gain.setValueAtTime(.0001,at);g.gain.linearRampToValueAtTime(peak,at+env.a);g.gain.linearRampToValueAtTime(Math.max(.0002,peak*env.s),at+env.a+env.d);g.gain.setValueAtTime(Math.max(.0002,peak*env.s),at+hold);g.gain.exponentialRampToValueAtTime(.0001,end);
+  g.connect(p);p.connect(this.musicBus);
+  const oscs=parts.map(part=>{const o=c.createOscillator(),pg=c.createGain();o.type=part.type;o.frequency.setValueAtTime(bounded(freq*part.ratio,20,12000,220),at);if(part.detune)o.detune.value=part.detune;pg.gain.value=part.gain;o.connect(pg);pg.connect(head);nodes.push(o,pg);o.start(at);o.stop(end+.02);return o;});
+  this.track(oscs[0],nodes,true);
+ }
+ private instrument(inst:Inst,freq:number,len:number,vol:number,pan:number,at:number){
+  switch(inst){
+   case 'square':return this.synth(at,len,pan,vol,[{type:'square',ratio:1,gain:1}],{a:.01,d:.1,s:.7,r:.06},freq,{type:'lowpass',freq:2600});
+   case 'brass':return this.synth(at,len,pan,vol,[{type:'sawtooth',ratio:1,gain:.8},{type:'sawtooth',ratio:1,gain:.5,detune:7}],{a:.03,d:.12,s:.75,r:.08},freq,{type:'lowpass',freq:2400,open:.07});
+   case 'accordion':return this.synth(at,len,pan,vol,[{type:'square',ratio:1,gain:.55,detune:-8},{type:'square',ratio:1,gain:.55,detune:8},{type:'sawtooth',ratio:2,gain:.12}],{a:.02,d:.1,s:.8,r:.05},freq,{type:'lowpass',freq:2200});
+   case 'marimba':return this.synth(at,Math.min(len,.12),pan,vol,[{type:'sine',ratio:1,gain:1},{type:'sine',ratio:4,gain:.2}],{a:.003,d:.22,s:.03,r:.12},freq);
+   case 'steel':return this.synth(at,Math.min(len,.2),pan,vol*1.2,[{type:'sine',ratio:1,gain:1},{type:'sine',ratio:2,gain:.35},{type:'triangle',ratio:3,gain:.12}],{a:.004,d:.3,s:.15,r:.18},freq);
+   case 'synth':return this.synth(at,len,pan,vol,[{type:'sawtooth',ratio:1,gain:.6,detune:-6},{type:'sawtooth',ratio:1,gain:.6,detune:6}],{a:.01,d:.15,s:.6,r:.1},freq,{type:'lowpass',freq:1800,q:4});
+   case 'pad':return this.synth(at,len,pan,vol,[{type:'triangle',ratio:1,gain:1},{type:'sine',ratio:2,gain:.2}],{a:.12,d:.2,s:.7,r:.3},freq);
+   case 'bass':return this.synth(at,len,pan,vol,[{type:'triangle',ratio:1,gain:1},{type:'square',ratio:1,gain:.22}],{a:.006,d:.1,s:.7,r:.05},freq,{type:'lowpass',freq:700});
+   case 'pluck':return this.synth(at,len,pan,vol,[{type:'square',ratio:1,gain:.8}],{a:.003,d:.08,s:.2,r:.05},freq,{type:'lowpass',freq:1800});
+  }
+ }
+ private drum(drum:Drum,vol:number,pan:number,at:number){
+  switch(drum){
+   case 'kick':this.tone(110,.16,'sine',0,pan,vol,38,true,at);break;
+   case 'snare':this.noise(.12,'bandpass',1800,pan,vol,0,undefined,true,at);this.tone(190,.07,'triangle',0,pan,vol*.4,120,true,at);break;
+   case 'hat':this.noise(.03,'highpass',7500,pan+.15,vol,0,undefined,true,at);break;
+   case 'openhat':this.noise(.16,'highpass',6500,pan+.1,vol,0,undefined,true,at);break;
+   case 'clap':for(const d of [0,.012,.024])this.noise(.045,'bandpass',1300,pan,vol,0,undefined,true,at+d);break;
+   case 'tom':this.tone(150,.22,'sine',0,pan,vol,85,true,at);break;
+   case 'lowtom':this.tone(92,.3,'sine',0,pan,vol,50,true,at);break;
+   case 'guiro':this.noise(.05,'bandpass',3200,pan-.2,vol,0,undefined,true,at);break;
+   case 'rim':this.tone(1800,.025,'square',0,pan,vol*.5,undefined,true,at);this.noise(.02,'highpass',4000,pan,vol*.6,0,undefined,true,at);break;
+   case 'shaker':this.noise(.045,'highpass',5200,pan+.25,vol,0,undefined,true,at);break;
+   case 'cowbell':this.tone(560,.09,'square',0,pan,vol*.6,undefined,true,at);this.tone(840,.09,'square',0,pan,vol*.4,undefined,true,at);break;
+   case 'riser':this.noise(.8,'bandpass',400,pan,vol,0,6000,true,at);break;
+  }
+ }
+ /** Final lap: a short brass fanfare on the tonic, a whole tone up like the music that follows. */
+ private fanfare(){
+  if(!this.context)return;const at=this.context.currentTime+.05,r=this.score.root*2**(2/12)*2;
+  [[1,0],[1.26,.12],[1.5,.24],[2,.36]].forEach(([k,d])=>this.instrument('brass',r*k,.18,.11,0,at+d));this.instrument('brass',r*2,.5,.1,0,at+.5);this.instrument('brass',r*1.5,.5,.06,0,at+.5);
+ }
+ setTrack(id:string){this.score=SCORES[id]??this.score;}
  /** 0 calm (countdown/menus), 1 racing, 2 final lap. */
- setIntensity(level:number){this.intensity=bounded(level,0,2,0)/2;}
-
+ setIntensity(level:number){const next=Math.round(bounded(level,0,2,0));if(next===2&&this.level===1)this.fanfare();this.level=next;}
+ /** 0–1: danger nearby (the Bong coming, a rival on your bumper on the final lap). */
+ setTension(value:number){this.tension=bounded(value,0,1,0);}
+ setSpeed(ratio:number,boost=false){this.speedRatio=bounded(ratio,0,1.2,0);this.boosting=boost;}
+ /** Voices on top: the band steps back for `seconds` and comes back smoothly. */
+ duck(seconds:number){if(!this.context||!this.musicDuck)return;const t=this.context.currentTime,g=this.musicDuck.gain;g.cancelScheduledValues(t);g.setTargetAtTime(.3,t,.04);g.setTargetAtTime(1,t+bounded(seconds,.2,6,1),.25);}
+ /** Plays a decoded recording on the voice bus. Returns its duration in seconds. */
+ playVoice(buffer:AudioBuffer,pan=0){
+  if(!this.context||!this.voiceBus||this.muted)return 0;const c=this.context,src=c.createBufferSource(),p=c.createStereoPanner();src.buffer=buffer;p.pan.value=bounded(pan,-1,1,0);src.connect(p);p.connect(this.voiceBus);this.track(src,[src,p]);src.start();return buffer.duration;
+ }
  private launch(object:string,pan:number,volume=.22){
   if(['victoria','tona','rum','flor','sixpack'].includes(object)){
    this.noise(.1,'bandpass',1400,pan,volume*.38,0,4200);this.tone(1700,.1,'sine',.012,pan,volume*.38,1000);this.tone(2400,.085,'sine',.02,pan,volume*.2,1800);
@@ -228,7 +272,7 @@ export class GameAudio {
  private applyLevels(){
   if(!this.context||!this.master)return;const t=this.context.currentTime;
   this.master.gain.setTargetAtTime(this.muted||document.hidden?0:.22,t,.025);
-  this.musicBus?.gain.setTargetAtTime(audioSettings.music*.55,t,.05);this.sfxBus?.gain.setTargetAtTime(audioSettings.sfx,t,.05);
+  this.musicBus?.gain.setTargetAtTime(audioSettings.music*.55,t,.05);this.sfxBus?.gain.setTargetAtTime(audioSettings.sfx,t,.05);this.voiceBus?.gain.setTargetAtTime(audioSettings.voice*1.6,t,.05);
  }
  refresh(){this.muted=audioSettings.muted;this.applyLevels();}
  toggle(){this.muted=!this.muted;audioSettings.set('morly-muted',this.muted?'yes':'no');this.applyLevels();if(!this.muted)this.unlock();}
@@ -237,7 +281,7 @@ export class GameAudio {
   window.removeEventListener('pointerdown',this.unlock);window.removeEventListener('keydown',this.unlock);window.removeEventListener('storage',this.storage);document.removeEventListener('visibilitychange',this.visibility);clearInterval(this.scheduler);this.scheduler=undefined;
   for(const voice of this.voices){try{voice.source.stop();}catch{/* already stopped */}voice.source.onended=null;for(const node of voice.nodes)node.disconnect();voice.released=true;}
   for(const loop of this.loops){try{loop.stop();}catch{/* already stopped */}loop.disconnect();}
-  this.voices.clear();this.loops=[];this.engineA=this.engineB=null;this.engineGain=null;this.engineFilter=null;this.skidGain=null;this.rumbleGain=null;this.master?.disconnect();this.compressor?.disconnect();this.noiseBuffer=null;
-  this.context?.close().catch(()=>{});this.context=null;this.master=null;this.compressor=null;this.musicBus=null;this.sfxBus=null;
+  this.voices.clear();this.loops=[];this.engineA=this.engineB=null;this.engineGain=null;this.engineFilter=null;this.skidGain=null;this.rumbleGain=null;this.master?.disconnect();this.compressor?.disconnect();this.musicDuck?.disconnect();this.voiceBus?.disconnect();this.noiseBuffer=null;
+  this.context?.close().catch(()=>{});this.context=null;this.master=null;this.compressor=null;this.musicBus=null;this.sfxBus=null;this.musicDuck=null;this.voiceBus=null;
  }
 }

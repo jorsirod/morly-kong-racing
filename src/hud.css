@@ -218,3 +218,5 @@
 .hx-touch .hx-subtitle{bottom:auto;top:max(70px,calc(env(safe-area-inset-top) + 62px));max-width:62vw}
 @media (max-height:440px){.hx-bong,.hx-birds{top:58px}.hx-fall{top:22%}.hx-banner{height:clamp(64px,15vh,96px)}}
 @media (prefers-reduced-motion:reduce){.hx-bong,.hx-bong.close,.hx-dizzy,.hx-woozy::after,.hx-item.rolling .hx-item-btn,.screen-flash i{animation:none!important}}
+/* Voices: provisional synthetic lines say so. */
+.hx-provisional{display:inline-block;margin-left:8px;padding:1px 6px;border-radius:4px;background:#ffffff1f;border:1px solid #ffffff55;font-size:10px;font-style:normal;font-weight:900;letter-spacing:.08em;vertical-align:middle;color:#dfe8fb}

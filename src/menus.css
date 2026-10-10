@@ -185,3 +185,29 @@
  .arcade-app .title-content>p{font-size:12px}
 }
 @media (prefers-reduced-motion:reduce){.pilot-card.selected,.arcade-app .arcade-car.selected{animation:none}.pilot-card:hover{transform:none}}
+/* ——— Voice studio (inside Ajustes) ——— */
+.voice-studio-box{grid-column:1/-1;margin-top:6px;border:1px solid #3f5d98;background:#0a1233}
+.voice-studio-box>summary{cursor:pointer;padding:11px 14px;font-size:14px;font-weight:900;color:var(--gold,#ffd33d);list-style:none}
+.voice-studio-box>summary::before{content:'▸ '}
+.voice-studio-box[open]>summary::before{content:'▾ '}
+.voice-studio{padding:0 14px 14px;display:flex;flex-direction:column;gap:10px}
+.voice-note{margin:0;font-size:13px;line-height:1.4;color:#d6e2fa}
+.voice-note code{font-size:12px;background:#ffffff14;padding:1px 4px}
+.voice-pilots{display:flex;flex-wrap:wrap;gap:6px}
+.voice-pilots button{font-size:13px;padding:6px 10px;min-height:36px;background:#1d3160;color:#eef3ff;border:2px solid;border-left-width:5px}
+.voice-pilots button.selected{background:#f0c040;color:#1c1204;font-weight:900}
+.voice-progress{margin:0;font-size:12px;color:#b9cbef}
+.voice-lines{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:5px;max-height:320px;overflow:auto}
+.voice-lines li{display:grid;grid-template-columns:76px 1fr auto auto;gap:8px;align-items:center;padding:6px 8px;background:#14214b;border:1px solid #2c4580}
+.voice-lines li.special{border-color:var(--gold,#ffd33d);background:#22305e}
+.voice-kind{font-size:11px;font-weight:900;letter-spacing:.06em;color:#9fb6e3;text-transform:uppercase}
+.voice-text{font-size:14px;color:#fff;display:flex;flex-direction:column;gap:2px;min-width:0}
+.voice-text small{font-size:11px;color:#8ea5d2;font-family:monospace}
+.voice-state{font-size:11px;font-weight:900;letter-spacing:.05em;padding:2px 6px}
+.voice-state.ok{color:#0e2a14;background:#7fe39a}
+.voice-state.missing{color:#3a1205;background:#ffb27a}
+.voice-actions{display:flex;gap:4px}
+.voice-actions button{min-width:36px;min-height:34px;font-size:13px;padding:0 8px;background:#2b4a85;color:#fff;border:1px solid #6d8cc6}
+.voice-actions button.rec{background:#b8263d}
+.voice-actions button.rec.live{background:#ff3d5a;animation:pilot-pop .6s infinite alternate}
+@media (max-width:700px){.voice-lines li{grid-template-columns:1fr auto;}.voice-kind{grid-column:1/-1}.voice-actions{grid-column:1/-1}}

@@ -10,7 +10,7 @@ import type {ScreenFx} from './birds';
 import {InputController} from './input';
 import {keyLabel} from './keys';
 export type FeedbackCue={id:number;text:string;kind:'attack'|'hit'|'boost'|'pickup'|'collision'|'warn'|'good'};
-export type Subtitle={id:number;who:string;text:string;color:string;special:boolean};
+export type Subtitle={id:number;who:string;text:string;color:string;special:boolean;provisional?:boolean};
 const FALL_TEXT:Record<string,string>={water:'¡AL AGUA!',lava:'¡A LA LAVA!',mud:'¡AL CAUCE!',pit:'¡AL VACÍO!',cliff:'¡AL BARRANCO!'};
 const ROULETTE:ItemId[]=['cafe','casco','coco','chilero','cohetes','cafe3'];
 
@@ -64,7 +64,7 @@ export function HUD({state,id,input,banner,cue,fps,rtt,muted,onMute,onMenu,stats
   {(count>0||go)&&<div className={'hx-count'+(go?' go':'')} key={go?'go':count}><div className="hx-lights">{[3,2,1].map(n=><i key={n} className={go?'green':count<=n?'red':''}/>)}</div><strong>{go?'¡DALE!':count}</strong>{count>0&&count<=1&&!battle&&<span>{touch?'TOCA DERRAPE':pad?'RB':'ESPACIO'} AHORA = SALIDA CON TURBO</span>}</div>}
 
   {banner&&caster&&<div className={'hx-banner'+(caster.id===id?' mine':'')} key={banner.id} style={{'--hero':casterChar.color} as React.CSSProperties}><div className="hx-lines"/><Portrait c={casterChar} pose/><div className="hx-banner-text"><span>{casterChar.name.toUpperCase()}{caster.nickname.toUpperCase()!==casterChar.name.toUpperCase()?' ('+caster.nickname.toUpperCase()+')':''} · ESPECIAL</span><strong>{banner.text}</strong>{target&&<em>{target.id===id?'¡VA POR TI!':'→ '+target.nickname.toUpperCase()}</em>}</div><WeaponIcon object={casterChar.special.object}/></div>}
-  {subtitle&&<div className={'hx-subtitle'+(subtitle.special?' special':'')} key={'sub'+subtitle.id} style={{'--hero':subtitle.color} as React.CSSProperties} aria-live="polite"><b>{subtitle.who}:</b> «{subtitle.text}»</div>}
+  {subtitle&&<div className={'hx-subtitle'+(subtitle.special?' special':'')} key={'sub'+subtitle.id} style={{'--hero':subtitle.color} as React.CSSProperties} aria-live="polite"><b>{subtitle.who}:</b> «{subtitle.text}»{subtitle.provisional&&<i className="hx-provisional" title="Voz sintética provisional: falta la grabación real">VOZ PROVISIONAL</i>}</div>}
   {cue&&<div className={'hx-cue '+cue.kind} key={cue.id}>{cue.text}</div>}
   {danger&&<div className={'hx-danger'+(danger.side<0?' left':danger.side>0?' right':'')} aria-live="assertive"><i/><i/><b>¡CUIDADO ATRÁS!</b></div>}
 
