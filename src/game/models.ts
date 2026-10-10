@@ -39,10 +39,10 @@ export function sphere(scene:Scene,parent:TransformNode|null,name:string,x:numbe
 export function cylinder(scene:Scene,parent:TransformNode|null,name:string,x:number,y:number,z:number,h:number,diameter:number,color:string,top=diameter){
  const m=MeshBuilder.CreateCylinder(name,{height:h,diameterBottom:diameter,diameterTop:top,tessellation:16},scene);m.position.set(x,y,z);m.material=material(scene,color);if(parent)m.parent=parent;m.isPickable=false;return m;
 }
-function tube(scene:Scene,parent:TransformNode,name:string,points:number[][],radius:number,color:string){
+export function tube(scene:Scene,parent:TransformNode,name:string,points:number[][],radius:number,color:string){
  const m=MeshBuilder.CreateTube(name,{path:points.map(p=>new Vector3(...p as [number,number,number])),radius,tessellation:8,cap:Mesh.CAP_ALL},scene);m.parent=parent;m.material=material(scene,color);m.isPickable=false;return m;
 }
-function torus(scene:Scene,parent:TransformNode,name:string,x:number,y:number,z:number,diameter:number,thickness:number,color:string){
+export function torus(scene:Scene,parent:TransformNode,name:string,x:number,y:number,z:number,diameter:number,thickness:number,color:string){
  const m=MeshBuilder.CreateTorus(name,{diameter,thickness,tessellation:16},scene);m.parent=parent;m.position.set(x,y,z);m.material=material(scene,color);m.isPickable=false;return m;
 }
 function decal(scene:Scene,parent:TransformNode,name:string,x:number,y:number,z:number,w:number,h:number,paint:(ctx:CanvasRenderingContext2D)=>void){
@@ -60,7 +60,7 @@ export function textLabel(scene:Scene,parent:TransformNode|null,text:string,x:nu
  const mat=new StandardMaterial(key,scene);mat.diffuseTexture=tex;mat.emissiveColor=Color3.White();mat.disableLighting=true;mat.backFaceCulling=false;
  const plane=MeshBuilder.CreatePlane('label-'+text,{width:w,height:h,sideOrientation:Mesh.DOUBLESIDE},scene);plane.position.set(x,y,z);plane.material=mat;if(parent)plane.parent=parent;plane.isPickable=false;return plane;
 }
-function mergeParts(root:TransformNode,recursive=true){
+export function mergeParts(root:TransformNode,recursive=true){
  const parent=root.parent,position=root.position.clone(),rotation=root.rotation.clone(),scaling=root.scaling.clone();root.parent=null;root.position.setAll(0);root.rotation.setAll(0);root.scaling.setAll(1);root.computeWorldMatrix(true);
  const groups=new Map<string,Mesh[]>();const meshes=recursive?root.getChildMeshes(false):root.getChildren().filter(n=>n instanceof Mesh);
  for(const m of meshes as Mesh[]){if(!m.material||m.name.startsWith('label'))continue;const g=groups.get(m.material.name)??[];g.push(m);groups.set(m.material.name,g);}
@@ -159,95 +159,22 @@ export function buildCharacter(scene:Scene,id:string,parent:TransformNode){
  else{textLabel(scene,root,c.initials,0,chestY+.08,chestZ,.25,.2,'#fff2dc',c.shirt)?.rotation.set(0,Math.PI,0);}
  mergeParts(root);return root;
 }
-export function buildAlf(scene:Scene,parent:TransformNode){
- const root=new TransformNode('ALF-plush',scene);root.parent=parent;root.position.set(.49,1.08,.36);
- const fur='#b98350',light='#d0a471',dark='#5f3d2b';sphere(scene,root,'alf-body',0,.26,0,.82,fur,new Vector3(.83,1.08,.76));sphere(scene,root,'alf-head',0,.98,0,.78,fur,new Vector3(.98,1.02,.91));
- sphere(scene,root,'alf-snout',0,.89,.44,.63,light,new Vector3(.84,.66,1.4));sphere(scene,root,'alf-nose',0,.91,.82,.22,dark,new Vector3(.8,.7,.65));
- for(const x of [-1,1]){const ear=sphere(scene,root,'alf-ear',x*.36,1.23,-.01,.39,fur,new Vector3(.65,1.32,.42));ear.rotation.z=x*-.36;sphere(scene,root,'alf-ear-inner',x*.38,1.26,.065,.24,light,new Vector3(.5,1.3,.3));sphere(scene,root,'alf-eye-white',x*.165,1.115,.318,.13,'#fff4df');sphere(scene,root,'alf-eye',x*.165,1.12,.37,.082,'#171e27');tube(scene,root,'alf-arm',[[x*.29,.48,.05],[x*.37,.16,.22],[x*.29,.15,.38]],.13,fur);sphere(scene,root,'alf-hand',x*.28,.13,.4,.27,light);}
- tube(scene,root,'alf-mouth',[[-.2,.77,.61],[0,.735,.68],[.2,.77,.61]],.028,dark);
- for(let i=0;i<4;i++){const tuft=cylinder(scene,root,'alf-tuft',(i-1.5)*.11,1.47,-.07,.39,.17,dark,.025);tuft.rotation.z=(i-1.5)*-.12;}
- for(let i=0;i<3;i++)torus(scene,root,'alf-nose-ridge',0,.89,.5+i*.07,.39-i*.025,.025,fur).rotation.x=Math.PI/2;
- mergeParts(root);return root;
-}
-
 export type AlfParts={head:TransformNode;armL:TransformNode;armR:TransformNode};
 export type VehicleModel={root:TransformNode;body:TransformNode;driverSocket:TransformNode;passengerSocket:TransformNode;alf?:TransformNode;alfParts?:AlfParts;wheels?:TransformNode[];frontWheels?:TransformNode[];driver?:TransformNode};
-export function buildVehicle(scene:Scene,id:string,characterId?:string):VehicleModel{
- const v=vehicle(id),root=new TransformNode('vehicle-'+id,scene),body=new TransformNode('body',scene);body.parent=root;
- const pickup=v.kind.startsWith('pickup'),single=v.kind==='pickup-single',matiz=v.kind==='matiz',suv=v.kind==='suv',golf=v.kind==='golf',mazda=v.kind==='mazda';
- const length=pickup?4.85:matiz?3.48:suv?3.9:4.22,width=pickup?2.22:matiz?1.9:2.08,wheelRadius=suv?.55:pickup?.53:.49,paint=v.color,dark='#24303b',chrome='#b9ceda',accent=suv?'#2fa5cd':mazda?'#ffd15a':golf?'#66c4d4':matiz?'#bb90ec':'#e3a340';
- box(scene,body,'underbody',0,.58,0,width*.92,.28,length-.1,dark);box(scene,body,'sill',0,.87,0,width,.42,length-.15,paint);
- const frontZ=length/2,hoodZ=pickup?1.49:suv?1.31:matiz?1.09:1.36,hoodLen=pickup?1.62:suv?1.28:matiz?1.18:1.46;
- box(scene,body,'hood',0,1.14,hoodZ,width-.09,.38,hoodLen,paint);box(scene,body,'hood-highlight',0,1.337,hoodZ,.22,.022,hoodLen*.9,suv?'#d5e4ef':paint);
- const cabinZ=pickup?(single?.49:.08):suv?-.24:-.17,cabinLen=pickup?(single?1.25:2.1):suv?2.35:matiz?1.84:2.06;
- // A cropped rear canopy preserves recognisable silhouettes without hiding the pilots.
- const rearRoofZ=cabinZ-cabinLen*.25,roofLen=cabinLen*.5;
- box(scene,body,'rear-roof',0,2.15,rearRoofZ,width-.14,.13,roofLen,paint);
- for(const x of [-1,1]){
-  const side=x*(width/2-.045);box(scene,body,'door',side,1.19,cabinZ,.1,.52,cabinLen,paint);
-  box(scene,body,'door-top-trim',side,1.46,cabinZ,.13,.07,cabinLen,dark);
-  box(scene,body,'door-handle',side+x*.06,1.31,cabinZ+.02,.04,.045,.2,chrome);
-  box(scene,body,'rear-roof-pillar',side,1.86,cabinZ-cabinLen/2,.13,.59,.13,paint);
-  box(scene,body,'window-front-stub',side,1.68,cabinZ+cabinLen/2,.12,.37,.12,paint).rotation.x=-.14;
-  const mirror=new TransformNode('mirror-'+x,scene);mirror.parent=body;mirror.position.set(side+x*.17,1.65,cabinZ+cabinLen*.37);
-  box(scene,mirror,'mirror-shell',0,0,0,.3,.19,.22,dark);box(scene,mirror,'mirror-glass',0,0,-.115,.23,.12,.018,'#83bbd2');
-  if(v.kind==='pickup-double'){box(scene,body,'rear-door-line',side+x*.008,1.16,cabinZ-.27,.015,.42,.04,dark);box(scene,body,'rear-door-handle',side+x*.061,1.32,cabinZ-.72,.04,.045,.18,chrome);box(scene,body,'middle-roof-pillar',side,1.83,cabinZ-.29,.09,.59,.11,paint);}
- }
- const rearGlass=box(scene,body,'rear-glass',0,1.82,cabinZ-cabinLen/2-.016,width-.27,.48,.035,'#4c8aa5');rearGlass.material=material(scene,'#4c8aa5',false,.65);
- const dash=box(scene,body,'dashboard',0,1.4,cabinZ+cabinLen*.36,width-.25,.23,.36,dark);dash.rotation.x=-.09;
- // The low split windscreen stays below eyes; open upper half is intentional kart art.
- const windshield=box(scene,body,'low-windscreen',0,1.57,cabinZ+cabinLen/2+.075,width-.29,.22,.035,'#80cfdf');windshield.material=material(scene,'#80cfdf',false,.24);windshield.rotation.x=-.16;
- for(const x of [-.43,.45])box(scene,body,'seat-back',x,1.34,cabinZ-.17,.57,.6,.22,'#334b68');
- if(pickup){const bedLen=single?2.07:1.62,bedZ=-length/2+bedLen/2+.1;box(scene,body,'bed-floor',0,1.0,bedZ,width-.25,.1,bedLen,dark);for(const x of [-1,1])box(scene,body,'bed-side',x*(width/2-.07),1.27,bedZ,.15,.64,bedLen,paint);box(scene,body,'tailgate',0,1.22,-length/2+.1,width-.07,.58,.17,paint);box(scene,body,'tailgate-handle',0,1.39,-length/2-.002,.32,.07,.04,dark);for(const x of [-.45,.45])box(scene,body,'bed-ridge',x,1.065,bedZ,.055,.03,bedLen-.18,'#5a6870');}
- else{const hatchZ=cabinZ-cabinLen/2-.26,hatchLen=suv?.65:matiz?.43:.72;box(scene,body,'hatch-tail',0,1.22,hatchZ,width-.1,.48,hatchLen,paint);if(mazda||matiz){box(scene,body,'rear-spoiler',0,1.89,cabinZ-cabinLen/2-.07,width+.04,.07,.35,mazda?'#f6903f':dark);}}
- box(scene,body,'front-bumper-dark',0,.73,frontZ-.05,width+.18,.24,.28,dark);box(scene,body,'front-bumper-chrome',0,.77,frontZ+.085,width+.03,.1,.085,suv?chrome:pickup?chrome:accent);
- box(scene,body,'rear-bumper',0,.72,-frontZ-.04,width+.14,.2,.24,dark);box(scene,body,'grille',0,1.085,frontZ+.025,width*.51,.28,.05,dark);
- for(let i=-2;i<=2;i++)box(scene,body,'grille-bar',i*.17,1.09,frontZ+.059,.027,.23,.017,chrome);
- for(const x of [-1,1]){
-  const lampX=x*width*.34;
-  if(golf||matiz){for(const offset of [0,x*.17]){const head=sphere(scene,body,'headlight',lampX+offset,1.15,frontZ+.035,offset===0?.3:.21,'#fff1b7',new Vector3(1,.84,.34));head.material=material(scene,'#fff1b7',true);}}
-  else{box(scene,body,'headlight-dark',lampX,1.12,frontZ+.034,.48,.27,.045,dark);const lamp=box(scene,body,'headlight',lampX,1.15,frontZ+.07,.4,.2,.045,'#fff0bd');lamp.material=material(scene,'#fff0bd',true);}
-  box(scene,body,'turn-signal',x*(width*.44),1.045,frontZ+.06,.13,.12,.035,'#ff9f35');box(scene,body,'tail-light',lampX,1.16,-frontZ-.035,.24,.31,.055,'#ee414c');
-  box(scene,body,'fender-trim',x*(width/2+.025),.98,frontZ-.67,.11,.21,.91,dark);box(scene,body,'fender-trim',x*(width/2+.025),.98,-frontZ+.71,.11,.21,.87,dark);
- }
- // Four preserved transforms allow the renderer to steer and spin the wheels separately.
- const wheels:TransformNode[]=[],frontWheels:TransformNode[]=[];const wheelZ=pickup?1.63:suv?1.26:matiz?1.1:1.37;
- for(const side of ['left','right'] as const)for(const axle of ['front','rear'] as const){
-  const sign=side==='left'?-1:1,pivot=new TransformNode('wheel-pivot-'+axle+'-'+side,scene);pivot.parent=body;pivot.position.set(sign*(width/2+.01),wheelRadius,axle==='front'?wheelZ:-wheelZ);
-  const spin=new TransformNode('wheel-spin-'+axle+'-'+side,scene);spin.parent=pivot;wheels.push(spin);if(axle==='front')frontWheels.push(pivot);
-  cylinder(scene,spin,'tire',0,0,0,.39,wheelRadius*2,dark).rotation.z=Math.PI/2;
-  const sidewall=torus(scene,spin,'tire-sidewall',sign*.207,0,0,wheelRadius*1.63,.075,dark);sidewall.rotation.z=Math.PI/2;
-  const rim=cylinder(scene,spin,'rim',sign*.216,0,0,.032,wheelRadius*1.27,chrome);rim.rotation.z=Math.PI/2;
-  const center=cylinder(scene,spin,'hub',sign*.247,0,0,.055,wheelRadius*.4,accent);center.rotation.z=Math.PI/2;
-  for(let i=0;i<5;i++){const a=i*Math.PI*2/5;const spoke=box(scene,spin,'spoke',sign*.241,Math.cos(a)*wheelRadius*.3,Math.sin(a)*wheelRadius*.3,.055,wheelRadius*.61,.1,chrome);spoke.rotation.x=a;}
-  for(let i=0;i<8;i++){const a=i*Math.PI/4;const tread=box(scene,spin,'tread',0,Math.cos(a)*wheelRadius*.99,Math.sin(a)*wheelRadius*.99,.31,.028,.13,dark);tread.rotation.x=-a;}
-  mergeParts(spin);
- }
- if(suv){
-  for(const x of [-1,1]){box(scene,body,'silver-side-step',x*(width/2+.13),.66,0,.18,.12,2.05,chrome);box(scene,body,'silver-blue-trim',x*(width/2+.012),.975,-.03,.025,.055,2.65,accent);box(scene,body,'rear-roof-rail',x*.69,2.26,rearRoofZ,.065,.065,roofLen-.12,'#657d8f');}
-  box(scene,body,'roof-crossbar',0,2.285,rearRoofZ-.35,1.44,.07,.09,chrome);box(scene,body,'silver-grille-badge',0,1.1,frontZ+.09,.13,.14,.035,accent);
-  const spare=cylinder(scene,body,'spare-tire',0,1.38,-frontZ-.21,.4,.94,dark);spare.rotation.x=Math.PI/2;const cover=cylinder(scene,body,'spare-cover',0,1.38,-frontZ-.435,.04,.74,chrome);cover.rotation.x=Math.PI/2;
-  cylinder(scene,body,'exhaust',-.7,.48,-frontZ-.04,.35,.16,chrome).rotation.x=Math.PI/2;
- }else if(golf){box(scene,body,'golf-badge',0,1.16,frontZ+.1,.16,.16,.028,chrome);}
- else if(mazda){box(scene,body,'mazda-smile',0,.91,frontZ+.12,.68,.075,.026,dark);}
- else if(pickup){box(scene,body,'pickup-badge',0,1.11,frontZ+.1,.17,.12,.03,single?'#eac258':chrome);}
- const driverSocket=new TransformNode('driver-socket',scene);driverSocket.parent=body;driverSocket.position.z=pickup?(single?.44:.06):suv?.14:.05;
- const passengerSocket=new TransformNode('passenger-socket',scene);passengerSocket.parent=body;passengerSocket.position.set(.48,1.04,driverSocket.position.z+.22);
- let alf:TransformNode|undefined;if(golf){alf=buildAlf(scene,body);alf.position.z=driverSocket.position.z+.3;}
- mergeParts(body,false);addVehicleDecals(scene,body,id);const driver=characterId?buildCharacter(scene,characterId,driverSocket):undefined;
- return{root,body,driverSocket,passengerSocket,alf,wheels,frontWheels,driver};
-}
+// The six vehicles (and ALF) are built in vehicles.ts.
+export { buildVehicle, buildAlf } from './vehicles';
 
 /** Runtime-only decals (canvas text cannot live in the GLB): rear name plates the chase camera
  * reads, a Nicaraguan plate, and each car's signature sticker. */
-const REAR:Record<string,{z:number;y:number;w:number}>={suv:{z:-2.43,y:1.38,w:.66},'pickup-double':{z:-2.43,y:1.27,w:1.55},'pickup-single':{z:-2.43,y:1.27,w:1.55},golf:{z:-1.84,y:1.25,w:1.3},mazda:{z:-1.84,y:1.25,w:1.3},matiz:{z:-1.58,y:1.24,w:1.1}};
+/** Where the rear name plate and the licence plate go on each body (z, y, width; plate z, y). */
+const REAR:Record<string,{z:number;y:number;w:number;pz:number;py:number}>={suv:{z:-2.41,y:1.32,w:.66,pz:-2.11,py:.72},'pickup-double':{z:-2.43,y:1.0,w:1.55,pz:-2.58,py:.54},'pickup-single':{z:-2.43,y:.92,w:1.55,pz:-2.58,py:.48},golf:{z:-2.04,y:1.36,w:1.2,pz:-2.11,py:.92},mazda:{z:-2.12,y:1.42,w:1.2,pz:-2.07,py:.95},matiz:{z:-1.75,y:1.36,w:1.1,pz:-1.755,py:.9}};
 export function addVehicleDecals(scene:Scene,body:TransformNode,id:string):TransformNode|null{
  if(typeof document==='undefined')return null;
  const v=vehicle(id),r=REAR[v.kind]??REAR.golf,dark=v.id==='black-diamond',group=new TransformNode('decals',scene);group.parent=body;body=group;
- const name=textLabel(scene,body,v.name.toUpperCase(),0,r.y+(v.kind==='suv'?.08:.06),r.z,r.w,r.w*.2,dark?'#ffd33d':'#13234d',dark?'#27353c':v.color);
- if(name)name.rotation.y=Math.PI;
- if(v.kind==='suv'){const quip=textLabel(scene,body,'EL MÁS CULITO',0,r.y-.12,r.z,.62,.12,'#2fa5cd','#e9eef1');if(quip)quip.rotation.y=Math.PI;}
- const plate=textLabel(scene,body,v.id==='la-raulina'?'M 2003':v.id==='white-empanade'?'M 1999':v.id==='black-diamond'?'M 2009':'M 2008',0,.74,r.z-(v.kind.startsWith('pickup')?.02:.32),.56,.18,'#163a7a','#f7f4ea');if(plate)plate.rotation.y=Math.PI;
+ // Planes face -z by default, which is exactly where the chase camera sits: no turning needed.
+ textLabel(scene,body,v.name.toUpperCase(),0,r.y+(v.kind==='suv'?.08:.06),r.z,r.w,r.w*.2,dark?'#ffd33d':'#13234d',dark?'#27353c':v.color);
+ if(v.kind==='suv'){textLabel(scene,body,'EL MÁS CULITO',0,r.y-.12,r.z,.62,.12,'#2fa5cd','#e9eef1');}
+ textLabel(scene,body,v.id==='la-raulina'?'M 2003':v.id==='white-empanade'?'M 1999':v.id==='black-diamond'?'M 2009':'M 2008',0,r.py,r.pz,.56,.18,'#163a7a','#f7f4ea');
  if(dark)for(const x of [-1,1]){const gem=textLabel(scene,body,'◆',x*.97,1.12,-.2,.34,.34,'#7ef3ff','#27353c');if(gem)gem.rotation.y=x>0?-Math.PI/2:Math.PI/2;}
  return group;
 }

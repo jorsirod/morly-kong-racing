@@ -1,7 +1,7 @@
 import {Engine} from '@babylonjs/core/Engines/engine';
 import {Scene} from '@babylonjs/core/scene';
 import {Color3,Color4} from '@babylonjs/core/Maths/math.color';
-import {Matrix,Vector3} from '@babylonjs/core/Maths/math.vector';
+import {Matrix,Quaternion,Vector3} from '@babylonjs/core/Maths/math.vector';
 import {FreeCamera} from '@babylonjs/core/Cameras/freeCamera';
 import {ArcRotateCamera} from '@babylonjs/core/Cameras/arcRotateCamera';
 import {HemisphericLight} from '@babylonjs/core/Lights/hemisphericLight';
@@ -42,6 +42,20 @@ export {savedQuality,reducedMotion,type Quality};
 const ease=(t:number)=>1-(1-t)**3;
 /** Converts glTF quaternion nodes to Euler so the race loop can steer, spin and lean them. */
 function eulerize(node?:TransformNode|null){if(node?.rotationQuaternion){node.rotation=node.rotationQuaternion.toEulerAngles();node.rotationQuaternion=null;}}
+/** glTF files are right-handed, so the loader hangs them under a converting __root__ and every frame
+ * inside ends up mirrored: a pilot added at runtime sat on the wrong side (on top of ALF) and runtime
+ * yaw/roll ran backwards. Undo the conversion node by node so a GLB car behaves exactly like the
+ * source geometry: x translations and quaternions are reflected back, and only the geometry keeps
+ * the mirror (which cancels the exporter's own reflection). */
+function unmirror(top:TransformNode){
+ if(!(top.scaling.z<0||top.scaling.x<0))return;
+ top.rotationQuaternion=Quaternion.Identity();top.scaling.set(1,1,1);
+ for(const n of top.getDescendants(false)){
+  if(!(n instanceof TransformNode))continue;
+  n.position.x*=-1;const q=n.rotationQuaternion;if(q)n.rotationQuaternion=new Quaternion(q.x,-q.y,-q.z,q.w);else{n.rotation.y*=-1;n.rotation.z*=-1;}
+  if('getTotalVertices' in n&&(n as AbstractMesh).getTotalVertices()>0)n.scaling.x*=-1;
+ }
+}
 export class RaceRenderer{
  engine:Engine;scene:Scene;fps=60;drawCalls=0;quality:Exclude<Quality,'auto'>='alta';reduced=reducedMotion();
  private camera:FreeCamera;private world:TransformNode;private trackId:string;private arena:boolean;
@@ -72,11 +86,12 @@ export class RaceRenderer{
  async preload(state:GameState){const ids=[...new Set(state.players.map(p=>p.vehicleId))];await Promise.all(ids.map(async id=>{try{this.assets.set(id,await LoadAssetContainerAsync('/models/'+id+'.glb',this.scene));}catch{/* Source geometry is the offline fallback. */}}));}
  private car(vehicleId:string,characterId:string):Car{
   const asset=this.assets.get(vehicleId);if(!asset)return buildVehicle(this.scene,vehicleId,characterId);
-  const entries=asset.instantiateModelsToScene(name=>name+'-copy',false,{doNotInstantiate:false}),root=new TransformNode('car-instance',this.scene);for(const n of entries.rootNodes)n.parent=root;
+  const entries=asset.instantiateModelsToScene(name=>name+'-copy',false,{doNotInstantiate:false}),root=new TransformNode('car-instance',this.scene);for(const n of entries.rootNodes){if(n instanceof TransformNode)unmirror(n);n.parent=root;}
   const nodes=root.getChildTransformNodes(),body=nodes.find(n=>n.name.startsWith('body'))??root,driverSocket=nodes.find(n=>n.name.startsWith('driver-socket'))??body,passengerSocket=nodes.find(n=>n.name.startsWith('passenger-socket'))??body,driver=buildCharacter(this.scene,characterId,driverSocket);
   const wheels=nodes.filter(n=>n.name.startsWith('wheel-spin-')),frontWheels=nodes.filter(n=>n.name.startsWith('wheel-pivot-front-')),alf=nodes.find(n=>n.name.startsWith('ALF-plush'));
-  for(const n of [body,alf,...wheels,...frontWheels])eulerize(n);addVehicleDecals(this.scene,body,vehicleId);
-  return{root,body,driverSocket,passengerSocket,driver,alf,wheels,frontWheels};
+  const part=(name:string)=>nodes.find(n=>n.name.startsWith(name)),head=part('alf-head-pivot'),armL=part('alf-arm-left'),armR=part('alf-arm-right'),alfParts=alf&&head&&armL&&armR?{head,armL,armR}:undefined;
+  for(const n of [body,alf,head,armL,armR,...wheels,...frontWheels])eulerize(n);addVehicleDecals(this.scene,body,vehicleId);
+  return{root,body,driverSocket,passengerSocket,driver,alf,alfParts,wheels,frontWheels};
  }
  private lod(parent:TransformNode,vehicleId:string,characterId:string){
   const root=new TransformNode('distant-car',this.scene);root.parent=parent;const v=vehicle(vehicleId),d=vehicleDynamics(vehicleId);box(this.scene,root,'lod-body',0,.92,0,d.halfWidth*2,.8,d.halfLength*2,v.color);box(this.scene,root,'lod-rear',0,1.7,-.6,d.halfWidth*1.7,.55,1.35,v.color);sphere(this.scene,root,'lod-driver',-.4,2.3,.2,.8,'#c38c6b');
