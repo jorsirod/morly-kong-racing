@@ -8,7 +8,7 @@ import { GameRoom, rooms } from './GameRoom';
 import { closeStore } from './store';
 const app=express();const http=createServer(app);const production=process.env.NODE_ENV==='production';
 process.on('uncaughtExceptionMonitor',error=>console.error('Error interno del servidor:',error));
-const port=Number(process.env.PORT??2567);const origin=process.env.PUBLIC_ORIGIN;
+const port=Number(process.env.PORT??2567);const origin=process.env.PUBLIC_ORIGIN??process.env.RENDER_EXTERNAL_URL;
 if(production&&!origin)throw new Error('PUBLIC_ORIGIN es obligatorio en producción.');
 const allowed=new Set([origin??'http://localhost:5173','http://127.0.0.1:5173']);
 const limits=new Map<string,{n:number;at:number}>();const secret=process.env.COOKIE_SECRET??randomBytes(32).toString('hex');

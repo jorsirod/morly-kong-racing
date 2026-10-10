@@ -1,0 +1,18 @@
+# Render Blueprint: un solo servicio gratis que sirve el juego y las salas online.
+# El secreto de cookies se genera solo; PUBLIC_ORIGIN sale de RENDER_EXTERNAL_URL.
+services:
+  - type: web
+    name: morly-kong-racing
+    runtime: docker
+    plan: free
+    dockerfilePath: ./deploy/Dockerfile
+    dockerContext: .
+    healthCheckPath: /api/health
+    autoDeploy: true
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: "2567"
+      - key: COOKIE_SECRET
+        generateValue: true
