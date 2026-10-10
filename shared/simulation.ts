@@ -321,8 +321,9 @@ export class Simulation {
    if(p.driftDir!==0&&p.driftCharge>=(level===2?DRIVE.driftTier2:DRIVE.driftTier1)&&Math.abs(bend)<.5)drift=false;
    brake=level<2&&Math.abs(bend)>.9&&p.speed>17;
    steerScale=level===0?.85:1;
-   // Occasional human mistakes: a late correction on the relaxed level.
+   // Occasional human mistakes: a late correction on the relaxed level, and a hesitant lift.
    if(level===0&&noise(.37)>.93&&!straight)steerScale*=.4;
+   if(level===0&&noise(.21)>.96&&!straight)brake=true;
   }
   const out=this.steerTo(p,target,0,drift,mem,brake,steerScale);
   // Attacks: aim first. Front basics need someone ahead, rear ones someone behind, specials a target.
@@ -338,8 +339,9 @@ export class Simulation {
  /** When a bot uses its item: boosts on straights, the helmet when something is coming, traps with someone behind. */
  private botItem(p:PlayerState,out:PlayerInput,ahead:boolean,behind:boolean,bend:number,seed:number){
   const s=this.state;if(out.attack||!p.item||p.roulette>0||p.stun>0||p.fall>0||s.phase!=='running')return out;
-  const wait=hash01(seed,s.tick>>5)<.25,item=p.item as ItemId;
-  const use=item==='cafe'||item==='cafe3'?Math.abs(bend)<.22&&!wait:item==='casco'?p.bongWarn>0||behind||hash01(seed,s.tick>>6)<.04:item==='coco'?ahead:item==='chilero'?behind||hash01(seed,s.tick>>6)<.03:true;
+  // Relaxed bots forget their item for a while; sharper ones use it as soon as it pays.
+  const wait=hash01(seed,s.tick>>5)<[.75,.25,.1][this.difficulty],item=p.item as ItemId;
+  const use=item==='cafe'||item==='cafe3'?Math.abs(bend)<.22&&!wait:item==='casco'?p.bongWarn>0||behind&&!wait||hash01(seed,s.tick>>6)<.04:item==='coco'?ahead&&!wait:item==='chilero'?behind&&!wait||hash01(seed,s.tick>>6)<.03:!wait;
   if(use){out.attack=5;out.actionSeq=s.tick+1;}
   return out;
  }
