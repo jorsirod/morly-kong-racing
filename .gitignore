@@ -1,0 +1,10 @@
+node_modules/
+dist/
+build/
+work/
+data/
+.env
+.env.*.local
+*.pem
+*.key
+work-probe/

@@ -1,0 +1,194 @@
+@font-face{font-family:Bungee;src:url('/fonts/bungee.ttf') format('truetype');font-style:normal;font-weight:400;font-display:swap}
+@font-face{font-family:Nunito;src:url('/fonts/nunito.ttf') format('truetype');font-style:normal;font-weight:200 900;font-display:swap}
+
+:root{font-family:Nunito,sans-serif;--arcade-display:Bungee,sans-serif;--hud-ink:#142448;--hud-gold:#ffd33d;--hud-cream:#fff6d5;font-synthesis:none}
+button,input,select{font-family:Nunito,sans-serif}
+::selection{background:#ffd33d;color:#152448}
+input{caret-color:#ffd33d}
+button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible{outline:3px solid #ffda51;outline-offset:3px}
+.arcade-scanlines{opacity:.04}
+.arcade-app,.lobby-page,.game-view{font-family:Nunito,sans-serif}
+.game-logo,.mini-logo,.arcade-heading h1,.arcade-preview-name strong,.world-preview-caption strong,.arcade-mode strong,.press-start,.dialog h2,.full-loading b,.lobby-page h1,.results-dialog h1,.countdown strong{font-family:var(--arcade-display);font-weight:400;font-style:normal;letter-spacing:0}
+.game-logo{font-size:clamp(68px,7.6vw,112px);line-height:1.02;letter-spacing:0;overflow:visible}
+.game-logo>span{line-height:1.02}
+.game-logo>span:nth-child(2){font-size:1.06em;margin-top:2px}
+.game-logo>b{font-weight:400;font-size:.46em;line-height:1.16;letter-spacing:.055em;padding:4px 18px;margin-top:14px}
+.mini-logo{font-size:18px;line-height:1.12}
+.mini-logo b{font-weight:400;font-size:12px;line-height:1.2;letter-spacing:.06em;margin-top:2px}
+.press-start{font-size:26px;line-height:1.2;letter-spacing:.05em}
+.arcade-heading h1{font-size:clamp(25px,2.65vw,38px);line-height:1.22;letter-spacing:0;text-wrap:balance}
+.arcade-heading p{font-size:13px;line-height:1.45}
+.arcade-preview-name strong{font-size:29px;line-height:1.2}
+.arcade-mode strong{font-size:20px;line-height:1.2}
+.world-preview-caption strong{font-size:29px;line-height:1.2}
+.arcade-edition,.panel-strip,.arcade-header nav button,.arcade-footer button,.arcade-primary,.arcade-secondary{font-weight:900}
+.arcade-character strong{font-size:12px;line-height:1.2;font-weight:900}
+.arcade-car strong{font-size:12px;line-height:1.25}
+.arcade-special strong{display:flex;align-items:center;gap:10px;font-size:13px;line-height:1.35;min-width:0}
+.arcade-special .weapon-icon{flex-shrink:0;width:32px;height:32px}
+.arcade-special .weapon-icon>svg{width:32px;height:32px}
+.car-banter{font-size:13px;line-height:1.45}
+.arcade-stats>div{font-size:11px}
+.setup-banter,.setup-combination span{font-size:11px;line-height:1.4}
+.arcade-world-card>b{font-size:13px;line-height:1.25}
+.arcade-world-card>span{font-size:10px;line-height:1.4}
+.arcade-mode p{font-size:11px;line-height:1.4}
+.arcade-mode small{font-size:10px;line-height:1.35}
+.title-content>p{font-size:14px;line-height:1.45}
+.title-links>button{font-size:11px}
+.dialog h2,.results-dialog h1{font-size:28px;line-height:1.25;text-wrap:balance}
+.dialog p{font-size:15px;line-height:1.55}
+.dialog .button{font-size:14px}
+.dialog .toggle{font-size:14px;line-height:1.4}
+.lobby-page h1{font-size:clamp(26px,3.2vw,42px);line-height:1.25}
+.room-ticket strong{font-family:var(--arcade-display);font-size:30px;font-weight:400;letter-spacing:.12em}
+.lobby-player strong{font-size:14px}.lobby-player span{font-size:12px}.lobby-player>b{font-size:12px}
+
+.driver-portrait{display:inline-flex;align-items:center;justify-content:center;position:relative;flex-shrink:0;width:48px;height:48px;overflow:hidden;border:2px solid #c2d9f3;border-radius:10px;box-shadow:0 3px 6px #07163455;vertical-align:middle}
+.driver-portrait>img{display:block;width:100%;height:100%;object-fit:cover}
+.driver-portrait>b{font-family:var(--arcade-display);font-size:18px;font-weight:400;color:#fff6d5;text-shadow:1px 2px 3px #132448}
+.arcade-character .driver-portrait{width:70px;height:70px;border-color:#b0c9e9}
+.arcade-character.selected .driver-portrait{border-color:#fff1b0}
+.skill-banner .driver-portrait{width:70px;height:70px;border-color:#fff2aa;transform:skewY(3deg);border-radius:8px}
+.lobby-player .driver-portrait{width:48px;height:48px}
+.podium-place .driver-portrait{width:54px;height:54px}
+.podium-place>.podium-rank{font-family:var(--arcade-display);font-weight:400;font-size:24px;line-height:1.15;color:#fff3ce}
+.vehicle-portrait{display:inline-flex;align-items:center;justify-content:center;width:160px;max-width:100%;aspect-ratio:16/9;vertical-align:middle;flex-shrink:0}
+.vehicle-portrait>img,.vehicle-portrait>svg{display:block;width:100%;height:100%;object-fit:contain}
+.arcade-car>.vehicle-portrait{width:100%;height:65px;aspect-ratio:auto}
+.preview-loading>.vehicle-portrait{width:70%;height:auto;max-width:380px}
+
+/* The road and the car own the centre; instruments live on the edges. */
+.race-top{top:max(16px,env(safe-area-inset-top));left:max(24px,env(safe-area-inset-left));right:max(24px,env(safe-area-inset-right));padding:0;background:none;border:0;gap:18px;align-items:flex-start;min-height:88px;text-shadow:1px 2px 5px #10224a}
+.race-place{order:0;min-width:86px;align-items:flex-start;line-height:1;color:var(--hud-gold)}
+.race-place strong{font-family:var(--arcade-display);font-style:normal;font-size:70px;font-weight:400;line-height:1.03;-webkit-text-stroke:1px #182646;text-shadow:3px 4px 5px #112044aa}
+.race-place sup{font-family:Nunito,sans-serif;font-size:24px;font-weight:900;vertical-align:top;position:relative;top:.2em;margin-left:2px;-webkit-text-stroke:0}
+.race-place span{color:var(--hud-cream);font-size:11px;font-weight:900;letter-spacing:.06em;margin-top:4px;max-width:150px;line-height:1.15}
+.race-brand{order:1;margin-right:auto;padding-top:7px;font-family:var(--arcade-display);font-size:23px;font-style:normal;font-weight:400;letter-spacing:0;line-height:1.25;color:var(--hud-cream);max-width:42%}
+.race-brand span{font-family:Nunito,sans-serif;display:block;font-size:12px;line-height:1.3;font-weight:900;letter-spacing:.03em;margin-top:5px;color:var(--hud-gold)}
+.race-timer{order:2;padding-top:8px;line-height:1.2;margin:0 2px 0 0}
+.race-timer strong{font-family:var(--arcade-display);font-size:28px;font-weight:400;line-height:1.15;color:var(--hud-cream);font-variant-numeric:tabular-nums}
+.race-timer span{font-family:Nunito,sans-serif;font-size:9px;font-weight:900;letter-spacing:.04em;line-height:1.3}
+.race-top>.hud-button{order:3;flex-shrink:0;width:48px;height:48px;margin-top:3px;border:2px solid #c6d7ee;background:#11285070;box-shadow:0 3px 7px #0b183a55;display:grid;place-items:center;color:#fff5d9}
+.race-top>.hud-button>svg{width:24px;height:24px}
+.race-bottom{left:max(24px,env(safe-area-inset-left));bottom:max(44px,env(safe-area-inset-bottom));top:auto;gap:0}
+.mini-map{width:122px;padding:8px 6px 6px;background:#15294750;border:0;border-radius:10px;box-shadow:none}
+.mini-map>svg{width:104px;height:104px}
+.mini-map>span{font-family:var(--arcade-display);font-size:25px;line-height:1.25;font-weight:400;color:#fff4cf;text-shadow:1px 2px 4px #132448}
+.mini-map>span>small{font-family:Nunito,sans-serif;font-size:11px;font-weight:900}
+.mini-map>.race-telemetry{font-family:Nunito,sans-serif;font-size:9px;letter-spacing:.02em;color:#e3ebf8;line-height:1.3;margin-top:5px}
+.keyboard-hint{font-family:Nunito,sans-serif;left:50%;translate:-50% 0;bottom:12px;font-size:10px;font-weight:900;line-height:1.4;white-space:nowrap;color:#fff8dd;letter-spacing:0}
+
+.action-controls{right:max(24px,env(safe-area-inset-right));bottom:max(28px,env(safe-area-inset-bottom));display:flex;align-items:flex-end;gap:12px;pointer-events:none}
+.action-controls>button,.fire-group>.fire-button{pointer-events:auto;flex-shrink:0;width:84px;height:84px;margin:0;padding:10px 5px;gap:5px;border:2px solid #b4c9eb;border-radius:50%;background:linear-gradient(#365f9fdd,#162e65e8);box-shadow:0 4px 7px #0b1b4a77;touch-action:none;line-height:1.1}
+.action-controls>button>svg{width:34px;height:34px;flex-shrink:0}
+.action-controls button small{font-family:Nunito,sans-serif;font-size:10px;line-height:1.2;font-weight:900;letter-spacing:0;white-space:nowrap}
+.action-controls button:disabled{opacity:.58;filter:saturate(.6)}
+.action-controls .special-button{width:84px;height:84px;margin:0;background:#263a62d9;color:#c2d0e6;border-color:#91a7cc}
+.action-controls .special-button.charged{background:linear-gradient(#f26370,#ad2044);color:#fff4ce;border-color:#ffe399;box-shadow:0 4px 8px #6a17356e;filter:none}
+.action-controls .drift-button{color:#e5f2ff}
+.action-controls .brake-button{width:48px;height:60px;margin:0;border-radius:12px;background:#192c54bd;padding:7px 3px;gap:4px}
+.action-controls .brake-button>svg{width:25px;height:25px}
+.action-controls .brake-button>small{font-size:8px}
+.fire-group{position:relative;display:flex;flex-direction:column;align-items:center;padding-bottom:22px;pointer-events:auto}
+.action-controls .fire-button{width:94px;height:94px;margin:0;background:linear-gradient(#ffe98c,#efba32);border-color:#fff2a7;color:#172b56;box-shadow:0 4px 7px #86602566}
+.weapon-icon{position:relative;display:inline-flex;align-items:center;justify-content:center;width:48px;height:48px;flex-shrink:0;vertical-align:middle}
+.weapon-icon>svg{display:block;width:48px;height:48px;transform:none;filter:drop-shadow(0 2px 2px #14234a25)}
+.weapon-icon>.weapon-count{position:absolute;right:-7px;bottom:-4px;background:#10254e;border:1px solid #ffe597;border-radius:5px;padding:1px 4px;font-family:Nunito,sans-serif;font-size:12px;font-weight:900;color:#fff4c7;line-height:1.2;white-space:nowrap}
+.fire-group>.basic-name{position:absolute;left:50%;bottom:0;translate:-50% 0;width:126px;max-width:126px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:16px;font-weight:900;line-height:1.3;color:#fff5d5;text-align:center;text-shadow:1px 2px 4px #132448;pointer-events:none}
+.action-controls>.charge-meter{position:relative;left:auto;top:auto;right:auto;bottom:auto;translate:none;align-self:center;width:158px;min-height:76px;padding:10px 12px;background:#11264eab;border:1px solid #c0d4e3a6;border-radius:10px;box-shadow:0 3px 7px #0b193a44;line-height:1.1}
+.action-controls>.charge-meter>span{font-size:10px;letter-spacing:.08em;font-weight:900;color:#e2edfb}
+.action-controls>.charge-meter>div{display:flex;align-items:center;justify-content:center;gap:9px;margin:11px 0}
+.action-controls>.charge-meter i{width:13px;height:13px;transform:rotate(45deg);border:1px solid #b7c7e3;background:#233b62;box-shadow:none;border-radius:2px}
+.action-controls>.charge-meter i.full{background:#ffd449;border-color:#fff4bd;box-shadow:0 2px 3px #5e462755}
+.action-controls>.charge-meter>strong{font-family:Nunito,sans-serif;font-size:10px;font-weight:900;letter-spacing:.025em;line-height:1.2;color:#fff5d5}
+.basic-shortcuts{position:absolute;bottom:130px;right:0;display:grid;grid-template-columns:repeat(3,96px);gap:8px;pointer-events:auto}
+.action-controls .basic-shortcuts>button{width:96px;height:70px;min-width:0;margin:0;padding:6px;border:1px solid #d4e2edaf;border-radius:9px;background:#142e5bbf;box-shadow:0 3px 7px #091c4044;gap:3px;color:#f8f4db}
+.basic-shortcuts .weapon-icon,.basic-shortcuts .weapon-icon>svg{width:34px;height:34px}
+.basic-shortcuts .weapon-count{font-size:10px;right:-9px;bottom:-2px}
+.action-controls .basic-shortcuts>button>small{font-size:10px;line-height:1.15;white-space:normal;text-align:center;max-width:84px}
+.action-controls .basic-shortcuts>button.active{border-color:#ffdf69;background:#735222d9;color:#fff6cf}
+.attack-choices{right:-7px;bottom:112px;display:grid;grid-template-columns:repeat(3,90px);gap:6px;padding:8px;background:#102651f5;border:2px solid #f4d36f;border-radius:12px;box-shadow:0 4px 12px #091a4666;z-index:8}
+.attack-choices>span{width:90px;height:80px;padding:5px;border:1px solid #b3c8e0;border-radius:7px;background:#234b80;color:#fff3c9;gap:4px}
+.attack-choices>span.active{background:#f3c943;color:#12274b;border-color:#fff5bd}
+.attack-choices .weapon-icon,.attack-choices .weapon-icon>svg{width:38px;height:38px}
+.attack-choices small{font-size:10px;font-weight:900;line-height:1.15;text-align:center;max-width:80px}
+
+.skill-banner{top:18%;height:94px;padding:0 8%;gap:18px;z-index:10;background:linear-gradient(100deg,#9c234ddd,#282b68ef);border-block:3px solid #ffd458;box-shadow:0 6px 12px #10214555}
+.skill-banner>div{min-width:0;gap:5px}
+.skill-banner>div>span{font-family:Nunito,sans-serif;font-size:11px;font-weight:900;letter-spacing:.08em;line-height:1.2}
+.skill-banner strong{font-family:var(--arcade-display);font-size:clamp(17px,2.2vw,28px);font-weight:400;font-style:normal;letter-spacing:0;line-height:1.25;text-wrap:balance}
+.skill-banner>.weapon-icon{margin-left:auto;width:64px;height:64px;transform:skewY(3deg)}
+.skill-banner>.weapon-icon>svg{width:64px;height:64px}
+.feedback-cue{position:absolute;top:35%;left:50%;translate:-50% 0;max-width:44%;padding:4px 10px;z-index:11;pointer-events:none;font-family:var(--arcade-display);font-size:20px;font-weight:400;line-height:1.25;text-align:center;color:#fff3cc;text-shadow:2px 3px 5px #12254a,-1px -1px 1px #12254a;animation:cue-pop .72s both}
+.feedback-cue.hit,.feedback-cue.collision{color:#ffe890}.feedback-cue.boost{color:#ffd345}.feedback-cue.pickup{color:#d5f8eb}
+.drift-status{position:absolute;left:50%;bottom:27%;translate:-50% 0;max-width:35%;z-index:5;pointer-events:none;text-align:center;line-height:1.25;opacity:0}
+.drift-status.building,.drift-status.boost{opacity:1}
+.drift-status>span{font-family:var(--arcade-display);font-size:14px;font-weight:400;color:#edfbff;text-shadow:1px 2px 4px #13254e}
+.drift-status.boost>span{color:#ffdc4f;font-size:19px}
+.joystick{width:124px;height:124px;left:max(24px,env(safe-area-inset-left));bottom:max(22px,env(safe-area-inset-bottom));background:#17345d61;border:2px solid #d5e0efa0;box-shadow:inset 0 0 0 6px #12356340}
+.joystick>i{width:52px;height:52px;left:calc(50% - 26px);top:calc(50% - 26px);background:linear-gradient(#d5e1f5bd,#829bcbd0);box-shadow:0 3px 7px #10284b66,inset 0 0 0 2px #dfeafa9e}
+.countdown strong{font-size:116px;line-height:1.15}
+.network-notice{top:110px;max-width:60%;font-family:Nunito,sans-serif;font-size:13px;line-height:1.4}
+@keyframes cue-pop{0%{opacity:0;transform:translateY(8px) scale(.94)}15%{opacity:1;transform:translateY(0) scale(1)}80%{opacity:1}100%{opacity:0;transform:translateY(-8px)}}
+
+@media(min-width:1500px){.arcade-character .driver-portrait{width:80px;height:80px}.arcade-character strong{font-size:14px}}
+@media(pointer:coarse),(max-width:950px){
+ .joystick{display:block}.keyboard-hint,.basic-shortcuts{display:none}
+ .race-top{top:max(12px,env(safe-area-inset-top));left:max(16px,env(safe-area-inset-left));right:max(16px,env(safe-area-inset-right));gap:14px}
+ .race-place strong{font-size:60px}.race-place{min-width:74px}.race-brand{font-size:21px;max-width:38%}.race-timer strong{font-size:24px}
+ .race-bottom{top:104px;bottom:auto;left:max(16px,env(safe-area-inset-left))}.mini-map{width:88px;padding:5px;background:#16274945}.mini-map>svg{width:76px;height:76px}.mini-map>span{font-size:20px}.mini-map>.race-telemetry{display:none}
+ .action-controls{right:max(18px,env(safe-area-inset-right));bottom:max(20px,env(safe-area-inset-bottom));gap:12px}
+ .action-controls>button{width:72px;height:72px}.action-controls .special-button{width:72px;height:72px}.action-controls .fire-button{width:84px;height:84px}.action-controls .brake-button{width:48px;height:54px}
+ .action-controls>.charge-meter{position:absolute;right:18px;left:auto;top:auto;bottom:124px;translate:none;width:152px;min-height:66px;padding:8px 10px}
+ .action-controls>.charge-meter>div{margin:9px 0;gap:9px}.action-controls>.charge-meter i{width:13px;height:13px}
+ .fire-group>.basic-name{font-size:14px;width:110px;max-width:110px}.attack-choices{bottom:102px}
+}
+
+@media(max-width:700px) and (orientation:portrait){
+ .game-logo{font-size:clamp(64px,18.7vw,96px);line-height:1.05}.game-logo>span:nth-child(2){margin-top:2px}.game-logo>b{margin-top:16px;font-size:.46em;padding:4px 14px}
+ .title-content{width:90%;left:5%;height:85%;top:5%}.title-content>p{font-size:13px;line-height:1.45;max-width:290px}.title-links>button{font-size:10px}.press-start{font-size:26px;min-height:58px;padding:12px 44px}
+ .arcade-heading h1{font-size:24px;line-height:1.25}.arcade-heading p{font-size:12px;line-height:1.4}.arcade-preview-name strong{font-size:23px}
+ .arcade-character .driver-portrait{width:70px;height:70px}.arcade-character{min-height:108px}.arcade-character strong{font-size:11px}.arcade-roster{padding:12px;gap:8px}
+ .arcade-special strong{font-size:12px}.arcade-car strong{font-size:10px}.arcade-mode strong{font-size:19px}.arcade-mode p{font-size:10px}.arcade-mode small{font-size:9px}
+ .arcade-car>.vehicle-portrait{height:56px}.podium-place .driver-portrait{width:40px;height:40px}.podium-place>.podium-rank{font-size:18px}
+ .arcade-stats>div{font-size:10px}.setup-banter{font-size:10px}.arcade-header nav button{font-size:9px;min-height:44px}.arcade-footer button{font-size:11px}
+ .dialog h2{font-size:24px;line-height:1.25}.dialog p{font-size:14px;line-height:1.45}
+ .lobby-player{gap:10px}.lobby-player strong{font-size:13px}.lobby-player span{font-size:10px}.lobby-player>b{font-size:10px;max-width:82px;text-align:right;line-height:1.3}
+ .room-ticket strong{font-size:25px;letter-spacing:.1em}.room-ticket .button{font-size:12px}.lobby-page h1{font-size:28px}
+}
+
+@media(max-height:500px) and (orientation:landscape){
+ .game-logo{font-size:clamp(48px,6.8vw,67px);line-height:1.02}.game-logo>b{margin-top:10px;padding:2px 12px}.title-content{height:92%;top:0}.title-content>p{font-size:10px;margin-bottom:12px}.arcade-edition{font-size:8px;margin-bottom:9px}.press-start{font-size:21px;min-height:44px;padding:7px 38px}.title-links>button{font-size:8px;min-height:36px}.insert-coin{font-size:7px}
+ .mini-logo{font-size:14px;line-height:1.1}.mini-logo b{font-size:9px;margin-top:2px}.arcade-heading h1{font-size:20px;line-height:1.2;margin:4px 0}.arcade-heading p{font-size:10px}.arcade-heading{padding:6px 0}.arcade-header{min-height:48px}.arcade-footer{min-height:49px}
+ .arcade-character .driver-portrait{width:40px;height:40px;border-radius:7px}.arcade-character strong{font-size:9px}.arcade-character{min-height:48px;gap:6px}.arcade-roster{gap:5px;padding:7px;min-height:158px}.arcade-special{min-height:35px;padding:4px 7px;gap:2px}.arcade-special strong{font-size:9px;gap:7px}.arcade-special .weapon-icon,.arcade-special .weapon-icon>svg{width:24px;height:24px}
+ .panel-strip{font-size:9px;padding:6px 9px}.panel-strip>span{font-size:7px}.arcade-preview-name strong{font-size:20px}.arcade-preview-name>span{font-size:9px}.car-banter{font-size:10px;margin:7px 10px}.arcade-stats>div{font-size:8px}.arcade-car strong{font-size:9px}.arcade-cars{gap:5px}.arcade-car{padding:3px}.arcade-world-card>b{font-size:10px}.arcade-world-card>span{font-size:8px;line-height:1.25}.world-preview-caption strong{font-size:21px}
+ .arcade-car>.vehicle-portrait{height:28px}.podium-place .driver-portrait{width:40px;height:40px}.podium-place>.podium-rank{font-size:18px}
+ .arcade-mode strong{font-size:17px}.arcade-mode p{font-size:9px}.arcade-mode small{font-size:8px}.setup-banter{font-size:8px}.setup-fields label{font-size:8px}.setup-combination strong{font-size:11px}.setup-combination span{font-size:9px}
+ .race-top{top:max(10px,env(safe-area-inset-top));left:max(14px,env(safe-area-inset-left));right:max(14px,env(safe-area-inset-right));gap:10px;min-height:70px}
+ .race-place{min-width:68px}.race-place strong{font-size:58px;line-height:1.02}.race-place sup{font-size:21px}.race-place span{font-size:9px;margin-top:1px;max-width:82px}
+ .race-brand{font-size:18px;line-height:1.2;padding-top:4px;max-width:34%}.race-brand span{font-size:10px;margin-top:4px;letter-spacing:0}.race-timer{padding-top:5px}.race-timer strong{font-size:23px}.race-timer span{display:none}.race-top>.hud-button{width:48px;height:48px;margin-top:0}.race-top>.hud-button>svg{width:23px;height:23px}
+ .race-bottom{top:88px;bottom:auto;left:max(16px,env(safe-area-inset-left))}.mini-map{width:80px;padding:4px;background:#11274633}.mini-map>svg{width:68px;height:68px}.mini-map>span{font-size:19px}.mini-map>span>small{font-size:9px}.mini-map>.race-telemetry{display:none}
+ .action-controls{right:max(14px,env(safe-area-inset-right));bottom:max(13px,env(safe-area-inset-bottom));gap:10px}
+ .action-controls>button,.action-controls .special-button{width:64px;height:64px;padding:8px 3px;gap:4px}.action-controls>button>svg{width:29px;height:29px}.action-controls button small{font-size:8px}.action-controls .fire-button{width:76px;height:76px;padding:6px 4px;gap:2px}.fire-group{padding-bottom:18px}.fire-group>.basic-name{font-size:13px;line-height:1.2;width:106px;max-width:106px}
+ .action-controls .brake-button{width:48px;height:48px;border-radius:10px;margin:0;padding:5px 2px;gap:2px}.action-controls .brake-button>svg{width:24px;height:24px}.action-controls .brake-button>small{font-size:8px}
+ .action-controls>.charge-meter{position:absolute;right:16px;left:auto;top:auto;bottom:112px;translate:none;width:142px;min-height:58px;padding:6px 9px}.action-controls>.charge-meter>span{font-size:8px}.action-controls>.charge-meter>div{margin:8px 0;gap:9px}.action-controls>.charge-meter i{width:12px;height:12px}.action-controls>.charge-meter>strong{font-size:9px}
+ .weapon-icon,.weapon-icon>svg{width:46px;height:46px}.weapon-icon>.weapon-count{font-size:10px;right:-5px;bottom:-2px}.basic-shortcuts{display:none}
+ .attack-choices{bottom:97px;right:-6px;grid-template-columns:repeat(3,76px);gap:5px;padding:6px}.attack-choices>span{width:76px;height:75px;padding:4px}.attack-choices .weapon-icon,.attack-choices .weapon-icon>svg{width:36px;height:36px}.attack-choices small{font-size:9px;line-height:1.2;max-width:68px}
+ .joystick{display:block;width:104px;height:104px;left:max(18px,env(safe-area-inset-left));bottom:max(14px,env(safe-area-inset-bottom))}.joystick>i{width:48px;height:48px;left:calc(50% - 24px);top:calc(50% - 24px)}
+ .skill-banner{top:18%;height:72px;padding:0 6%;gap:14px;border-block-width:2px}.skill-banner .driver-portrait{width:58px;height:58px}.skill-banner strong{font-size:19px;line-height:1.22}.skill-banner>div>span{font-size:9px;line-height:1.1}.skill-banner>.weapon-icon,.skill-banner>.weapon-icon>svg{width:48px;height:48px}
+ .feedback-cue{top:39%;max-width:44%;font-size:15px;line-height:1.25}.drift-status{bottom:26%;max-width:32%}.drift-status>span{font-size:10px}.drift-status.boost>span{font-size:15px}.countdown strong{font-size:88px}.countdown span{font-size:9px}.network-notice{top:75px;padding:7px 12px;font-size:11px;max-width:58%}
+}
+
+@media(max-width:650px) and (orientation:landscape){
+ .race-brand{max-width:26%;font-size:15px}.race-place strong{font-size:52px}.race-place{min-width:58px}.race-timer strong{font-size:20px}.race-top{gap:8px}.race-brand span{font-size:9px}.mini-map{display:block;width:70px}.mini-map>svg{width:58px;height:58px}.race-bottom{top:81px}
+ .action-controls{gap:7px;right:max(10px,env(safe-area-inset-right))}.action-controls>button,.action-controls .special-button{width:58px;height:58px}.action-controls .fire-button{width:68px;height:68px}.action-controls .brake-button{width:48px;height:48px}.action-controls button small{font-size:7px}.action-controls>.charge-meter{right:10px;bottom:104px;width:138px}.fire-group>.basic-name{font-size:12px;width:94px;max-width:94px}.weapon-icon,.weapon-icon>svg{width:42px;height:42px}.skill-banner strong{font-size:15px}.skill-banner{gap:10px}.skill-banner>.weapon-icon{display:none}.joystick{width:96px;height:96px}
+}
+@media(prefers-reduced-motion:reduce){.feedback-cue,.skill-banner,.countdown{animation:none}.arcade-scanlines{display:none}}
+
+/* Keep navigation together despite the legacy page footer rules. */
+.arcade-footer{flex-direction:row;flex-shrink:0}
+.arcade-car{overflow:hidden}.arcade-car>.vehicle-portrait{min-width:0}
+.vehicle-portrait>img{max-width:100%;max-height:100%}
+.mode-icon{display:block;width:38px;height:38px;flex-shrink:0}.mode-icon>svg{width:100%;height:100%}
+@media(max-height:500px) and (orientation:landscape){.mode-icon{width:26px;height:26px}}

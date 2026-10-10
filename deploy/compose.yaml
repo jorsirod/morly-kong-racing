@@ -1,0 +1,35 @@
+services:
+  game:
+    image: morly-racing:current
+    build:
+      context: ..
+      dockerfile: deploy/Dockerfile
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      PUBLIC_ORIGIN: https://${PUBLIC_HOSTNAME}
+      COOKIE_SECRET: ${COOKIE_SECRET:?Configura COOKIE_SECRET}
+      DB_PATH: /app/data/races.sqlite
+    volumes:
+      - ../data:/app/data
+    expose:
+      - "2567"
+    mem_limit: 2g
+  proxy:
+    image: caddy:2.10.2
+    restart: unless-stopped
+    environment:
+      PUBLIC_HOSTNAME: ${PUBLIC_HOSTNAME:?Configura PUBLIC_HOSTNAME}
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      game:
+        condition: service_healthy
+volumes:
+  caddy_data:
+  caddy_config:

@@ -1,0 +1,2 @@
+import { routeFor,sample } from './track';
+export function hazardsFor(trackId:string,time:number){const r=routeFor(trackId);return [.24,.76].map((f,i)=>{const p=sample(r,r.length*f),offset=Math.sin(time*.8+i*2)*4;return{id:i,x:p.x+Math.cos(p.yaw)*offset,y:p.y,z:p.z-Math.sin(p.yaw)*offset,yaw:p.yaw,radius:1.2,object:trackId==='la-salle'?'basketball':trackId==='oriental'?'ice':trackId==='masaya'?'ashtray':trackId==='san-juan'?'frog':trackId==='hipa-hipa'?'slipper':'coin'};});}

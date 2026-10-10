@@ -1,0 +1,7 @@
+node_modules
+work
+data
+build
+dist
+.env
+.git

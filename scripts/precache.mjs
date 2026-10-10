@@ -1,0 +1,4 @@
+import { readdir,writeFile,readFile } from 'node:fs/promises';
+import { createHash } from 'node:crypto';
+async function files(dir,prefix=''){const result=[];for(const f of await readdir(dir,{withFileTypes:true})){const path=prefix+f.name;if(f.isDirectory())result.push(...await files(dir+'/'+f.name,path+'/'));else if(!['sw.js','precache.json'].includes(f.name))result.push('/'+path);}return result;}
+const paths=await files('dist');const hash=createHash('sha256');for(const path of paths.sort()){hash.update(path);hash.update(await readFile('dist'+path));}const version=hash.digest('hex').slice(0,12);await writeFile('dist/precache.json',JSON.stringify({version,paths}));await writeFile('dist/sw.js','const BUILD_VERSION='+JSON.stringify(version)+';\n'+await readFile('public/sw.js','utf8'));console.log('Caché offline preparada: '+paths.length+' archivos.');

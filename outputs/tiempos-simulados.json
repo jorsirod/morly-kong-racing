@@ -1,0 +1,218 @@
+[
+  {
+    "track": "La Salle",
+    "vehicle": "Silver Surfer",
+    "time": 162.08,
+    "laps": 3
+  },
+  {
+    "track": "La Salle",
+    "vehicle": "White Empanade",
+    "time": 161.95,
+    "laps": 3
+  },
+  {
+    "track": "La Salle",
+    "vehicle": "Hola Willy",
+    "time": 162.18,
+    "laps": 3
+  },
+  {
+    "track": "La Salle",
+    "vehicle": "Orange Seed",
+    "time": 168.77,
+    "laps": 3
+  },
+  {
+    "track": "La Salle",
+    "vehicle": "Black Diamond",
+    "time": 156.28,
+    "laps": 3
+  },
+  {
+    "track": "La Salle",
+    "vehicle": "La Raulina",
+    "time": 168.75,
+    "laps": 3
+  },
+  {
+    "track": "Mercado Oriental",
+    "vehicle": "Silver Surfer",
+    "time": 177.88,
+    "laps": 3
+  },
+  {
+    "track": "Mercado Oriental",
+    "vehicle": "White Empanade",
+    "time": 178.23,
+    "laps": 3
+  },
+  {
+    "track": "Mercado Oriental",
+    "vehicle": "Hola Willy",
+    "time": 184.83,
+    "laps": 3
+  },
+  {
+    "track": "Mercado Oriental",
+    "vehicle": "Orange Seed",
+    "time": 190.65,
+    "laps": 3
+  },
+  {
+    "track": "Mercado Oriental",
+    "vehicle": "Black Diamond",
+    "time": 180.5,
+    "laps": 3
+  },
+  {
+    "track": "Mercado Oriental",
+    "vehicle": "La Raulina",
+    "time": 189.1,
+    "laps": 3
+  },
+  {
+    "track": "Managua",
+    "vehicle": "Silver Surfer",
+    "time": 181.55,
+    "laps": 3
+  },
+  {
+    "track": "Managua",
+    "vehicle": "White Empanade",
+    "time": 181.95,
+    "laps": 3
+  },
+  {
+    "track": "Managua",
+    "vehicle": "Hola Willy",
+    "time": 181.57,
+    "laps": 3
+  },
+  {
+    "track": "Managua",
+    "vehicle": "Orange Seed",
+    "time": 189.02,
+    "laps": 3
+  },
+  {
+    "track": "Managua",
+    "vehicle": "Black Diamond",
+    "time": 175.02,
+    "laps": 3
+  },
+  {
+    "track": "Managua",
+    "vehicle": "La Raulina",
+    "time": 189.3,
+    "laps": 3
+  },
+  {
+    "track": "Hipa Hipa",
+    "vehicle": "Silver Surfer",
+    "time": 152.85,
+    "laps": 3
+  },
+  {
+    "track": "Hipa Hipa",
+    "vehicle": "White Empanade",
+    "time": 152.98,
+    "laps": 3
+  },
+  {
+    "track": "Hipa Hipa",
+    "vehicle": "Hola Willy",
+    "time": 152.8,
+    "laps": 3
+  },
+  {
+    "track": "Hipa Hipa",
+    "vehicle": "Orange Seed",
+    "time": 159.05,
+    "laps": 3
+  },
+  {
+    "track": "Hipa Hipa",
+    "vehicle": "Black Diamond",
+    "time": 147.4,
+    "laps": 3
+  },
+  {
+    "track": "Hipa Hipa",
+    "vehicle": "La Raulina",
+    "time": 159.15,
+    "laps": 3
+  },
+  {
+    "track": "Volcán Masaya",
+    "vehicle": "Silver Surfer",
+    "time": 158.22,
+    "laps": 3
+  },
+  {
+    "track": "Volcán Masaya",
+    "vehicle": "White Empanade",
+    "time": 163.72,
+    "laps": 3
+  },
+  {
+    "track": "Volcán Masaya",
+    "vehicle": "Hola Willy",
+    "time": 174.48,
+    "laps": 3
+  },
+  {
+    "track": "Volcán Masaya",
+    "vehicle": "Orange Seed",
+    "time": 181.4,
+    "laps": 3
+  },
+  {
+    "track": "Volcán Masaya",
+    "vehicle": "Black Diamond",
+    "time": 174.55,
+    "laps": 3
+  },
+  {
+    "track": "Volcán Masaya",
+    "vehicle": "La Raulina",
+    "time": 175.67,
+    "laps": 3
+  },
+  {
+    "track": "San Juan del Sur",
+    "vehicle": "Silver Surfer",
+    "time": 179.73,
+    "laps": 3
+  },
+  {
+    "track": "San Juan del Sur",
+    "vehicle": "White Empanade",
+    "time": 180.42,
+    "laps": 3
+  },
+  {
+    "track": "San Juan del Sur",
+    "vehicle": "Hola Willy",
+    "time": 179.72,
+    "laps": 3
+  },
+  {
+    "track": "San Juan del Sur",
+    "vehicle": "Orange Seed",
+    "time": 187.42,
+    "laps": 3
+  },
+  {
+    "track": "San Juan del Sur",
+    "vehicle": "Black Diamond",
+    "time": 173.8,
+    "laps": 3
+  },
+  {
+    "track": "San Juan del Sur",
+    "vehicle": "La Raulina",
+    "time": 187.6,
+    "laps": 3
+  }
+]
