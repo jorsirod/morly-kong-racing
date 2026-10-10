@@ -86,7 +86,7 @@ function cabin(scene:Scene,body:TransformNode,c:Cab){
  }
  box(scene,body,'windscreen-top',0,topY,topZ+.02,inner*2+.08,.07,.08,c.frame);
  quad(scene,body,'low-windscreen',[[-(c.hw-.1),c.belt+.02,c.wsBase-.02],[c.hw-.1,c.belt+.02,c.wsBase-.02],[inner-.02,topY-.04,topZ+.03],[-(inner-.02),topY-.04,topZ+.03]],'#a9dcea',.32);
- for(const x of [-.43,.45])box(scene,body,'seat-back',x,c.belt-.06,c.S-.4,.57,.62,.22,seat);
+ for(const x of [-.43,.45])box(scene,body,'seat-back',x,c.belt-.12,c.S-.4,.57,.46,.22,seat);
  const dash=box(scene,body,'dashboard',0,c.belt+.03,Math.min(c.S+.98,c.wsBase-.12),c.hw*2-.34,.22,.3,interior);dash.rotation.x=-.1;
 }
 function mirrors(scene:Scene,body:TransformNode,x:number,y:number,z:number,color:string){for(const s of [-1,1]){const g=new TransformNode('mirror',scene);g.parent=body;g.position.set(s*x,y,z);box(scene,g,'mirror-shell',s*.13,0,0,.26,.17,.2,color);box(scene,g,'mirror-glass',s*.13,0,-.105,.2,.11,.018,'#83bbd2');box(scene,g,'mirror-arm',s*.02,0,.02,.12,.05,.06,interior);}}
@@ -240,6 +240,8 @@ export function buildVehicle(scene:Scene,id:string,characterId?:string):VehicleM
  const v=vehicle(id),root=new TransformNode('vehicle-'+id,scene),body=new TransformNode('body',scene);body.parent=root;const paint=v.color;
  const built=v.kind==='suv'?jimny(scene,body,paint):v.kind==='pickup-double'?pickup(scene,body,paint,false):v.kind==='pickup-single'?pickup(scene,body,paint,true):v.kind==='golf'?golf(scene,body,paint):v.kind==='mazda'?mazda(scene,body,paint):matiz(scene,body,paint);
  const driverSocket=new TransformNode('driver-socket',scene);driverSocket.parent=body;driverSocket.position.z=built.S;
+ // The Matiz is all roof: its pilot sits upright and high, as in the real car, so the head clears it.
+ if(v.kind==='matiz')driverSocket.position.y=.14;
  const passengerSocket=new TransformNode('passenger-socket',scene);passengerSocket.parent=body;passengerSocket.position.set(.48,1.04,built.S+.22);
  let alf:TransformNode|undefined,alfParts:AlfParts|undefined;if(v.kind==='golf'){const a=buildAlf(scene,body);alf=a.root;alfParts=a.parts;alf.position.z=built.S+.3;}
  mergeParts(body,false);addVehicleDecals(scene,body,id);const driver=characterId?buildCharacter(scene,characterId,driverSocket):undefined;

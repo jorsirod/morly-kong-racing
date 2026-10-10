@@ -20,7 +20,7 @@ import {track,vehicle} from '../../shared/content';
 import {angle,clamp,lerp,routeFor,sample} from '../../shared/track';
 import {resolveVehicleCollision,vehicleDynamics,vehicleVelocity as vehicleVelocityOf} from '../../shared/dynamics';
 import type {GameState,PlayerState} from '../../shared/types';
-import {buildVehicle,buildCharacter,buildProjectile,addVehicleDecals,material,cylinder,sphere,box,textLabel,type VehicleModel} from './models';
+import {buildVehicle,buildCharacter,buildProjectile,addVehicleDecals,material,cylinder,sphere,box,textLabel,aimArm,pilotArms,type VehicleModel} from './models';
 import {buildWorld} from './world';
 import {INTRO} from '../../shared/simulation';
 import {RaceEffects} from './effects';
@@ -33,7 +33,7 @@ import '@babylonjs/core/Lights/Shadows/shadowGeneratorSceneComponent';
 type Car=VehicleModel;
 type Actor={model:Car;vehicleId:string;characterId:string;shadow:TransformNode;lod:TransformNode;steer:number;spin:number;label?:HTMLElement|null;
  driftYaw:number;hop:number;lastDrift:number;lastStun:number;spinStart:number;stunTotal:number;faded:boolean;meshes:AbstractMesh[];lastImpact:number;wobble:number;decals?:TransformNode|null;
- /** Race time of this pilot's last special (pose) and of the last landing (squash). */ cast:number;landed:number;lastAir:number;shield?:Mesh|null;roll:number;suspension:number;alf:AlfState};
+ /** Race time of this pilot's last special (pose) and of the last landing (squash). */ cast:number;landed:number;lastAir:number;shield?:Mesh|null;roll:number;suspension:number;alf:AlfState;arms?:{l?:TransformNode;r?:TransformNode}};
 /** ALF's little routine: what he is doing now and until when. */
 type AlfState={action:'idle'|'wave'|'look'|'cheer'|'hold';until:number;next:number};
 const PLAYER_COLORS=['#f14d53','#459be9','#78ce50','#ffc63c','#bd76e5','#54d5d9'];
@@ -41,6 +41,7 @@ import {savedQuality,reducedMotion,QUALITY,type Quality} from './renderer-settin
 export {savedQuality,reducedMotion,type Quality};
 const ease=(t:number)=>1-(1-t)**3;
 /** Converts glTF quaternion nodes to Euler so the race loop can steer, spin and lean them. */
+const ALF_REST=new Vector3(0,-.34,.35).normalize();
 function eulerize(node?:TransformNode|null){if(node?.rotationQuaternion){node.rotation=node.rotationQuaternion.toEulerAngles();node.rotationQuaternion=null;}}
 /** glTF files are right-handed, so the loader hangs them under a converting __root__ and every frame
  * inside ends up mirrored: a pilot added at runtime sat on the wrong side (on top of ALF) and runtime
@@ -231,7 +232,7 @@ export class RaceRenderer{
   if(p.fall>0){const f=1-p.fall/1.25;pitch=f*2.2;body.rotation.z=Math.sin(f*6)*.5;}
   body.rotation.x=lerp(body.rotation.x,pitch,k(p.fall>0?20:10));
   // Respawn: the car blinks while its grace lasts.
-  const faded=p.respawn>0&&Math.floor(t*12)%2===0;if(faded!==c.faded){c.faded=faded;for(const m of c.meshes)m.visibility=faded?.25:1;}
+  const faded=p.respawn>0&&Math.floor(t*12)%2===0;if(faded!==c.faded){c.faded=faded;for(const m of c.meshes)m.isVisible=!faded;}
   // Helmet: a bubble around the car until it pops.
   if(p.shield>0&&!c.shield){const bubble=MeshBuilder.CreateSphere('helmet-shield',{diameter:6.4,segments:12},this.scene);const m=material(this.scene,'#7fd4ff',true,.22);m.backFaceCulling=false;m.disableDepthWrite=true;bubble.material=m;bubble.parent=c.model.root;bubble.position.y=1.4;bubble.scaling.set(.85,.7,1.05);bubble.isPickable=false;c.shield=bubble;}
   if(c.shield){c.shield.setEnabled(p.shield>0);if(p.shield>0)c.shield.visibility=.6+Math.sin(t*6)*.25+(p.shield<2&&Math.floor(t*8)%2?-.4:0);}
@@ -246,6 +247,18 @@ export class RaceRenderer{
    driver.rotation.y=lerp(driver.rotation.y,p.stun>0?Math.sin(t*14)*.4:throwing?.25:posing?Math.sin(cast*7)*.15:0,k(10));
    driver.position.y=lerp(driver.position.y,1.02+(celebrate?Math.abs(Math.sin(t*7))*.22:0)+(p.vy>0?.06:0)+pose*.55,k(14));
    driver.scaling.setAll(lerp(driver.scaling.x,1+pose*.22,k(14)));
+   // Arms: hands on the wheel (turning it), the outer arm throws, both go up for the special and the win.
+   const arms=c.arms??(c.arms=pilotArms(driver));
+   for(const [arm,sx] of [[arms.l,-1],[arms.r,1]] as const){
+    if(!arm)continue;const rest=arm.metadata?.rest as Vector3;let dir:Vector3;
+    if(posing)dir=throwT<.05?new Vector3(sx*.55,.85,.05+Math.sin(cast*9+sx)*.12):new Vector3(sx*.22,.35,.9);
+    else if(celebrate)dir=new Vector3(sx*.45,.9,.1+Math.sin(t*8+sx*1.3)*.35);
+    else if(p.stun>0)dir=new Vector3(sx*.7,.3+Math.sin(t*15+sx)*.45,.4);
+    else if(throwing&&sx<0)dir=new Vector3(-.35,.75,.55);
+    else if(p.air>.3)dir=new Vector3(sx*.6,.55,.45);
+    else dir=new Vector3(rest.x,rest.y+p.steerAngle*-sx*.6,rest.z);
+    aimArm(arm,dir,k(posing||throwing?16:10));
+   }
   }
   this.animateAlf(c,p,state,dt);
  }
@@ -265,8 +278,12 @@ export class RaceRenderer{
    const head=parts.head,armL=parts.armL,armR=parts.armR;
    head.rotation.y=lerp(head.rotation.y,action==='look'?2.4:action==='wave'?-.4:-p.turnRate*.35,k(action==='look'?5:8));
    head.rotation.x=lerp(head.rotation.x,action==='hold'?.25:action==='cheer'?-.2:0,k(8));
-   armR.rotation.x=lerp(armR.rotation.x,action==='wave'||action==='cheer'?-2.5:action==='hold'?-.6:0,k(10));armR.rotation.z=lerp(armR.rotation.z,action==='wave'?Math.sin(t*12)*.5:0,k(12));
-   armL.rotation.x=lerp(armL.rotation.x,action==='cheer'?-2.5:action==='hold'?-.6:0,k(10));armL.rotation.z=lerp(armL.rotation.z,action==='cheer'?Math.sin(t*12+1)*.4:0,k(12));
+   // Arms aim like the pilots': high and wide so a wave or a cheer reads from behind the car.
+   for(const [arm,sx] of [[armL,-1],[armR,1]] as const){
+    if(!arm.metadata?.rest)arm.metadata={...arm.metadata,rest:ALF_REST};
+    const dir=action==='cheer'?new Vector3(sx*.55,.85,.1+Math.sin(t*10+sx)*.25):action==='wave'&&sx>0?new Vector3(.45+Math.sin(t*12)*.35,.9,.05):action==='hold'?new Vector3(sx*.25,-.15,.95):ALF_REST;
+    aimArm(arm,dir,k(action==='wave'?14:9));
+   }
   }
  }
  private updateCamera(state:GameState,me:PlayerState,poses:PlayerState[],dt:number,id:string){

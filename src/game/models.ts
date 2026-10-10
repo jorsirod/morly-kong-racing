@@ -1,5 +1,5 @@
 import { Color3 } from '@babylonjs/core/Maths/math.color';
-import { Vector3 } from '@babylonjs/core/Maths/math.vector';
+import { Quaternion, Vector3 } from '@babylonjs/core/Maths/math.vector';
 import { MeshBuilder } from '@babylonjs/core/Meshes/meshBuilder';
 import { Mesh } from '@babylonjs/core/Meshes/mesh';
 import { VertexData } from '@babylonjs/core/Meshes/mesh.vertexData';
@@ -60,10 +60,11 @@ export function textLabel(scene:Scene,parent:TransformNode|null,text:string,x:nu
  const mat=new StandardMaterial(key,scene);mat.diffuseTexture=tex;mat.emissiveColor=Color3.White();mat.disableLighting=true;mat.backFaceCulling=false;
  const plane=MeshBuilder.CreatePlane('label-'+text,{width:w,height:h,sideOrientation:Mesh.DOUBLESIDE},scene);plane.position.set(x,y,z);plane.material=mat;if(parent)plane.parent=parent;plane.isPickable=false;return plane;
 }
-export function mergeParts(root:TransformNode,recursive=true){
+export function mergeParts(root:TransformNode,recursive=true,keep:TransformNode[]=[]){
  const parent=root.parent,position=root.position.clone(),rotation=root.rotation.clone(),scaling=root.scaling.clone();root.parent=null;root.position.setAll(0);root.rotation.setAll(0);root.scaling.setAll(1);root.computeWorldMatrix(true);
  const groups=new Map<string,Mesh[]>();const meshes=recursive?root.getChildMeshes(false):root.getChildren().filter(n=>n instanceof Mesh);
- for(const m of meshes as Mesh[]){if(!m.material||m.name.startsWith('label'))continue;const g=groups.get(m.material.name)??[];g.push(m);groups.set(m.material.name,g);}
+ const kept=(m:Mesh)=>{for(let n=m.parent;n&&n!==root;n=n.parent)if(keep.includes(n as TransformNode))return true;return false;};
+ for(const m of meshes as Mesh[]){if(!m.material||m.name.startsWith('label')||(keep.length&&kept(m)))continue;const g=groups.get(m.material.name)??[];g.push(m);groups.set(m.material.name,g);}
  for(const meshes of groups.values())if(meshes.length>1){const merged=Mesh.MergeMeshes(meshes,true,true,undefined,false,false);if(merged){merged.parent=root;merged.isPickable=false;}}
  root.parent=parent;root.position.copyFrom(position);root.rotation.copyFrom(rotation);root.scaling.copyFrom(scaling);
 }
@@ -94,6 +95,14 @@ const LOOKS:Record<string,Look>={
  // Raulín: round face and buzz cut, easy laugh.
  raulin:{skin:'#c39479',hair:'#392d27',head:[1.14,1.04,.96],eyes:.18,brow:-.03,browTilt:0,haircut:'buzz',height:.98,width:1.08,neck:-.02,cheeks:.04,ears:.23,nose:.28,smile:'open'},
 };
+const aimTemp=new Quaternion();
+/** Points a pilot's arm (a shoulder pivot) along a direction in the pilot's own space; rate 1 snaps. */
+export function aimArm(arm:TransformNode|undefined,dir:Vector3,rate=1){
+ const rest=arm?.metadata?.rest as Vector3|undefined;if(!arm||!rest)return;
+ Quaternion.FromUnitVectorsToRef(rest,dir.normalizeToNew(),aimTemp);
+ if(!arm.rotationQuaternion)arm.rotationQuaternion=Quaternion.Identity();Quaternion.SlerpToRef(arm.rotationQuaternion,aimTemp,Math.min(1,rate),arm.rotationQuaternion);
+}
+export function pilotArms(driver:TransformNode){const n=driver.getChildTransformNodes(true);return{l:n.find(x=>x.name==='arm-left'),r:n.find(x=>x.name==='arm-right')};}
 export function characterLook(id:string){return LOOKS[id]??LOOKS.semilla;}
 /** Height of the head centre above the driver socket, used to frame portraits. */
 export function headCenter(id:string){const f=characterLook(id);return 1.02+(.52+.3*f.height+f.neck-.8)+1.17;}
@@ -138,14 +147,17 @@ export function buildCharacter(scene:Scene,id:string,parent:TransformNode){
  if(c.id==='coconitas'){const band=torus(scene,head,'sweatband',0,1.46,0,.92*hx,.07,'#fff6e2');band.scaling.z=.98;}
  if(c.id==='jorsi'){const pencil=cylinder(scene,head,'ear-pencil',.46*hx,1.3,-.04,.62,.07,'#f3c12d');pencil.rotation.x=1.2;pencil.rotation.z=.3;}
  // Arms and hands on the wheel; thin pilots get thin arms.
- const arm=.11*Math.min(1.1,f.width+.12);
+ const arm=.11*Math.min(1.1,f.width+.12),arms:TransformNode[]=[];
  for(const x of [-1,1]){
   sphere(scene,root,'shoulder',x*.32*f.width,shoulderY,.04,.36*Math.min(1.1,f.width+.1),c.id==='morly'?f.skin:c.shirt);
-  tube(scene,root,'forearm',[[x*.36*f.width,shoulderY-.03,.1],[x*.41,.15,.28],[x*.29,.3,.58]],arm,f.skin);
-  sphere(scene,root,'hand',x*.29,.3,.6,.24,f.skin);box(scene,root,'thumb',x*.235,.32,.62,.08,.13,.11,f.skin);
+  // Each arm hangs from a shoulder pivot so the renderer can raise it for throws, specials and wins.
+  const sx=x*.36*f.width,sy=shoulderY-.03,sz=.1,pivot=new TransformNode(x<0?'arm-left':'arm-right',scene);pivot.parent=root;pivot.position.set(sx,sy,sz);
+  tube(scene,pivot,'forearm',[[0,0,0],[x*.41-sx,.15-sy,.28-sz],[x*.29-sx,.3-sy,.58-sz]],arm,f.skin);
+  sphere(scene,pivot,'hand',x*.29-sx,.3-sy,.6-sz,.24,f.skin);box(scene,pivot,'thumb',x*.235-sx,.32-sy,.62-sz,.08,.13,.11,f.skin);
+  pivot.metadata={rest:new Vector3(x*.29-sx,.3-sy,.6-sz).normalize()};arms.push(pivot);
   sphere(scene,root,'knee',x*.22,-.1,.18,.34*Math.min(1.1,f.width+.15),'#344465',new Vector3(1,.7,1.4));
  }
- const wheel=torus(scene,root,'steering',0,.32,.62,.62,.065,'#25323f');wheel.rotation.x=Math.PI/2-.32;for(const x of [-1,1])tube(scene,root,'steering-spoke',[[0,.32,.63],[x*.25,.36,.59]],.028,'#a8b7c3');
+ const steering=new TransformNode('steering-wheel',scene);steering.parent=root;const wheel=torus(scene,steering,'steering',0,.32,.62,.62,.065,'#25323f');wheel.rotation.x=Math.PI/2-.32;for(const x of [-1,1])tube(scene,steering,'steering-spoke',[[0,.32,.63],[x*.25,.36,.59]],.028,'#a8b7c3');
  const chestZ=.338*Math.max(.82,f.width),chestY=.29+.08*(f.height-1);
  if(c.id==='morly'){
   box(scene,root,'jersey-purple-side',-.33,.26,.18,.1,.65,.18,'#613991');box(scene,root,'jersey-purple-side',.33,.26,.18,.1,.65,.18,'#613991');
@@ -157,7 +169,27 @@ export function buildCharacter(scene:Scene,id:string,parent:TransformNode){
  else if(c.id==='coconitas'){textLabel(scene,root,'7',0,chestY+.02,chestZ,.28,.26,'#fff6e2',c.shirt)?.rotation.set(0,Math.PI,0);textLabel(scene,root,'COCO 7',0,chestY+.12,-.34,.48,.2,'#fff6e2',c.shirt);}
  else if(c.id==='jorsi'){for(const [x,y,col] of [[-.15,.4,'#f04c72'],[.12,.22,'#ffcf4f'],[.05,.5,'#53d5e4']] as [number,number,string][])sphere(scene,root,'paint-splat',x,chestY+y-.25,chestZ+.005,.13,col,new Vector3(1,1,.2));}
  else{textLabel(scene,root,c.initials,0,chestY+.08,chestZ,.25,.2,'#fff2dc',c.shirt)?.rotation.set(0,Math.PI,0);}
- mergeParts(root);return root;
+ // Backs are what the chase camera sees: every pilot carries something of their own there.
+ const backZ=-.33*Math.max(.82,f.width),backY=.29+.08*(f.height-1);
+ if(c.id==='semilla')textLabel(scene,root,'SEMILLA',0,backY+.3,backZ-.01,.5,.13,'#7a4b1d',c.shirt);
+ else if(c.id==='chete'){textLabel(scene,root,'$',0,backY+.2,backZ-.01,.3,.3,'#f2c13a',c.shirt);for(let i=0;i<7;i++){const a=-.9+i*.3;sphere(scene,root,'gold-chain',Math.sin(a)*.27,backY+.44-Math.cos(a)*.06,backZ+.05+Math.cos(a)*.02,.07,'#f2c13a');}}
+ else if(c.id==='calin')textLabel(scene,root,'CALÍN',0,backY+.3,backZ-.01,.42,.12,'#d73e39',c.shirt);
+ else if(c.id==='sap-heinz'){textLabel(scene,root,'SAP',0,backY+.28,backZ-.01,.32,.15,'#fff6e2',c.shirt);
+  // A little frog rides on his shoulder.
+  const frog=new TransformNode('shoulder-frog',scene);frog.parent=root;frog.position.set(.3*f.width,shoulderY+.2,-.02);sphere(scene,frog,'frog-body',0,0,0,.3,'#4caf50',new Vector3(1.1,.75,1));for(const e of [-1,1]){sphere(scene,frog,'frog-eye',e*.08,.1,.07,.11,'#4caf50');sphere(scene,frog,'frog-pupil',e*.08,.12,.12,.05,'#16232c');}}
+ else if(c.id==='enanonitas'){textLabel(scene,root,'ENANONITAS',0,backY+.28,backZ-.01,.5,.12,'#ffe1a8',c.shirt);const onion=sphere(scene,root,'onion-charm',-.3*f.width,backY-.12,backZ-.02,.22,'#b770b8',new Vector3(1,1.1,1));onion.rotation.z=.2;cylinder(scene,root,'onion-stem',-.3*f.width,backY+.03,backZ-.02,.12,.05,'#7cb55b',.02);}
+ else if(c.id==='jorsi'){
+  // His backpack, with the smiling heart he paints on everyone else's.
+  const by=backY+.22;box(scene,root,'backpack',0,by,backZ-.14,.56,.62,.28,'#f05a7e');box(scene,root,'backpack-pocket',0,by-.17,backZ-.29,.4,.22,.06,'#d9446a');for(const x of [-1,1])box(scene,root,'backpack-strap',x*.2,by+.3,backZ+.02,.07,.26,.06,'#7a2e45');
+  sphere(scene,root,'heart-lobe',-.07,by+.12,backZ-.29,.16,'#ffd34d',new Vector3(1,1,.3));sphere(scene,root,'heart-lobe',.07,by+.12,backZ-.29,.16,'#ffd34d',new Vector3(1,1,.3));const tip=box(scene,root,'heart-tip',0,by+.04,backZ-.29,.15,.15,.04,'#ffd34d');tip.rotation.z=Math.PI/4;
+  for(const x of [-1,1])sphere(scene,root,'heart-eye',x*.05,by+.12,backZ-.315,.035,'#1d2430');tube(scene,root,'heart-smile',[[-.05,by+.06,backZ-.315],[0,by+.04,backZ-.32],[.05,by+.06,backZ-.315]],.012,'#1d2430');
+ }
+ else if(c.id==='raulin'){
+  // Cow spots: the milk-bucket man dresses for the part.
+  for(const [x,y,z,r] of [[-.18,.42,-1,.2],[.16,.12,-1,.24],[-.08,-.02,-1,.14],[.22,.5,1,.16],[-.2,.18,1,.18]] as number[][])sphere(scene,root,'cow-spot',x*f.width,backY+y-.1,z*.335*Math.max(.82,f.width),r,'#fbf6ea',new Vector3(1,.8,.25));
+  textLabel(scene,root,'RAULÍN',0,backY+.38,backZ-.02,.42,.12,'#fbf6ea',c.shirt);
+ }
+ for(const a of [...arms,steering])mergeParts(a);mergeParts(root,true,[...arms,steering]);return root;
 }
 export type AlfParts={head:TransformNode;armL:TransformNode;armR:TransformNode};
 export type VehicleModel={root:TransformNode;body:TransformNode;driverSocket:TransformNode;passengerSocket:TransformNode;alf?:TransformNode;alfParts?:AlfParts;wheels?:TransformNode[];frontWheels?:TransformNode[];driver?:TransformNode};
