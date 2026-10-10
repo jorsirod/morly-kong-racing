@@ -96,14 +96,14 @@ export class RacePrediction {
    peer.x += (sin * peer.speed + cos * peer.lateralSpeed + peer.pushX) * dt;
    peer.z += (cos * peer.speed - sin * peer.lateralSpeed + peer.pushZ) * dt;
    peer.yaw = angle(peer.yaw + peer.turnRate * dt);
-   peer.y = this.state.mode === 'battle' ? 0 : peer.vy !== 0 ? peer.y + peer.vy * dt : closest(route, peer.x, peer.z).y;
+   peer.y = this.state.mode === 'battle' ? 0 : peer.vy !== 0 || peer.fall > 0 || peer.air > 0 ? peer.y + peer.vy * dt : closest(route, peer.x, peer.z, { y: peer.y, hint: peer.progress, lap: peer.lap }).y;
   }
   if (this.player.finishTime >= 0 && dt > 0) {
    const p = this.player, sin = Math.sin(p.yaw), cos = Math.cos(p.yaw);
    p.x += (sin * p.speed + cos * p.lateralSpeed + p.pushX) * dt;
    p.z += (cos * p.speed - sin * p.lateralSpeed + p.pushZ) * dt;
    p.yaw = angle(p.yaw + p.turnRate * dt);
-   p.y = this.state.mode === 'battle' ? 0 : p.vy !== 0 ? p.y + p.vy * dt : closest(route, p.x, p.z).y;
+   p.y = this.state.mode === 'battle' ? 0 : p.vy !== 0 || p.air > 0 ? p.y + p.vy * dt : closest(route, p.x, p.z, { y: p.y, hint: p.progress, lap: p.lap }).y;
   }
   this.elapsed += FIXED_DT;
   if (this.player.finishTime < 0) stepPlayer(this.player, input, route, this.state.mode, FIXED_DT);
