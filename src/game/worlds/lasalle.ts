@@ -1,7 +1,7 @@
 import { Vector3 } from '@babylonjs/core/Maths/math.vector';
 import { MeshBuilder } from '@babylonjs/core/Meshes/meshBuilder';
 import { TransformNode } from '@babylonjs/core/Meshes/transformNode';
-import { sample, type Route } from '../../../shared/track';
+import { sample, sampleLane, type Route } from '../../../shared/track';
 import { material } from '../models';
 import { Kit, rng, surfaceTexture } from './kit';
 
@@ -94,26 +94,38 @@ export function buildLaSalle(k:Kit,route:Route,battle:boolean){
  const room=corridor(270),rx=Math.cos(room.yaw),rz=-Math.sin(room.yaw);
  for(let i=0;i<3;i++)for(let j=0;j<2;j++){const ox=-14.5-j*2.2,oz=(i-1)*2.6;k.box('desk',room.x+rx*ox+Math.sin(room.yaw)*oz,1,room.z+rz*ox+Math.cos(room.yaw)*oz,1.6,.15,1.2,'#b88857',room.yaw);}
  k.box('blackboard',room.x+rx*-16.9,2.5,room.z+rz*-16.9,.12,2,6,'#244f49',room.yaw);
- // ── Las canchas y el bar ──
- court(k,25,79,38,20);court(k,70,79,38,20);
- k.box('bleacher',47,1,96,86,2,4,'#c9b48c');k.box('bleacher-step',47,2.2,98,86,.4,3,'#b39f78');k.crowd(25,98.2,Math.PI,22,2.4);k.crowd(70,98.2,Math.PI,22,2.4);
+ // ── Las canchas (ruta alterna desde la 2.ª vuelta) y el bar ──
+ const lane=route.lanes.find(l=>l.id==='canchas');
+ if(lane){
+  // Hoops stand exactly where the shared hazards put their poles; the courts are the lane itself.
+  for(const f of [.12,.84]){const p=sampleLane(lane,f*lane.length),side=f<.5?1:-1,dir=f<.5?-1:1,x=p.x+Math.cos(p.yaw)*3*side,z=p.z-Math.sin(p.yaw)*3*side;
+   k.cyl('hoop-pole',x,p.y+2.3,z,4.6,.3,'#38515a',.3);k.box('hoop-arm',x-Math.sin(p.yaw)*.7*dir,p.y+4.5,z-Math.cos(p.yaw)*.7*dir,.18,.18,1.4,'#38515a',p.yaw);
+   const bx=x-Math.sin(p.yaw)*1.4*dir,bz=z-Math.cos(p.yaw)*1.4*dir;k.box('backboard',bx,p.y+4.6,bz,2.8,1.8,.15,'#fbf6e8',p.yaw);k.box('backboard-square',bx,p.y+4.4,bz,.9,.6,.18,'#d6402f',p.yaw);
+   const hoop=MeshBuilder.CreateTorus('hoop',{diameter:.95,thickness:.08,tessellation:16},k.scene);hoop.parent=k.root;hoop.position.set(bx-Math.sin(p.yaw)*.6*dir,p.y+3.9,bz-Math.cos(p.yaw)*.6*dir);hoop.material=material(k.scene,'#e0612f');}
+  // Bleachers on the north side, fans facing the courts, the water ditch sign.
+  const mid=sampleLane(lane,lane.length*.5);k.box('bleacher',mid.x,1,mid.z+15,110,2,4,'#c9b48c');k.box('bleacher-step',mid.x,2.2,mid.z+17,110,.4,3,'#b39f78');for(const dx of [-36,0,36])k.crowd(mid.x+dx,mid.z+17.2,Math.PI,16,2.4);
+  k.sign('¡ZANJA! SALTA O AL AGUA',mid.x+6,mid.z-9,Math.PI*.5,7,1.2,3.2,'#13234d','#ffd33d');
+  // The courts gate: closed on lap one, open from lap two (the renderer swings it per player).
+  const entry=sampleLane(lane,6),gate=new TransformNode('courts-gate',k.scene);gate.parent=k.root;gate.position.set(entry.x,entry.y,entry.z);gate.rotation.y=entry.yaw;gate.metadata={animate:true};
+  for(const s of [-1,1]){k.box('courts-gate-leaf',s*lane.width/4,1.6,0,lane.width/2,3.2,.2,GATE,0,gate);for(let i=0;i<5;i++)k.box('courts-gate-bar',s*(i+.5)*lane.width/10,1.6,.12,.1,3.2,.1,'#245e3c',0,gate);}
+  k.label('CERRADO · ABRE EN LA 2.ª VUELTA',0,2,-.2,lane.width-.4,.8,0,'#fff3d0','#c8432f',gate);
+  k.gates.push({node:gate,lane:'canchas',laps:[1,2]});
+  for(const s of [-1,1]){const qx=entry.x+Math.cos(entry.yaw)*(lane.width/2+.6)*s,qz=entry.z-Math.sin(entry.yaw)*(lane.width/2+.6)*s;k.box('courts-gate-pillar',qx,entry.y+2,qz,.9,4,.9,CREAM,entry.yaw);}
+ }
  barKiosk(k,48,116,Math.PI);
- k.sign('CANCHAS',95,58,-Math.PI*.75,7,1.5);k.sign('EL BAR →',-6,52,Math.PI*.8,7,1.5);
- // A ball that keeps bouncing on the far court.
- const ball=new TransformNode('court-ball',k.scene);ball.parent=k.root;ball.position.set(78,0,82);ball.metadata={animate:true};k.ball('basketball',0,.6,0,1.1,'#e9792d',undefined,ball);
- k.anims.push({node:ball,update:t=>{ball.position.y=Math.abs(Math.sin(t*3.2))*3;ball.position.x=70+Math.sin(t*.7)*14;}});
+ k.sign('EL BAR →',-6,52,Math.PI*.8,7,1.5);
  // ── Patio central (dentro del circuito): cancha de fútbol, árboles y bancas ──
  const field=k.box('football-field',-20,.03,-55,96,.08,58,'#5f9e45');field.material=surfaceTexture(k.scene,'grass','#5f9e45');
  for(const dz of [-29,29])k.box('field-line',-20,.09,-55+dz,96,.02,.25,'#f3f3e6');for(const dx of [-48,0,48])k.box('field-line',-20+dx,.09,-55,.25,.02,58,'#f3f3e6');
  for(const s of [-1,1]){const gx=-20+s*48;k.box('goal-post',gx,1.2,-55-3.6,.18,2.4,.18,'#f6f6f0');k.box('goal-post',gx,1.2,-55+3.6,.18,2.4,.18,'#f6f6f0');k.box('goal-bar',gx,2.4,-55,.18,.18,7.4,'#f6f6f0');}
- for(let i=0;i<14;i++){const a=i/14*Math.PI*2;k.tree(-20+Math.cos(a)*64+r()*4,-55+Math.sin(a)*40+r()*4,i%4===0?'malinche':i%4===1?'ceiba':'mango',0,.9+r()*.3);}
+ for(let i=0;i<14;i++){const a=i/14*Math.PI*2,tx=-20+Math.cos(a)*64+r()*4,tz=-55+Math.sin(a)*40+r()*4;if(k.blocked(tx,tz,3))continue;k.tree(tx,tz,i%4===0?'malinche':i%4===1?'ceiba':'mango',0,.9+r()*.3);}
  // ── Oeste: gimnasio y biblioteca; norte: el viejo edificio con el nombre ──
  block(k,-212,-30,70,16,Math.PI/2,{color:'#e9d8b0',signs:['GIMNASIO','BIBLIOTECA']});
  block(k,-110,124,74,18,Math.PI,{floors:3,color:'#ecd9a8',signs:['LA SALLE','FUNDADO EN 1913']});
  // Ramp at the north-west bend: wooden planks, arrows and people on the wall.
  const ramp=sample(route,route.length*.68);k.sign('¡SALTO!',ramp.x-Math.sin(ramp.yaw)*14+Math.cos(ramp.yaw)*12,ramp.z-Math.cos(ramp.yaw)*14-Math.sin(ramp.yaw)*12,ramp.yaw+Math.PI,6,1.6);
  // Trees along the outside of the circuit.
- for(let d=20;d<route.length;d+=26){const p=sample(route,d);if(d>220&&d<345)continue;if(Math.abs(p.z+158)<14&&d<130)continue;for(const s of [-1,1]){if(r()<.35)continue;const off=19+r()*10;const x=p.x+Math.cos(p.yaw)*off*s,z=p.z-Math.sin(p.yaw)*off*s;if(Math.hypot(x-47,z-86)<34||Math.hypot(x+20,z+55)<52||(z<-170&&z>-215))continue;k.tree(x,z,r()<.2?'malinche':r()<.5?'mango':'bush',0,.8+r()*.4);}}
+ for(let d=20;d<route.length;d+=26){const p=sample(route,d);if(d>220&&d<345)continue;if(Math.abs(p.z+158)<14&&d<130)continue;for(const s of [-1,1]){if(r()<.35)continue;const off=19+r()*10;const x=p.x+Math.cos(p.yaw)*off*s,z=p.z-Math.sin(p.yaw)*off*s;if(Math.hypot(x-47,z-86)<34||Math.hypot(x+20,z+55)<52||(z<-170&&z>-215)||k.blocked(x,z,3))continue;k.tree(x,z,r()<.2?'malinche':r()<.5?'mango':'bush',0,.8+r()*.4);}}
  k.box('lawn-path',-20,.04,-100,4,.06,30,CONCRETE);
 }
 function barKiosk(k:Kit,x:number,z:number,yaw:number){

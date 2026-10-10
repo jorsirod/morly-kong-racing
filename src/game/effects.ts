@@ -13,7 +13,7 @@ import '@babylonjs/core/Engines/Extensions/engine.dynamicTexture';
 type Sprite='spark'|'star'|'ring'|'dust'|'flame'|'trail';
 type Particle={mesh:Mesh;life:number;duration:number;vx:number;vy:number;vz:number;gravity:number;drag:number;size:number;endSize:number;spin:number;opacity:number;critical:boolean};
 const COLORS={gold:'#ffdf62',blue:'#50d6ff',white:'#fff8d6',dust:'#c3a77b',orange:'#ff934a',green:'#90e76a',pink:'#ff6faa',purple:'#b899ff'};
-const objectColors:Record<string,string>={victoria:COLORS.gold,tona:COLORS.green,rum:COLORS.white,flor:COLORS.orange,cigarettes:COLORS.white,ashtray:COLORS.blue,sixpack:COLORS.gold,basketball:COLORS.orange,leaf:COLORS.green,frog:COLORS.green,onion:COLORS.white,cucumber:COLORS.green,bill:COLORS.green,coin:COLORS.gold,diamond:COLORS.blue,console:COLORS.purple,ice:COLORS.blue,slipper:COLORS.blue,pizza:COLORS.orange,milk:COLORS.white,backpack:COLORS.pink,brush:COLORS.pink,pencil:COLORS.gold,eraser:COLORS.blue,claudia:COLORS.pink,talc:COLORS.white,smoke:COLORS.green};
+const objectColors:Record<string,string>={victoria:COLORS.gold,tona:COLORS.green,rum:COLORS.white,flor:COLORS.orange,cigarettes:COLORS.white,ashtray:COLORS.blue,sixpack:COLORS.gold,basketball:COLORS.orange,leaf:COLORS.green,frog:COLORS.green,onion:COLORS.white,cucumber:COLORS.green,bill:COLORS.green,coin:COLORS.gold,diamond:COLORS.blue,console:COLORS.purple,ice:COLORS.blue,slipper:COLORS.blue,pizza:COLORS.orange,milk:COLORS.white,backpack:COLORS.pink,brush:COLORS.pink,pencil:COLORS.gold,eraser:COLORS.blue,claudia:COLORS.pink,talc:COLORS.white,smoke:COLORS.green,coco:COLORS.orange,chilero:COLORS.orange,bong:COLORS.green};
 
 /** Short additive sprites share geometry and materials; no mesh is allocated during a race. */
 export class RaceEffects {

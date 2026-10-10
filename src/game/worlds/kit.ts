@@ -20,9 +20,20 @@ export type Anim={node:TransformNode;update:(time:number)=>void};
 export function rng(seed:number){let s=seed>>>0||1;return()=>{s^=s<<13;s^=s>>>17;s^=s<<5;return((s>>>0)%100000)/100000;};}
 
 /** Small builder for static scenery: everything here is merged by material afterwards. */
+/** A gate that closes an alternative lane on laps where it is not open (shown per local player). */
+export type LaneGate={node:TransformNode;lane:string;laps:number[]};
 export class Kit {
- anims:Anim[]=[];
+ anims:Anim[]=[];gates:LaneGate[]=[];
  constructor(readonly scene:Scene,readonly root:TransformNode,readonly route?:Route){}
+ /** True when (x,z) is within `margin` of an alternative lane's surface. */
+ onLane(x:number,z:number,margin=2){const r=this.route;if(!r)return false;for(const l of r.lanes)for(const p of l.points)if(Math.hypot(p.x-x,p.z-z)<l.width*.5+margin)return true;return false;}
+ /** True when (x,z) is on (or within `margin` of) the main road or an alternative lane: keep scenery off the course. */
+ blocked(x:number,z:number,margin=2){
+  const r=this.route;if(!r)return false;
+  for(let i=0;i<r.points.length;i+=2){const p=r.points[i];if(Math.hypot(p.x-x,p.z-z)<r.width*.72+margin)return true;}
+  for(const l of r.lanes)for(let i=0;i<l.points.length;i++){const p=l.points[i];if(Math.hypot(p.x-x,p.z-z)<l.width*.72+margin)return true;}
+  return false;
+ }
  box(name:string,x:number,y:number,z:number,w:number,h:number,d:number,color:string,yaw=0,parent:TransformNode=this.root){const m=MeshBuilder.CreateBox(name,{width:w,height:h,depth:d},this.scene);m.position.set(x,y,z);m.rotation.y=yaw;m.material=material(this.scene,color);m.parent=parent;m.isPickable=false;return m;}
  glow(name:string,x:number,y:number,z:number,w:number,h:number,d:number,color:string,yaw=0,parent:TransformNode=this.root){const m=this.box(name,x,y,z,w,h,d,color,yaw,parent);m.material=material(this.scene,color,true);return m;}
  cyl(name:string,x:number,y:number,z:number,h:number,diameter:number,color:string,top=diameter,parent:TransformNode=this.root,tessellation=12){const m=MeshBuilder.CreateCylinder(name,{height:h,diameterBottom:diameter,diameterTop:top,tessellation},this.scene);m.position.set(x,y,z);m.material=material(this.scene,color);m.parent=parent;m.isPickable=false;return m;}

@@ -177,16 +177,41 @@ export class GameAudio {
   else if(kind==='hit'){this.impact(object??'',pan,own?.34:.26);if(own)this.tone(1320,.08,'square',.05,0,.09);}
   else if(kind==='special')this.special(object??'',pan);
   else if(kind==='attack')this.launch(object??'',pan);
-  else if(kind==='boost'){if(force<1)return;const strong=force>=3;this.noise(strong?.45:.3,'bandpass',350,pan,strong?.3:.22,0,strong?5000:3500);this.tone(strong?200:240,.28,'sawtooth',0,pan,.1,strong?900:700);}
+  else if(kind==='boost'){if(force<1)return;if(force>=4){this.noise(.6,'bandpass',300,pan,.32,0,6500);this.tone(180,.5,'sawtooth',0,pan,.12,1100);this.tone(360,.4,'square',.05,pan,.06,1500);return;}const strong=force>=3;this.noise(strong?.45:.3,'bandpass',350,pan,strong?.3:.22,0,strong?5000:3500);this.tone(strong?200:240,.28,'sawtooth',0,pan,.1,strong?900:700);}
   else if(kind==='draft'){this.noise(.4,'bandpass',600,pan,.16,0,2400);}
   else if(kind==='drift'){this.tone(140,.06,'square',0,pan,.08,200);}
   else if(kind==='count'){this.tone(force>=1?1047:523,force>=1?.5:.16,'square',0,0,.16);}
   else if(kind==='lap'){[523,659,784,1047].forEach((f,i)=>this.tone(f,.12,'square',i*.08,0,.12));}
   else if(kind==='finish'){[392,523,659,784,1047].forEach((f,i)=>this.tone(f,.22,'triangle',i*.1,pan,.2));}
-  else if(kind==='warn'){this.tone(880,.08,'square',0,pan,.1);this.tone(880,.08,'square',.12,pan,.1);}
+  else if(kind==='warn'){if(object==='bong'){[0,.16,.32].forEach((d,i)=>{this.tone(660,.1,'square',d,0,.13);this.tone(990,.1,'square',d+.08,0,.11);});this.bubbles(0,.25);}else{this.tone(880,.08,'square',0,pan,.1);this.tone(880,.08,'square',.12,pan,.1);}}
+  else if(kind==='fall'){
+   if(object==='water'){this.noise(.5,'lowpass',1600,pan,.32,0,300);this.bubbles(pan,.3);}
+   else if(object==='lava'){this.noise(.6,'highpass',2200,pan,.22,0,800);this.tone(70,.5,'sawtooth',0,pan,.16,35);this.noise(.4,'bandpass',600,pan,.2,.15,200);}
+   else if(object==='mud'){this.noise(.3,'lowpass',500,pan,.3);this.tone(120,.2,'sine',.05,pan,.2,60);}
+   else{this.tone(900,.7,'triangle',0,pan,.12,120);}
+  }
+  else if(kind==='respawn'){[523,784,1047].forEach((f,i)=>this.tone(f,.12,'triangle',i*.07,0,.12));this.noise(.25,'highpass',3000,0,.08);}
+  else if(kind==='item'){
+   if(object==='cafe'||object==='cafe3'){this.noise(.2,'bandpass',900,pan,.18,0,2400);this.tone(300,.4,'sawtooth',.08,pan,.12,1200);}
+   else if(object==='casco'){[1200,1800].forEach((f,i)=>this.tone(f,.18,'triangle',i*.05,pan,.15,f*.8));}
+   else if(object==='coco'){this.tone(220,.15,'sine',0,pan,.25,90);this.tone(330,.1,'triangle',.05,pan,.12);}
+   else if(object==='chilero'){this.tone(500,.06,'square',0,pan,.12,900);this.noise(.2,'lowpass',900,pan,.2,.05);}
+   else if(object==='cohetes'){[0,.1,.2].forEach(d=>{this.noise(.35,'bandpass',2600,pan,.14,d,7000);});}
+   else if(object==='bong'){this.bubbles(pan,.32);this.tone(400,.6,'sine',.2,pan,.14,1600);}
+   else{[880,1175,1568].forEach((f,i)=>this.tone(f,.06,'square',i*.05,pan,.09));}
+  }
+  else if(kind==='shield'){this.tone(1500,.2,'triangle',0,pan,.2,900);this.noise(.12,'highpass',4000,pan,.15);}
+  else if(kind==='flash'){[0,.12,.26].forEach((d,i)=>{this.noise(.08,'highpass',6000,pan,.2,d);this.tone(140-i*20,.25,'sine',d,pan,.22,40);});}
+  else if(kind==='bong'){this.bubbles(pan,.34);this.tone(300,.8,'sine',.1,pan,.15,1400);}
+  else if(kind==='birds'){
+   // Zanates: metallic whistles and clacks, a few voices panned around.
+   for(let i=0;i<7;i++){const p=((i*37)%20-10)/10,d=i*.13;this.tone(1700+((i*311)%900),.09,'square',d,p,.08,2600+((i*173)%800));this.noise(.03,'highpass',5200,p,.08,d+.06);}
+  }
   else this.tone(260,.09,'square',0,pan,.13);
  }
 
+ /** Glug-glug: a few short descending blips. */
+ private bubbles(pan:number,volume:number){for(let i=0;i<5;i++)this.tone(260+((i*97)%140),.07,'sine',i*.07,pan,volume*.6,140);}
  update(speed:number,vehicleId='silver-surfer',drifting=false,boost=0,surface=0,driftTier=0){
   if(!this.context||!this.engineA||!this.engineB||!this.engineGain||!this.engineFilter||this.disposed)return;
   const e=ENGINES[vehicleId]??ENGINES['silver-surfer'],value=bounded(speed,0,40,0),time=this.context.currentTime,top=24;

@@ -4,10 +4,15 @@ import {DRIVE,INTRO,ranking} from '../../shared/simulation';
 import {routeFor} from '../../shared/track';
 import type {GameEvent,GameState,PlayerState} from '../../shared/types';
 import {Portrait} from '../components/Portrait';
-import {ControlIcon,WeaponIcon} from '../components/WeaponIcon';
+import {ControlIcon,WeaponIcon,ItemIcon} from '../components/WeaponIcon';
+import {BONG,ITEMS,type ItemId} from '../../shared/items';
+import type {ScreenFx} from './birds';
 import {InputController} from './input';
 import {keyLabel} from './keys';
 export type FeedbackCue={id:number;text:string;kind:'attack'|'hit'|'boost'|'pickup'|'collision'|'warn'|'good'};
+export type Subtitle={id:number;who:string;text:string;color:string;special:boolean};
+const FALL_TEXT:Record<string,string>={water:'¡AL AGUA!',lava:'¡A LA LAVA!',mud:'¡AL CAUCE!',pit:'¡AL VACÍO!',cliff:'¡AL BARRANCO!'};
+const ROULETTE:ItemId[]=['cafe','casco','coco','chilero','cohetes','cafe3'];
 
 const HOLD_MS=170;
 /** Radial positions (px from the attack button centre) for the three basics, thumb-reachable. */
@@ -25,7 +30,7 @@ function threat(state:GameState,me:PlayerState){
  return best;
 }
 
-export function HUD({state,id,input,banner,cue,fps,rtt,muted,onMute,onMenu,stats,calm}:{calm?:boolean;state:GameState;id:string;input:InputController;banner:GameEvent|null;cue:FeedbackCue|null;fps:number;rtt:number;muted:boolean;onMute:()=>void;onMenu:()=>void;stats?:boolean}){
+export function HUD({state,id,input,banner,cue,fps,rtt,muted,onMute,onMenu,stats,calm,screen,subtitle}:{calm?:boolean;state:GameState;id:string;input:InputController;banner:GameEvent|null;cue:FeedbackCue|null;fps:number;rtt:number;muted:boolean;onMute:()=>void;onMenu:()=>void;stats?:boolean;screen?:ScreenFx;subtitle?:Subtitle|null}){
  const me=state.players.find(p=>p.id===id)??state.players[0],c=character(me?.characterId??'semilla');
  const [stick,setStick]=useState(0),[choosing,setChoosing]=useState(false),[,refresh]=useState(0);
  const joy=useRef<{x:number;id:number}|null>(null),fire=useRef<{x:number;y:number;at:number;timer:ReturnType<typeof setTimeout>;moved:boolean}|null>(null);
@@ -43,7 +48,8 @@ export function HUD({state,id,input,banner,cue,fps,rtt,muted,onMute,onMenu,stats
  const releaseStick=()=>{joy.current=null;input.steer=0;setStick(0);};
  const select=(i:number)=>{if(input.selected!==i){input.selected=i;refresh(n=>n+1);if(navigator.vibrate)navigator.vibrate(8);}};
  const closeWheel=()=>{const f=fire.current;if(f)clearTimeout(f.timer);fire.current=null;setChoosing(false);};
- return <div className={'hx '+(touch?'hx-touch':'hx-desk')+(me.haze>0?' hx-hazed':'')+(calm?' hx-calm':'')}>
+ const item=me.item as ItemId|'',rolling=me.roulette>0,shown=rolling?ROULETTE[Math.floor(state.time*12)%ROULETTE.length]:item,target=state.players.find(p=>p.id===banner?.targetId);
+ return <div className={'hx '+(touch?'hx-touch':'hx-desk')+(me.haze>0?' hx-hazed':'')+(calm?' hx-calm':'')+(me.slow>0?' hx-woozy':'')}>
   <div className="hx-place" aria-live="polite">
    {battle?<><strong>{me.score}</strong><span className="hx-unit">PTS</span><small>{place}º DE {total}</small></>:<><strong className={'p'+Math.min(place,4)}>{place}</strong><span className="hx-unit">º</span><small>DE {total}</small></>}
   </div>
@@ -57,22 +63,38 @@ export function HUD({state,id,input,banner,cue,fps,rtt,muted,onMute,onMenu,stats
   {intro&&<div className="hx-intro" key="intro"><span>{state.mode==='championship'?'COPA · MANGA '+state.round:state.mode==='battle'?'BATALLA':state.mode==='practice'?'PRÁCTICA':'CARRERA · 3 VUELTAS'}</span><strong>{track(state.trackId).name}</strong><em>{track(state.trackId).subtitle}</em><small>{c.name} × {vehicle(me.vehicleId).name}</small></div>}
   {(count>0||go)&&<div className={'hx-count'+(go?' go':'')} key={go?'go':count}><div className="hx-lights">{[3,2,1].map(n=><i key={n} className={go?'green':count<=n?'red':''}/>)}</div><strong>{go?'¡DALE!':count}</strong>{count>0&&count<=1&&!battle&&<span>{touch?'TOCA DERRAPE':pad?'RB':'ESPACIO'} AHORA = SALIDA CON TURBO</span>}</div>}
 
-  {banner&&caster&&<div className="hx-banner" key={banner.id} style={{'--hero':casterChar.color} as React.CSSProperties}><div className="hx-lines"/><Portrait c={casterChar}/><div className="hx-banner-text"><span>{caster.nickname.toUpperCase()} · ESPECIAL</span><strong>{banner.text}</strong></div><WeaponIcon object={casterChar.special.object}/></div>}
+  {banner&&caster&&<div className={'hx-banner'+(caster.id===id?' mine':'')} key={banner.id} style={{'--hero':casterChar.color} as React.CSSProperties}><div className="hx-lines"/><Portrait c={casterChar} pose/><div className="hx-banner-text"><span>{casterChar.name.toUpperCase()}{caster.nickname.toUpperCase()!==casterChar.name.toUpperCase()?' ('+caster.nickname.toUpperCase()+')':''} · ESPECIAL</span><strong>{banner.text}</strong>{target&&<em>{target.id===id?'¡VA POR TI!':'→ '+target.nickname.toUpperCase()}</em>}</div><WeaponIcon object={casterChar.special.object}/></div>}
+  {subtitle&&<div className={'hx-subtitle'+(subtitle.special?' special':'')} key={'sub'+subtitle.id} style={{'--hero':subtitle.color} as React.CSSProperties} aria-live="polite"><b>{subtitle.who}:</b> «{subtitle.text}»</div>}
   {cue&&<div className={'hx-cue '+cue.kind} key={cue.id}>{cue.text}</div>}
   {danger&&<div className={'hx-danger'+(danger.side<0?' left':danger.side>0?' right':'')} aria-live="assertive"><i/><i/><b>¡CUIDADO ATRÁS!</b></div>}
 
   <div className={'hx-drift t'+tier+(me.driftDir?' on':'')+(me.boost>0?' boosting b'+me.boostLevel:'')} aria-hidden="true">
-   {me.boost>0?<b>{me.boostLevel>=3?'¡TURBO NARANJA!':me.boostLevel===2?'¡TURBO AZUL!':'¡EMPUJÓN!'}</b>:me.driftDir?<b>{tier===2?'¡SUELTA YA!':tier===1?'TURBO AZUL · SIGUE':'DERRAPANDO'}</b>:null}
+   {me.boost>0?<b>{me.boostLevel>=4?'¡SÚPER TURBO!':me.boostLevel>=3?'¡TURBO NARANJA!':me.boostLevel===2?'¡TURBO AZUL!':'¡EMPUJÓN!'}</b>:me.driftDir?<b>{tier===2?'¡SUELTA YA!':tier===1?'TURBO AZUL · SIGUE':'DERRAPANDO'}</b>:null}
    {(me.driftDir!==0||me.boost>0)&&<div className="hx-bar"><i style={{width:(me.boost>0?Math.min(1,me.boost/DRIVE.tier2Boost):Math.min(1,charge/DRIVE.driftTier2))*100+'%'}}/><u style={{left:DRIVE.driftTier1/DRIVE.driftTier2*100+'%'}}/></div>}
   </div>
   {me.draft>.15&&me.boost<=0&&<div className="hx-draft"><span>REBUFO</span><div className="hx-bar"><i style={{width:Math.min(1,me.draft/DRIVE.draftTime)*100+'%'}}/></div></div>}
-  {me.immune>0&&me.stun<=0&&<div className="hx-shield">PROTEGIDO</div>}
+  {me.immune>0&&me.stun<=0&&me.shield<=0&&me.respawn<=0&&<div className="hx-shield">PROTEGIDO</div>}
+  {me.shield>0&&<div className="hx-helmet"><ItemIcon item="casco"/><span>CASCO · {Math.ceil(me.shield)} s</span></div>}
+  {me.slow>0&&me.stun<=0&&<div className="hx-dizzy">MAREADO · {me.slow.toFixed(1)} s</div>}
+  {me.bongWarn>0&&me.bongWarn<9&&me.fall<=0&&<div className={'hx-bong'+(me.bongWarn<BONG.warn?' close':'')} role="alert"><ItemIcon item="bong"/><div><b>¡VIENE EL BONG CACHINFLÍN!</b><span>{me.bongWarn<BONG.warn?'¡AGÁRRATE! '+me.bongWarn.toFixed(1)+' s · UN CASCO LO PARA':'Te persigue por irte tan adelante'}</span></div><i className="hx-bong-arrow"/></div>}
+  {me.fall>0&&<div className="hx-fall"><strong>{FALL_TEXT[me.fallKind]??'¡SE CAYÓ!'}</strong><span>Tranquilo: te devolvemos atrás, no adelante.</span></div>}
+  {me.respawn>0&&me.fall<=0&&<div className="hx-respawn">DE VUELTA · ¡DALE!</div>}
+  {(screen?.birdWarn??0)>0&&<div className="hx-birds" role="alert"><b>¡ZANATES!</b><span>Ojo con el parabrisas</span></div>}
 
   <div className={'hx-speedlines'+(me.boost>0?' boost':me.speed>21?' fast':'')}/>
   <div className={'screen-haze '+(me.haze>0?'visible':'')}/><div className={'screen-paint '+(me.paint>0?'visible':'')}/>
+  <div className={'screen-flash'+(me.flash>0?' visible':'')} style={{opacity:Math.min(1,me.flash/1.1)}}><i/><i/><i/><i/></div>
+  <div className="hx-splats" aria-hidden="true">{screen?.splats.map(sp=>{const age=state.time-sp.born;return <i key={sp.id} style={{left:sp.x+'%',top:sp.y+'%',transform:`translate(-50%,-50%) rotate(${sp.r}deg) scale(${sp.s*(age<.12?age/.12:1)})`,opacity:Math.max(0,Math.min(1,(2.2-age)/.8))}}/>;})}</div>
 
   <div className="hx-arsenal">
    <div className="hx-charges" aria-label={me.charges+' cargas de seis'}>{Array.from({length:6},(_,i)=><i key={i} className={(i<me.charges?'full':'')+(i===4?' sp':'')}/>)}<span>{me.charges===0?'BUSCA UNA CAJA':me.charges>=5?'ESPECIAL LISTA':me.charges+'/6'}</span></div>
+   <div className={'hx-item'+(item?' has':'')+(rolling?' rolling':'')}>
+    <button className="hx-item-btn" disabled={!item||rolling} aria-label={item&&!rolling?'Usar '+ITEMS[item].name+': '+ITEMS[item].desc:'Sin ítem: pasa por una caja sorpresa'} style={{'--item':item?ITEMS[item].color:'#7a5ab0'} as React.CSSProperties} onPointerDown={e=>{if(e.pointerType!=='mouse'){e.preventDefault();input.fire(5);}}} onClick={e=>{if(e.detail===0||!touch)input.fire(5);}}>
+     {shown?<ItemIcon item={shown}/>:<span className="hx-item-empty">?</span>}{me.itemUses>1&&!rolling&&<b className="weapon-count">×{me.itemUses}</b>}
+     <small>{touch?'ÍTEM':pad?'Y · ÍTEM':keyLabel(input.keys,'item')+' · ÍTEM'}</small>
+    </button>
+    {item&&!rolling&&<span className="hx-item-name"><b>{ITEMS[item].role}</b>{ITEMS[item].name}</span>}
+   </div>
    <div className="hx-special-wrap">
     <button className={'hx-special'+(me.charges>=5?' ready':'')} aria-label={'Especial: '+c.special.name+(me.charges<5?'. Necesitas cinco cargas.':'')} disabled={me.charges<5} onPointerDown={e=>{if(e.pointerType!=='mouse'){e.preventDefault();input.fire(4);}}} onClick={e=>{if(e.detail===0||!touch)input.fire(4);}}><WeaponIcon object={c.special.object}/><small>{touch?'ESPECIAL':pad?'B · ESPECIAL':keyLabel(input.keys,'special')+' · ESPECIAL'}</small></button>
    </div>
@@ -88,7 +110,7 @@ export function HUD({state,id,input,banner,cue,fps,rtt,muted,onMute,onMenu,stats
      <span className="hx-dots">{[1,2,3].map(n=><i key={n} className={n===selected?'on':''}/>)}</span>
     </button>
     <span className="hx-basic-name">{basic.name}</span>
-    {!touch&&<div className="hx-basics-strip">{c.basics.map((a,i)=><button key={i} className={selected===i+1?'active':''} aria-label={'Elegir y lanzar '+a.name} disabled={!me.charges} onClick={()=>{select(i+1);input.fire(i+1);}}><b>{pad?'':keyLabel(input.keys,(['basic1','basic2','basic3'] as const)[i])}</b><WeaponIcon object={a.object} count={a.count}/></button>)}{pad&&<em>X/Y CAMBIA</em>}</div>}
+    {!touch&&<div className="hx-basics-strip">{c.basics.map((a,i)=><button key={i} className={selected===i+1?'active':''} aria-label={'Elegir y lanzar '+a.name} disabled={!me.charges} onClick={()=>{select(i+1);input.fire(i+1);}}><b>{pad?'':keyLabel(input.keys,(['basic1','basic2','basic3'] as const)[i])}</b><WeaponIcon object={a.object} count={a.count}/></button>)}{pad&&<em>X CAMBIA</em>}</div>}
    </div>
   </div>
 
@@ -97,7 +119,7 @@ export function HUD({state,id,input,banner,cue,fps,rtt,muted,onMute,onMenu,stats
    <button className={'hx-drift-btn'+(me.driftDir?' active t'+tier:'')} aria-label="Derrape: mantén en las curvas y suelta para el turbo" onPointerDown={e=>{e.currentTarget.setPointerCapture(e.pointerId);input.drift=true;}} onPointerUp={()=>input.drift=false} onPointerCancel={()=>input.drift=false} onLostPointerCapture={()=>input.drift=false}><ControlIcon kind="drift"/><small>DERRAPE</small></button>
    <button className="hx-brake" aria-label="Freno" onPointerDown={e=>{e.currentTarget.setPointerCapture(e.pointerId);input.brake=true;}} onPointerUp={()=>input.brake=false} onPointerCancel={()=>input.brake=false} onLostPointerCapture={()=>input.brake=false}><ControlIcon kind="brake"/><small>FRENO</small></button>
   </div>}
-  {!touch&&(state.phase==='countdown'||state.time<14)&&state.phase!=='results'&&<div className="hx-keys">{pad?'PALANCA · DIRECCIÓN   RB · DERRAPE   A · BÁSICO   X/Y · CAMBIAR   B · ESPECIAL   LT · FRENO':`${keyLabel(input.keys,'left')} ${keyLabel(input.keys,'right')} · DIRECCIÓN   ${keyLabel(input.keys,'drift')} · DERRAPE   ${keyLabel(input.keys,'fire')} · LANZAR   ${keyLabel(input.keys,'cycle')} · CAMBIAR   ${keyLabel(input.keys,'special')} · ESPECIAL   ${keyLabel(input.keys,'brake')} · FRENO   ${keyLabel(input.keys,'pause')} · PAUSA`}</div>}
+  {!touch&&(state.phase==='countdown'||state.time<14)&&state.phase!=='results'&&<div className="hx-keys">{pad?'PALANCA · DIRECCIÓN   RB · DERRAPE   A · BÁSICO   X · CAMBIAR   Y · ÍTEM   B · ESPECIAL   LT · FRENO':`${keyLabel(input.keys,'left')} ${keyLabel(input.keys,'right')} · DIRECCIÓN   ${keyLabel(input.keys,'drift')} · DERRAPE   ${keyLabel(input.keys,'fire')} · LANZAR   ${keyLabel(input.keys,'cycle')} · CAMBIAR   ${keyLabel(input.keys,'special')} · ESPECIAL   ${keyLabel(input.keys,'item')} · ÍTEM   ${keyLabel(input.keys,'brake')} · FRENO   ${keyLabel(input.keys,'pause')} · PAUSA`}</div>}
  </div>;
 }
 /** Small stick moves give gentle turns; the outer third is a full turn. */

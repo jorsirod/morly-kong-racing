@@ -433,7 +433,7 @@ export class Simulation {
    case 'ball':case 'slipper':p.speed*=.6;p.sliding=.5;shove(5);p.yawKick+=(p.color%2?1:-1)*.9;p.immune=.8;break;
    case 'geyser':p.vy=7.5;p.air=1e-3;p.stun=.7;p.speed*=.6;p.immune=1.6;break;
    case 'rock':p.stun=.8;p.speed*=.4;p.immune=1.6;p.impact=Math.max(p.impact,.5);break;
-   case 'wave':p.sliding=1.2;p.speed*=.7;p.pushX+=Math.cos(h.yaw)*6;p.pushZ-=Math.sin(h.yaw)*6;p.immune=1;break;
+   case 'wave':p.sliding=1.2;p.speed*=.7;p.pushX-=Math.cos(h.yaw)*6;p.pushZ+=Math.sin(h.yaw)*6;p.immune=1;break; // toward land
    case 'bus':p.stun=.6;p.speed*=.3;p.pushX+=Math.sin(h.yaw)*9;p.pushZ+=Math.cos(h.yaw)*9;p.immune=1.6;p.impact=Math.max(p.impact,.6);break;
   }
   if(p.stun>0)p.driftDir=0;

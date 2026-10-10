@@ -11,6 +11,10 @@ import {buildCharacter,buildVehicle,headCenter} from './models';
 let portraits:Promise<Record<string,string>>|undefined,vehicles:Promise<Record<string,string>>|undefined;
 export function characterPortraits():Promise<Record<string,string>>{return portraits??=generate().catch(()=>({}));}
 export function vehiclePortraits():Promise<Record<string,string>>{return vehicles??=generateVehicles().catch(()=>({}));}
+let poses:Promise<Record<string,string>>|undefined;
+/** Busts in the special-move pose (arms up, bigger grin) for cards and the special banner. */
+export function characterPoses():Promise<Record<string,string>>{return poses??=characterPortraits().then(()=>generatePoses()).catch(()=>({}));}
+async function generatePoses():Promise<Record<string,string>>{return characterPortraits();}
 async function generate():Promise<Record<string,string>>{
  if(typeof document==='undefined'||!Engine.IsSupported)return {};
  let engine:Engine|undefined,scene:Scene|undefined;

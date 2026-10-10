@@ -9,7 +9,7 @@ import { Constants } from '@babylonjs/core/Engines/constants';
 import type { Scene } from '@babylonjs/core/scene';
 import { character } from '../../shared/content';
 import type { GameEvent, GameState, PlayerState, Shot } from '../../shared/types';
-import { buildProjectile } from './models';
+import { buildProjectile, textLabel } from './models';
 import '@babylonjs/core/Meshes/Builders/planeBuilder';
 import '@babylonjs/core/Meshes/Builders/discBuilder';
 import '@babylonjs/core/Meshes/Builders/torusBuilder';
@@ -18,9 +18,9 @@ import '@babylonjs/core/Meshes/Builders/sphereBuilder';
 import '@babylonjs/core/Meshes/Builders/tubeBuilder';
 
 /** Each object has a colour that its halo, trail and debris share, so you can read it at a glance. */
-export const OBJECT_COLORS:Record<string,string>={victoria:'#ffcf3d',tona:'#5fe07a',rum:'#d9f4ff',flor:'#ff9c3a',cigarettes:'#ff5964',ashtray:'#9fe6ff',sixpack:'#ffd33d',basketball:'#ff8a2a',leaf:'#7be05a',frog:'#8ef05c',onion:'#fff1d6',cucumber:'#6fdc5a',bill:'#7dffa8',coin:'#ffd84a',diamond:'#7ef3ff',console:'#b48cff',ice:'#a6ecff',slipper:'#5ff1ff',pizza:'#ffa63d',milk:'#ffffff',backpack:'#ff6f9f',brush:'#ff6f9f',pencil:'#ffd23d',eraser:'#ff8ab8',claudia:'#ff8fc8',talc:'#ffffff',smoke:'#c9f2b8'};
+export const OBJECT_COLORS:Record<string,string>={victoria:'#ffcf3d',tona:'#5fe07a',rum:'#d9f4ff',flor:'#ff9c3a',cigarettes:'#ff5964',ashtray:'#9fe6ff',sixpack:'#ffd33d',basketball:'#ff8a2a',leaf:'#7be05a',frog:'#8ef05c',onion:'#fff1d6',cucumber:'#6fdc5a',bill:'#7dffa8',coin:'#ffd84a',diamond:'#7ef3ff',console:'#b48cff',ice:'#a6ecff',slipper:'#5ff1ff',pizza:'#ffa63d',milk:'#ffffff',backpack:'#ff6f9f',brush:'#ff6f9f',pencil:'#ffd23d',eraser:'#ff8ab8',claudia:'#ff8fc8',talc:'#ffffff',smoke:'#c9f2b8',coco:'#c69a5b',chilero:'#ff3b1f',bong:'#9be35a'};
 type Motion='tumble'|'bounce'|'hop'|'roll'|'spinY'|'flutter'|'spear'|'frisbee'|'lob'|'still';
-const MOTION:Record<string,Motion>={victoria:'tumble',tona:'tumble',rum:'tumble',flor:'tumble',cigarettes:'tumble',sixpack:'lob',console:'lob',basketball:'bounce',frog:'hop',onion:'roll',cucumber:'roll',coin:'spinY',diamond:'spinY',eraser:'spinY',slipper:'spinY',bill:'flutter',leaf:'flutter',pencil:'spear',brush:'tumble',pizza:'frisbee',backpack:'tumble',ice:'still',ashtray:'still',milk:'still',talc:'still',smoke:'still'};
+const MOTION:Record<string,Motion>={victoria:'tumble',tona:'tumble',rum:'tumble',flor:'tumble',cigarettes:'tumble',sixpack:'lob',console:'lob',basketball:'bounce',frog:'hop',onion:'roll',cucumber:'roll',coin:'spinY',diamond:'spinY',eraser:'spinY',slipper:'spinY',bill:'flutter',leaf:'flutter',pencil:'spear',brush:'tumble',pizza:'frisbee',backpack:'tumble',ice:'still',ashtray:'still',milk:'still',talc:'still',smoke:'still',coco:'roll',chilero:'still',bong:'spinY'};
 interface View { node:TransformNode; halo:Mesh; shadow:Mesh; extra?:TransformNode; motion:Motion; }
 interface Transient { node:TransformNode; born:number; life:number; update:(t:number)=>void; }
 
@@ -91,7 +91,8 @@ export class AttackView {
     if(v.extra){v.extra.position.set(shot.x,ground+.08,shot.z);const pulse=reduced?1:1+Math.sin(this.time*7)*.12;v.extra.getChildMeshes()[0]?.scaling.setAll(pulse);}
    }
    v.halo.visibility=.75+Math.sin(this.time*12+shot.id)*.25;
-   v.shadow.position.set(shot.x,ground+.06,shot.z);v.shadow.scaling.setAll(shot.delivery==='area'?1:1/(1+Math.max(0,lift-.8)*.35));
+   if(shot.delivery==='homing'){n.position.y=shot.y+Math.sin(age*5)*.3;n.rotation.z=Math.sin(age*7)*.35;}
+   v.shadow.position.set(shot.x,(shot.delivery==='homing'?shot.y-4.2:ground)+.06,shot.z);v.shadow.scaling.setAll(shot.delivery==='area'?1:1/(1+Math.max(0,lift-.8)*.35));
    if(shot.object==='backpack')for(const paint of n.getChildMeshes().filter(m=>m.name.startsWith('label-heart')))paint.visibility=Math.min(1,age*3);
   }
   for(const event of state.events)if(event.id>this.lastEvent){this.lastEvent=event.id;this.event(event,state);}
@@ -118,6 +119,20 @@ export class AttackView {
    const holder=new TransformNode('special-cast',this.scene);pillar.parent=holder;ring.parent=holder;pillar.position.set(0,13,0);ring.position.set(0,.15,0);holder.position.set(x,y,z);
    this.fx.push({node:holder,born:this.time,life:.75,update:t=>{pillar.scaling.set(1-t*.6,1,1-t*.6);pillar.visibility=1-t;ring.scaling.setAll(1+t*14);ring.visibility=1-t;}});
   }
+  if(event.type==='flash'&&caster){
+   // Purísima rockets: from the thrower to each rival ahead, then a burst of glare over them.
+   const target=state.players.find(p=>p.id===event.targetId);if(target){const rocket=buildProjectile(this.scene,'pencil');rocket.scaling.setAll(.9);const from=new Vector3(caster.x,caster.y+2,caster.z),born=this.time;
+    this.fx.push({node:rocket,born,life:.7,update:t=>{const to=new Vector3(target.x,target.y+3,target.z);const p=Vector3.Lerp(from,to,t);p.y+=Math.sin(t*Math.PI)*8;rocket.position.copyFrom(p);rocket.lookAt(to);}});if(target.id!==this.me)this.fx.push({node:new TransformNode('pum',this.scene),born:born+.6,life:.05,update:()=>{}});}
+  }
+  if(event.type==='shield'){const t=state.players.find(p=>p.id===event.targetId);if(t){const ring=this.plane('shield-pop',2,this.mat('ring','#7fd4ff',1));ring.position.set(t.x,t.y+1.6,t.z);this.fx.push({node:ring,born:this.time,life:.45,update:k=>{ring.scaling.setAll(1+k*4);ring.visibility=1-k;}});if(t.id!==this.me)this.callout('¡CASCO!','#7fd4ff',new Vector3(t.x,t.y+3.6,t.z),.9);}}
+  if(event.type==='bong'&&caster&&caster.id!==this.me){this.callout('¡AHÍ VA EL BONG!','#9be35a',new Vector3(caster.x,caster.y+4,caster.z),1.1);}
+  if(event.type==='hit'&&event.x!==undefined&&event.special){
+   // Specials say what happened over the victim's head: who used what on whom.
+   const words:Record<string,string>={sixpack:'¡SALUD!',console:'GAME OVER',slipper:'¡VOLTIO!',talc:'FATALITY',smoke:'¡ÁRMATE 1!',pizza:'¡DE LA ROTONDA!',onion:'¡CLAUDIA!',backpack:'¡PINTADO!',milk:'¡RESBALÓN!',bong:'¡CACHINFLÍN!'};
+   const target=state.players.find(p=>p.id===event.targetId),color=caster?character(caster.characterId).color:'#ffd33d';
+   if(event.targetId!==this.me)this.callout(words[event.object??'']??'¡ZAS!',color,new Vector3(event.x,(event.y??0)+4.2,event.z??0),1.3);
+   if(target){const marker=this.plane('special-victim',3.2,this.mat('ring',color,1),false);marker.rotation.x=Math.PI/2;this.fx.push({node:marker,born:this.time,life:1.2,update:k=>{marker.position.set(target.x,target.y+.2,target.z);marker.scaling.setAll(1+Math.sin(k*Math.PI)*.6);marker.visibility=1-k;}});}
+  }
   if(event.type==='hit'&&event.x!==undefined){
    const at=new Vector3(event.x,(event.y??0)+1.2,event.z??0),color=OBJECT_COLORS[event.object??'']??'#ffffff';
    const ring=this.plane('hit-ring',2,this.mat('ring',color,1));ring.position.copyFrom(at);
@@ -132,6 +147,11 @@ export class AttackView {
    }
    this.lastHit.set(event.playerId,at);
   }
+ }
+ /** Big comic word that pops over a car and floats up (special names, ¡PUM!, ¡CASCO!). */
+ private callout(text:string,color:string,at:Vector3,life:number){
+  const label=textLabel(this.scene,null,text,at.x,at.y,at.z,3.6,.9,'#13234d',color) as Mesh|null;if(!label)return;label.billboardMode=Mesh.BILLBOARDMODE_ALL;label.renderingGroupId=1;
+  this.fx.push({node:label,born:this.time,life,update:t=>{label.position.y=at.y+t*1.6;const pop=Math.min(1,t*6);label.scaling.setAll(.6+pop*.5-(t>.8?(t-.8)*2:0));label.visibility=t<.75?1:1-(t-.75)*4;}});
  }
  dispose(){for(const v of this.views.values()){v.node.dispose();v.shadow.dispose();v.extra?.dispose();}this.views.clear();for(const f of this.fx)f.node.dispose();this.fx=[];for(const d of this.dizzy.values())d.dispose();this.dizzy.clear();this.materials.forEach(m=>m.dispose());this.textures.forEach(t=>t.dispose());}
 }

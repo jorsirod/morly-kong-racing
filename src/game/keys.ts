@@ -1,11 +1,11 @@
 /** Remappable keyboard controls, saved per browser. Two keys per action. */
-export type KeyAction='left'|'right'|'brake'|'drift'|'fire'|'basic1'|'basic2'|'basic3'|'cycle'|'special'|'pause';
+export type KeyAction='left'|'right'|'brake'|'drift'|'fire'|'basic1'|'basic2'|'basic3'|'cycle'|'special'|'item'|'pause';
 export const KEY_ACTIONS:{id:KeyAction;label:string}[]=[
  {id:'left',label:'Girar a la izquierda'},{id:'right',label:'Girar a la derecha'},{id:'brake',label:'Frenar'},{id:'drift',label:'Derrapar'},
  {id:'fire',label:'Lanzar el básico elegido'},{id:'basic1',label:'Básico 1 (elige y lanza)'},{id:'basic2',label:'Básico 2 (elige y lanza)'},{id:'basic3',label:'Básico 3 (elige y lanza)'},
- {id:'cycle',label:'Cambiar básico'},{id:'special',label:'Especial'},{id:'pause',label:'Pausa'},
+ {id:'cycle',label:'Cambiar básico'},{id:'special',label:'Especial'},{id:'item',label:'Usar ítem de la caja sorpresa'},{id:'pause',label:'Pausa'},
 ];
-export const DEFAULT_KEYS:Record<KeyAction,string[]>={left:['a','arrowleft'],right:['d','arrowright'],brake:['s','arrowdown'],drift:[' ','shift'],fire:['w','arrowup'],basic1:['1',''],basic2:['2',''],basic3:['3',''],cycle:['q',''],special:['e',''],pause:['escape','p']};
+export const DEFAULT_KEYS:Record<KeyAction,string[]>={left:['a','arrowleft'],right:['d','arrowright'],brake:['s','arrowdown'],drift:[' ','shift'],fire:['w','arrowup'],basic1:['1',''],basic2:['2',''],basic3:['3',''],cycle:['q',''],special:['e',''],item:['r','enter'],pause:['escape','p']};
 const STORE='morly-keys';
 export function loadKeys():Record<KeyAction,string[]>{
  const keys=structuredClone(DEFAULT_KEYS);

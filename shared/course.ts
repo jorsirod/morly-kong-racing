@@ -36,7 +36,7 @@ export interface Course { ramps:CRamp[]; pads:CPad[]; gaps:CGap[]; edges:CEdge[]
 export const COURSES:Record<string,CourseDef>={
  // La Salle: túmulos, la loma del norte, las canchas (se abren en la 2.ª vuelta) y el gran salto sobre la zanja.
  'la-salle':{
-  elev:[{from:.52,to:.66,height:4.5,ramp:45},{from:.706,to:.80,height:4,ramp:26}],
+  elev:[{from:.598,to:.668,height:4.5,ramp:30},{from:.706,to:.80,height:4,ramp:26}],
   ramps:[{at:.152,lift:3.2,height:.35,len:3},{at:.578,lift:4.2,height:.45,len:3.5},{at:.727,len:13,height:2.2,lift:8,minSpeed:19,big:true},
    {lane:'canchas',at:.43,len:7,height:1,lift:5.2,minSpeed:15,width:7}],
   pads:[{at:.025,offset:-4,power:.8},{at:.372,offset:3.5,power:.9},{at:.708,power:1.5,super:true,width:10},{at:.905,offset:4,power:.8},{lane:'canchas',at:.32,power:1.2,super:true,width:5}],
@@ -89,14 +89,14 @@ export const COURSES:Record<string,CourseDef>={
  },
  // San Juan del Sur: malecón, pueblo, subida al Cristo, el salto de la quebrada, el puente y la playa.
  'san-juan':{
-  elev:[{from:.585,to:.655,height:3.6,ramp:24}],
+  elev:[{from:.585,to:.655,height:3.6,ramp:24},{from:.768,to:.812,height:2.6,ramp:16}],
   rough:[[.86,.9]],
   ramps:[{at:.12,lift:3,height:.3,len:3},{at:.37,lift:3.6,height:.4,len:3},{at:.613,len:12,height:2.2,lift:8,minSpeed:19,big:true},
    {lane:'playa',at:.55,len:6,height:1,lift:5,minSpeed:16,width:7}],
   pads:[{at:.03,offset:4,power:.8},{at:.25,offset:-4,power:.9},{at:.596,power:1.5,super:true,width:10},{at:.82,offset:3.5,power:.8},{lane:'playa',at:.42,power:1.2,width:5,super:true}],
   gaps:[{from:.6245,to:.639,kind:'pit'},{lane:'playa',from:.60,to:.66,kind:'water'}],
-  edges:[{lane:'playa',from:.15,to:.9,side:-1,kind:'water'}],
-  alts:[{id:'playa',name:'POR LA ORILLA DE LA PLAYA',from:.875,to:.985,via:[[-126,-186],[-84,-212],[-38,-204]],width:9,rough:true,sign:'ORILLA · CUIDADO CON LAS OLAS'}],
+  edges:[{lane:'playa',from:.15,to:.9,side:1,kind:'water'}],
+  alts:[{id:'playa',name:'POR LA ORILLA DE LA PLAYA',from:.875,to:.985,via:[[-126,-186],[-84,-212],[-38,-204]],width:9,rough:true,lift:1.4,sign:'ORILLA · CUIDADO CON LAS OLAS'}],
   bridges:[[.775,.805]],
   charges:[{at:.04},{at:.15},{at:.27},{at:.4},{at:.52},{at:.72},{at:.94}],items:[{at:.2},{at:.58},{at:.86}],
  },

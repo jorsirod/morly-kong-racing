@@ -17,9 +17,9 @@ export function hazardsFor(trackId:string,time:number):Hazard[]{
  const cycle=(period:number,shift:number,warn:number,on:number)=>{const t=((time+shift)%period+period)%period;return{warn:t<warn,active:t>=warn&&t<warn+on,phase:t/period};};
  if(trackId==='la-salle'){
   // Basketballs bouncing across the courts lane, a loose one near the courts on the main road, and the hoops.
-  for(const [k,f] of [[0,.2],[1,.68]] as const){const o=Math.sin(time*1.6+k*2)*3.2;add('ball','canchas',f,o,1,{phase:Math.abs(Math.sin(time*3.2+k))});}
+  for(const [k,f] of [[0,.25],[1,.7]] as const){const o=Math.sin(time*1.6+k*2)*3.2;add('ball','canchas',f,o,1,{phase:Math.abs(Math.sin(time*3.2+k))});}
   add('ball','',.455,Math.sin(time*.9)*5.5,1,{phase:Math.abs(Math.sin(time*3))});
-  add('hoop','canchas',.27,2.7,.6);add('hoop','canchas',.62,-2.7,.6);
+  add('hoop','canchas',.12,3,.6);add('hoop','canchas',.84,-3,.6);
  }else if(trackId==='oriental'){
   // Shoppers on painted crossings, a cart pushed along the kerb, crates in the alley.
   [.12,.26,.47,.66,.935].forEach((f,i)=>walker('pedestrian','',f,8.2,9+i*.7,i*2.3,1.1,i));

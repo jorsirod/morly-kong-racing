@@ -170,7 +170,8 @@ export function buildAlf(scene:Scene,parent:TransformNode){
  mergeParts(root);return root;
 }
 
-export type VehicleModel={root:TransformNode;body:TransformNode;driverSocket:TransformNode;passengerSocket:TransformNode;alf?:TransformNode;wheels?:TransformNode[];frontWheels?:TransformNode[];driver?:TransformNode};
+export type AlfParts={head:TransformNode;armL:TransformNode;armR:TransformNode};
+export type VehicleModel={root:TransformNode;body:TransformNode;driverSocket:TransformNode;passengerSocket:TransformNode;alf?:TransformNode;alfParts?:AlfParts;wheels?:TransformNode[];frontWheels?:TransformNode[];driver?:TransformNode};
 export function buildVehicle(scene:Scene,id:string,characterId?:string):VehicleModel{
  const v=vehicle(id),root=new TransformNode('vehicle-'+id,scene),body=new TransformNode('body',scene);body.parent=root;
  const pickup=v.kind.startsWith('pickup'),single=v.kind==='pickup-single',matiz=v.kind==='matiz',suv=v.kind==='suv',golf=v.kind==='golf',mazda=v.kind==='mazda';
@@ -347,6 +348,29 @@ export function buildProjectile(scene:Scene,object:string,special=false){
  else if(object==='smoke'||object==='talc'){
   const color=object==='talc'?'#fff8e6':'#bad3b4';for(let i=0;i<5;i++)sphere(scene,root,'cloud-puff',Math.sin(i*2.4)*.65,(i%2)*.35,Math.cos(i*2.4)*.65,1.25,color);
   if(object==='talc'){cylinder(scene,root,'talc-can',0,-.1,0,.84,.48,'#faf7ea');cylinder(scene,root,'talc-cap',0,.38,0,.12,.52,'#66bce0');textLabel(scene,root,'TALCO',0,-.12,.259,.41,.19,'#39709a','#faf7ea');}
+ }
+ else if(object==='coco'){
+  // Coco loco: a green coconut with a cheeky face, rolls and bounces.
+  sphere(scene,root,'coco-shell',0,0,0,1.25,'#5e8f2f',new Vector3(1,1.05,1));sphere(scene,root,'coco-top',0,.5,0,.5,'#8b6a3a',new Vector3(1,.5,1));
+  for(const x of [-1,1]){sphere(scene,root,'coco-eye',x*.2,.15,.55,.22,'#fff8e8');sphere(scene,root,'coco-pupil',x*.2,.15,.64,.1,'#1a1a1a');}tube(scene,root,'coco-grin',[[-.22,-.12,.55],[0,-.2,.6],[.22,-.12,.55]],.035,'#2d3a1a');
+ }
+ else if(object==='chilero'){
+  // A jar of chilero: pickled onions and chiles, red lid, the puddle it leaves is spicy.
+  cylinder(scene,root,'chilero-jar',0,0,0,1,.75,'#f4e3c4',.7);for(let i=0;i<6;i++)sphere(scene,root,'chilero-chile',Math.sin(i*1.9)*.2,-.25+i*.1,Math.cos(i*1.9)*.2,.24,i%2?'#e8442c':'#f6d05a',new Vector3(.6,1.4,.6));
+  cylinder(scene,root,'chilero-lid',0,.58,0,.18,.78,'#c8321f');textLabel(scene,root,'CHILERO',0,.05,.4,.7,.2,'#c8321f','#fff8e8');
+  const puddle=cylinder(scene,root,'chilero-puddle',0,-.9,0,.04,2.6,'#e8442c');puddle.material=material(scene,'#e8442c',true,.7);
+ }
+ else if(object==='bong'){
+  // «El Bong Cachinflín»: a cartoon glass bong with googly eyes, bubbles and a puff of smoke.
+  const glass=material(scene,'#7fe0a0',true,.55);glass.backFaceCulling=false;
+  const base=sphere(scene,root,'bong-base',0,-.55,0,1.15,'#7fe0a0',new Vector3(1,.85,1));base.material=glass;
+  const neck=cylinder(scene,root,'bong-neck',0,.45,0,1.6,.42,'#7fe0a0',.5);neck.material=glass;cylinder(scene,root,'bong-mouth',0,1.28,0,.12,.62,'#b4ffd0');
+  const water=sphere(scene,root,'bong-water',0,-.68,0,.95,'#3fb4e0',new Vector3(1,.55,1));water.material=material(scene,'#3fb4e0',true,.7);
+  const stem=cylinder(scene,root,'bong-stem',.42,-.2,.0,.75,.13,'#b4ffd0');stem.rotation.z=-.85;cylinder(scene,root,'bong-bowl',.72,.1,0,.22,.32,'#2f6b4f',.22);
+  for(const x of [-1,1]){sphere(scene,root,'bong-eye',x*.2,.55,.24,.3,'#ffffff');sphere(scene,root,'bong-pupil',x*.2,.55,.37,.14,'#1a1a1a');}
+  tube(scene,root,'bong-smile',[[-.18,.28,.22],[0,.2,.26],[.18,.28,.22]],.035,'#1a4a2a');
+  for(let i=0;i<4;i++)sphere(scene,root,'bong-bubble',Math.sin(i*2.1)*.25,-.6+i*.1,Math.cos(i*2.1)*.25,.14,'#e6fff2');
+  for(let i=0;i<3;i++){const puff=sphere(scene,root,'bong-smoke',.1*i,1.55+i*.32,0,.55+i*.18,'#cfc6e8');puff.material=material(scene,'#cfc6e8',false,.65);}
  }
  else{box(scene,root,object,0,0,0,1.04,.57,.77,'#a3d8e4');}
  // Both sides read correctly when a projectile moves away from the chase camera.
