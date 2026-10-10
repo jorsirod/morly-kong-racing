@@ -3,7 +3,7 @@ import { CHARACTERS,TRACKS,VEHICLES } from '../shared/content';
 import { resolveVehicleCollision,vehicleContact,vehicleDynamics,vehicleVelocity } from '../shared/dynamics';
 import { makePlayer,Simulation,stepPlayer } from '../shared/simulation';
 import { EMPTY_INPUT,FIXED_DT } from '../shared/types';
-import { routeFor,sample,closest } from '../shared/track';
+import { routeFor,sample,closest,sampleLane } from '../shared/track';
 import { RaceWire,syncWire,fromWire } from '../shared/network';
 
 const car=(id:string,vehicleId:string,x=0,z=0)=>Object.assign(makePlayer(id,id,'semilla',vehicleId,0),{x,z});
@@ -72,8 +72,8 @@ describe('contactos con masa e inercia',()=>{
   const route=routeFor('la-salle'),q=sample(route,80),p=car('p','silver-surfer');p.x=q.x+Math.cos(q.yaw)*route.width*.78;p.z=q.z-Math.sin(q.yaw)*route.width*.78;p.y=q.y;p.progress=80;p.yaw=q.yaw;p.pushX=Math.cos(q.yaw)*8;p.pushZ=-Math.sin(q.yaw)*8;
   const before=closest(route,p.x,p.z).distance,curb=stepPlayer(p,{...EMPTY_INPUT,assist:false},route,'race');
   expect(curb).toBeDefined();expect(closest(route,p.x,p.z).distance).toBeLessThan(before+.1);expect(p.stun).toBe(0);
-  const cut=route.shortcut!,other=car('cut','silver-surfer');other.x=(cut.a.x+cut.b.x)/2;other.z=(cut.a.z+cut.b.z)/2;other.yaw=Math.atan2(cut.b.x-cut.a.x,cut.b.z-cut.a.z);other.progress=(cut.from+cut.to)/2;
-  expect(stepPlayer(other,EMPTY_INPUT,route,'race')).toBeUndefined();expect(other.boost).toBeGreaterThan(0);
+  const market=routeFor('oriental'),lane=market.lanes[0],mid=sampleLane(lane,lane.length*.4),other=car('cut','silver-surfer');Object.assign(other,{x:mid.x,z:mid.z,y:mid.y,yaw:mid.yaw,progress:lane.from+(lane.to-lane.from)*.4,speed:15});
+  expect(stepPlayer(other,EMPTY_INPUT,market,'race')).toBeUndefined();expect(closest(market,other.x,other.z,{hint:other.progress}).lane).toBe(lane.id);
  });
  it('protege datos no finitos y conserva la nueva dinámica en el estado online',()=>{
   const s=new Simulation('battle'),p=s.addPlayer(car('p','silver-surfer'));p.speed=NaN;p.lateralSpeed=Infinity;p.pushX=NaN;p.turnRate=NaN;
