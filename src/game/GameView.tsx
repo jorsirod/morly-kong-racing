@@ -10,6 +10,7 @@ import { VoiceSystem } from './voices';
 import { LocalSession,OnlineSession,type Session } from './session';
 import {useDialogTrap} from '../components/useDialogTrap';
 import {KeyBindings} from '../components/KeyBindings';
+import {FullscreenButton} from '../components/FullscreenButton';
 import {HUD,type FeedbackCue,type Subtitle} from './HUD';
 import {ITEMS,type ItemId} from '../../shared/items';
 import {character} from '../../shared/content';
@@ -101,6 +102,7 @@ export default function GameView({session,onExit}:{session:Session;onExit:()=>vo
   </div>
   <details className="pause-keys"><summary>Teclado de la computadora</summary><KeyBindings onCapture={capturing=>{if(input.current)input.current.capturing=capturing;}}/></details>
   <button autoFocus className="button yellow" onClick={()=>setMenu(false)}>Seguir corriendo →</button>
+  <FullscreenButton variant="text" className="button outline" hideIfUnsupported/>
   {!session.online&&<button className="button outline" onClick={()=>{if(session instanceof LocalSession){session.sim.start();input.current?.reset();setMenu(false);}}}>Reiniciar desde la salida ↺</button>}
   <button className="button outline" onClick={onExit}>Volver al garaje</button></section></div>}
  {!loading&&(state.phase==='results'||state.phase==='cup-results')&&<Results state={state} id={session.id} canNext={!session.online||state.hostId===session.id} onNext={()=>{session.next();input.current?.reset();}} onExit={onExit}/>}
