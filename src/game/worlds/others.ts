@@ -165,7 +165,7 @@ export function dressMasaya(k:Kit,route:Route){
 /* San Juan del Sur — malecón, pueblo, ranchos de playa, botes, el río con su puente y la subida al Cristo. */
 export function dressSanJuan(k:Kit,route:Route){
  const r=rng(1898),colors=['#f2b8a0','#9fd5d1','#f6dc8c','#c7b3e6','#f4f0e4','#a8d08d'];
- for(let d=8;d<route.length;d+=15){if(special(route,d))continue;for(const side of [-1,1]){if(r()<.4)continue;const p=beside(route,d,(route.width*.72+5+r()*8)*side);if(k.blocked(p.x,p.z,4)||p.z<-176&&p.y<1)continue;
+ for(let d=8;d<route.length;d+=15){if(special(route,d))continue;for(const side of [-1,1]){if(r()<.4)continue;const raw=route.width*.72+5+r()*8,elevated=sample(route,d).y>1,p=beside(route,d,(elevated?Math.min(raw,route.width/2+12):raw)*side);if(k.blocked(p.x,p.z,4)||p.z<-176&&p.y<1)continue; // on raised road, stay on the 14 m shelf (no floating trees)
   if(p.y>12){k.tree(p.x,p.z,r()<.6?'palm':'bush',p.y,.9);continue;}
   const g=new TransformNode('casa-playa',k.scene);g.parent=k.root;g.position.set(p.x,p.y,p.z);g.rotation.y=facing(p.yaw,side);const h=4.5+Math.floor(r()*2)*3.4;
   k.box('beach-house',0,h/2,0,8,h,7,colors[Math.floor(r()*colors.length)],0,g);k.box('beach-roof',0,h+.4,0,9,.5,8,'#a8553a',0,g);k.box('balcony',0,h-1.8,3.9,7.6,.15,1.4,'#8a5a3a',0,g);for(let i=0;i<5;i++)k.box('baluster',-3.6+i*1.8,h-1.3,4.55,.12,.9,.12,'#f4f0e4',0,g);
