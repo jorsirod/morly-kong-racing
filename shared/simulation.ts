@@ -24,10 +24,14 @@ export const DRIVE = {
 } as const;
 /** Jumps and falls. A fall lasts FALL_TIME before you reappear at your last safe point. */
 export const AIR = { gravity: 12, fallTime: 1.25, fallDepth: 2.6, respawnSpeed: 8, respawnGrace: 1.6 } as const;
+/** A car that cannot get going is put back on safe road, Lakitu style: nearly stopped for LOW_TIME seconds, or gaining
+ *  under MIN_GAIN metres of track in WINDOW seconds while driving. Holding the brake never counts as stuck. */
+export const STUCK = { speed: 1.8, lowTime: 3.2, window: 6, minGain: 5 } as const;
 /** Steering capacity at full lock, in rad/s. Tighter at low speed, calmer at top speed. */
 export function yawCapacity(speed:number,handling:number){
  const s=Math.abs(speed);
- return (1.78-.58*clamp((s-6)/14,0,1))*(1+.06*(handling-3))*clamp(s/5.5,0,1);
+ // Never zero: a car pinned against a wall must still be able to turn itself out.
+ return (1.78-.58*clamp((s-6)/14,0,1))*(1+.06*(handling-3))*Math.max(.3,clamp(s/5.5,0,1));
 }
 /** Signed lateral offset from the centre line (right positive) and heading relative to the road. */
 export function roadFrame(route:Route,p:{x:number;z:number;yaw:number;y?:number;progress?:number;lap?:number}){
@@ -168,6 +172,9 @@ export function stepPlayer(p:PlayerState,input:PlayerInput,route:Route,mode:Mode
    p.pushX-=nx*response;p.pushZ-=nz*response;
    const correction=Math.min(.3,penetration*.08);p.x-=nx*correction;p.z-=nz*correction;
    p.speed*=Math.exp(-Math.min(penetration,8)*.25*dt);
+   // Scraping the wall turns the car along it, like every arcade racer: a car that lands or spins facing the verge can no
+   // longer sit there pushing against it at full throttle. It swings toward the direction of the road.
+   if(outward>1.5&&penetration>.05)p.yaw+=clamp(angle(n.yaw-p.yaw),-1,1)*clamp(.5+penetration/3,.5,1)*4.2*dt;
    // Scraping the barrier while sliding cancels the drift charge.
    if(outward>4&&p.driftDir){p.driftCharge=Math.min(p.driftCharge,DRIVE.driftTier1*.5);}
    if(outward>2){const intensity=clamp(outward/22,.12,.65);p.impact=Math.max(p.impact,intensity);curb={x:p.x,y:p.y,z:p.z,intensity};}
@@ -231,7 +238,7 @@ export function leadInfo(state:GameState,length:number){
 type BotMemory={lane:number;nextFire:number;wobble:number;alt:string;altFor:number};
 
 export class Simulation {
- state:GameState; route:Route; inputs=new Map<string,PlayerInput>(); private shotId=0;private castId=0;private eventId=0;private firstFinish=-1;private curbEvents=new Map<string,number>();private launchHeld=new Map<string,boolean>();private bumpTimes=new Map<string,number>();
+ state:GameState; route:Route; inputs=new Map<string,PlayerInput>(); private shotId=0;private castId=0;private eventId=0;private firstFinish=-1;private curbEvents=new Map<string,number>();private stuck=new Map<string,{low:number;ref:number;t:number}>();private launchHeld=new Map<string,boolean>();private bumpTimes=new Map<string,number>();
  /** No new Bong can be rolled or thrown before this race time. */
  bongReadyAt=0;
  constructor(mode:Mode='race',trackId='la-salle') {
@@ -254,7 +261,7 @@ export class Simulation {
   for(const r of c.charges)row(r.lane,r.at,0);for(const r of c.items)row(r.lane,r.at,1);
   this.state.pickups=out;
  }
- start(){this.state.phase='countdown';this.state.countdown=INTRO+3;this.launchHeld.clear();this.bumpTimes.clear();this.botMemory.clear();this.state.time=0;this.state.shots=[];this.firstFinish=-1;this.bongReadyAt=0;this.curbEvents.clear();this.state.players.forEach((p,i)=>this.place(p,i));this.setupPickups();this.inputs.clear();}
+ start(){this.state.phase='countdown';this.state.countdown=INTRO+3;this.launchHeld.clear();this.bumpTimes.clear();this.botMemory.clear();this.state.time=0;this.state.shots=[];this.firstFinish=-1;this.bongReadyAt=0;this.curbEvents.clear();this.stuck.clear();this.state.players.forEach((p,i)=>this.place(p,i));this.setupPickups();this.inputs.clear();}
  /** Each round of the cup moves to the next world; points carry over. */
  nextRound(){if(this.state.mode!=='championship'||this.state.round>=3)return;this.state.round++;const next=this.state.cup.split(',')[this.state.round-1];if(next)this.setTrack(next);this.start();}
  /** Back to round one of the same cup (rematch). */
@@ -441,6 +448,14 @@ export class Simulation {
   if(p.stun>0)p.driftDir=0;
   this.emit('hit',p.id,{targetId:p.id,object:h.kind,text:'hazard',x:p.x,y:p.y,z:p.z});
  }
+ /** Lakitu rescue for any car that is wedged, pinned or going nowhere. Runs only in the authoritative simulation. */
+ rescue(p:PlayerState,input:PlayerInput,dt:number){
+  const s=this.state,L=this.route.length;let m=this.stuck.get(p.id);if(!m){m={low:0,ref:p.progress,t:s.time};this.stuck.set(p.id,m);}
+  if(s.mode==='battle'||p.finishTime>=0||p.fall>0||p.respawn>0||p.stun>0||input.brake){m.low=0;m.ref=p.progress;m.t=s.time;return;}
+  m.low=Math.abs(p.speed)<STUCK.speed?m.low+dt:0;
+  let lost=false;if(s.time-m.t>=STUCK.window){const g=(((p.progress-m.ref)%L)+L)%L,gain=g>L/2?g-L:g;lost=gain<STUCK.minGain;m.ref=p.progress;m.t=s.time;}
+  if(m.low>=STUCK.lowTime||lost){respawn(p,this.route);this.emit('respawn',p.id,{x:p.x,y:p.y,z:p.z});this.stuck.delete(p.id);}
+ }
  tick(dt=FIXED_DT){
   const s=this.state;s.tick++;if(s.phase==='countdown'){s.countdown-=dt;this.launchWindow();if(s.countdown<=0){s.phase='running';s.time=0;this.launch();}return;}if(s.phase!=='running')return;s.time+=dt;
   const hazards=s.mode==='battle'?[]:hazardsFor(s.trackId,s.time),L=this.route.length;
@@ -457,6 +472,7 @@ export class Simulation {
    if(fall<=0&&p.fall>0)this.emit('fall',p.id,{text:p.fallKind,x:p.x,y:p.y,z:p.z});
    else if(fall>0&&p.fall<=0)this.emit('respawn',p.id,{x:p.x,y:p.y,z:p.z});
    else if(falling&&p.vy===0&&p.fall<=0)this.emit('land',p.id,{x:p.x,y:p.y,z:p.z,intensity:clamp(-vy/14,.2,1)});
+   this.rescue(p,input,dt);
    if(input.attack>0&&(automatic||input.actionSeq>p.actionSeq)){if(!automatic)p.actionSeq=input.actionSeq;this.attack(p,input.attack);}
    if(p.fall<=0)for(const h of hazards)if(h.active&&p.lap>=h.minLap&&p.immune<=0&&Math.abs(p.y-h.y)<2.6&&Math.hypot(p.x-h.x,p.z-h.z)<h.radius+1.1)this.hazardHit(p,h);
    for(const pick of s.pickups)if(pick.availableAt<=s.time&&Math.abs(p.y-pick.y)<3.2&&Math.hypot(p.x-pick.x,p.z-pick.z)<3.8&&p.fall<=0){

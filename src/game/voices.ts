@@ -1,5 +1,6 @@
 import { character } from '../../shared/content';
 import { audioSettings, type GameAudio } from './audio';
+import { cancelSpeech,forgetVoice,pickVoice,speakText,speechAvailable } from './speech';
 
 /*
  * Voices. The nine special phrases are said exactly as written below, the instant the special
@@ -67,21 +68,10 @@ export async function loadRecordings():Promise<Map<string,Blob>>{
 export async function shippedVoices():Promise<Map<string,string>>{try{const r=await fetch('/voices/manifest.json',{cache:'no-cache'});if(!r.ok)return new Map();const j=await r.json() as {files?:string[]};return new Map((j.files??[]).map(f=>[f.replace(/\.[a-z0-9]+$/i,''),f]));}catch{return new Map();}}
 
 export interface SpokenLine{who:string;text:string;color:string;special:boolean;provisional:boolean;seconds:number}
-let spanishVoice:SpeechSynthesisVoice|null|undefined;
-function pickVoice(){
- if(typeof speechSynthesis==='undefined')return null;if(spanishVoice)return spanishVoice;
- const voices=speechSynthesis.getVoices();if(!voices.length)return null;
- for(const lang of ['es-419','es-MX','es-US','es-NI','es-CO','es-ES'])for(const v of voices)if(v.lang.replace('_','-').toLowerCase()===lang.toLowerCase())return spanishVoice=v;
- return spanishVoice=voices.find(v=>v.lang.toLowerCase().startsWith('es'))??null;
-}
-export function ttsAvailable(){return typeof speechSynthesis!=='undefined'&&!!pickVoice();}
-/** Speaks with the provisional system voice; resolves when done. */
+export const ttsAvailable=speechAvailable;
+/** Speaks with the provisional system voice; resolves when done. Phones need the unlock and care in speech.ts. */
 export function speakProvisional(characterId:string,text:string,volume=audioSettings.voice):Promise<number>{
- return new Promise(resolve=>{
-  const voice=pickVoice();if(!voice||typeof SpeechSynthesisUtterance==='undefined'){resolve(0);return;}
-  const u=new SpeechSynthesisUtterance(text.replace(/!!/g,'!')),style=TTS_STYLE[characterId]??{pitch:1,rate:1};u.voice=voice;u.lang=voice.lang;u.pitch=style.pitch;u.rate=style.rate;u.volume=volume;
-  const start=performance.now();u.onend=u.onerror=()=>resolve((performance.now()-start)/1000);speechSynthesis.cancel();speechSynthesis.speak(u);
- });
+ const style=TTS_STYLE[characterId]??{pitch:1,rate:1};return speakText(text,{pitch:style.pitch,rate:style.rate,volume});
 }
 const estimate=(text:string)=>Math.max(1.1,Math.min(3.6,.55+text.length*.07));
 
@@ -92,7 +82,7 @@ export class VoiceSystem{
  /** Fetch the list of shipped recordings and this device's own; decode them lazily per pilot. */
  async init(characterIds:string[]){
   [this.shipped,this.recordings]=await Promise.all([shippedVoices(),loadRecordings()]);
-  pickVoice();if(typeof speechSynthesis!=='undefined')speechSynthesis.onvoiceschanged=()=>{spanishVoice=undefined;pickVoice();};
+  pickVoice();if(typeof speechSynthesis!=='undefined')speechSynthesis.onvoiceschanged=()=>{forgetVoice();pickVoice();};
   const ids=new Set(characterIds),wanted=allLines().filter(l=>ids.has(l.characterId)&&(this.recordings.has(l.file)||this.shipped.has(l.file)));
   await Promise.all(wanted.map(l=>this.decode(l.file)));this.loading=false;
  }
@@ -113,9 +103,8 @@ export class VoiceSystem{
   const line=this.pick(characterId,kind);if(!line)return false;
   this.lastKind.set(key,now);this.lastAny=now;
   const c=character(characterId),buffer=this.buffers.get(line.file);let seconds=0,provisional=false;
-  if(now<this.busyUntil&&p>this.busyPriority&&typeof speechSynthesis!=='undefined')speechSynthesis.cancel();
-  if(buffer){seconds=this.audio.playVoice(buffer,pan);}
-  else if(audioSettings.tts&&ttsAvailable()){provisional=true;seconds=estimate(line.text);void speakProvisional(characterId,line.text,audioSettings.voice);}
+  if(buffer){if(now<this.busyUntil&&p>this.busyPriority)cancelSpeech();seconds=this.audio.playVoice(buffer,pan);}
+  else if(audioSettings.tts&&ttsAvailable()){provisional=true;seconds=estimate(line.text);void speakProvisional(characterId,line.text,audioSettings.voice).then(()=>this.resumeAudio());}
   else{seconds=estimate(line.text);provisional=true;}
   seconds=Math.max(seconds,.9);this.busyUntil=now+seconds;this.busyPriority=p;this.audio.duck(seconds+.15);
   if(audioSettings.subtitles||kind==='special')this.onLine({who:c.name,text:line.text,color:c.color,special:kind==='special',provisional:provisional&&!buffer,seconds});
@@ -128,6 +117,8 @@ export class VoiceSystem{
   let index=Math.floor(Math.random()*list.length);if(list.length>1&&index===last)index=(index+1)%list.length;this.lastIndex.set(key,index);
   return{characterId,kind,index,text:list[index],file:`${characterId}/${kind}-${index+1}`};
  }
+ /** iPhone can leave Web Audio interrupted after the system speaks; bring the music back. */
+ private resumeAudio(){const ctx=this.audio.context;if(ctx&&(ctx.state as string)!=='running')void ctx.resume().catch(()=>{});}
  get ready(){return !this.loading;}
- dispose(){if(typeof speechSynthesis!=='undefined')speechSynthesis.cancel();}
+ dispose(){cancelSpeech();}
 }
