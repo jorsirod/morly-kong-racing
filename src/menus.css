@@ -1,0 +1,187 @@
+/*
+ * Menus, revision 3: legibility first. Minimum sizes (CSS px): 12 for any sentence, 11 for
+ * short uppercase labels. Text over the 3D preview sits on a dark plate, never on a hard offset
+ * shadow (that read as a doubled "ghost" line on phones). Pilot cards: posed portrait when
+ * selected, name and car always visible, comparable stats, special in a sentence.
+ */
+.arcade-app{--plate:rgba(8,14,44,.78);--card:#1d3160;--card-hi:#2b4a85;--card-line:#5f7fb8}
+
+/* ——— Text over the 3D preview ——— */
+.arcade-app .arcade-preview-name{text-shadow:none;left:14px;right:auto;bottom:14px;max-width:calc(100% - 28px);padding:10px 14px 9px;background:var(--plate);border-left:4px solid var(--gold);gap:3px}
+.arcade-app .arcade-preview-name>span{font-size:13px;color:#e6edff;letter-spacing:.01em}
+.arcade-app .arcade-preview-name strong{font-size:30px;line-height:1.1;color:#ffe268;text-shadow:0 2px 0 #0b1636}
+.arcade-app .arcade-preview-name small{font-size:11px;letter-spacing:.08em;color:#c9d8f6;margin-top:3px}
+.arcade-app .preview-player-tag span{font-size:16px;text-shadow:0 1px 2px #000}
+.arcade-app .world-preview-caption{background:var(--plate);padding:10px 14px;text-shadow:none}
+.arcade-app .world-preview-caption span{font-size:13px}
+
+/* ——— Panel strip ——— */
+.arcade-app .panel-strip{font-size:13px;padding:11px 16px;align-items:center}
+.arcade-app .panel-strip>span{font-size:12px;color:#d2e0fa;letter-spacing:.03em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+
+/* ——— Pilot picker ——— */
+.pilot-pick{display:flex;flex-direction:column;min-height:0;flex:1;overflow:auto;scrollbar-width:thin;scrollbar-color:#5b7abc #13224e}
+.pilot-roster{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;padding:12px 12px 8px}
+.pilot-card{--pc:#ffd33d;position:relative;display:flex;align-items:center;gap:10px;min-width:0;min-height:60px;padding:5px 10px 5px 5px;text-align:left;color:#eef3ff;background:linear-gradient(180deg,var(--card-hi),var(--card));border:2px solid var(--card-line);border-left:6px solid var(--pc);transition:transform .14s ease,background .14s,border-color .14s,box-shadow .14s}
+.pilot-card:hover,.pilot-card:focus-visible{transform:translateY(-2px);background:linear-gradient(180deg,#36589a,#223a6c);border-color:#a9c3ee}
+.pilot-card .driver-portrait{flex:0 0 auto;width:48px;height:48px;border:2px solid #b0c9e9;border-radius:8px;transform:none;box-shadow:0 2px 0 #0b1636;overflow:hidden}
+.pilot-card .driver-portrait img{width:100%;height:100%;object-fit:cover}
+.pilot-card-text{display:flex;flex-direction:column;gap:2px;min-width:0;flex:1}
+.pilot-card-text>*{display:block;max-width:100%}
+.pilot-card-text strong{font-size:15px;line-height:1.15;font-weight:900;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pilot-card-text small{font-size:12px;line-height:1.2;color:#c3d3f2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pilot-card.selected{background:linear-gradient(180deg,#f0c040,#b67b22);border-color:#fff1a2;border-left-color:#fff1a2;box-shadow:0 0 0 2px #ffd842,0 6px 14px rgba(0,0,0,.35);color:#231503;animation:pilot-pop .32s ease-out}
+.pilot-card.selected .pilot-card-text strong{color:#1c1204}
+.pilot-card.selected .pilot-card-text small{color:#3b2506;font-weight:700}
+.pilot-card.selected .driver-portrait{border-color:#fff8d2;width:52px;height:52px}
+.pilot-badge{position:absolute;top:-8px;right:-6px;font-size:12px;line-height:1;color:#fff7cb;background:#d32e47;padding:4px 6px;border:2px solid #fff1a2;transform:rotate(6deg)}
+@keyframes pilot-pop{0%{transform:scale(.96)}55%{transform:scale(1.04)}100%{transform:scale(1)}}
+
+.pilot-sheet{display:grid;grid-template-columns:1fr 1fr;gap:8px 14px;margin:0 12px 12px;padding:12px 14px;background:#0a1233;border:1px solid #2f4a82;border-left:4px solid var(--gold)}
+.pilot-tagline{grid-column:1/-1;margin:0;font-size:14px;line-height:1.35;color:#dfe8fb}
+.pilot-tagline strong{color:var(--gold);font-size:15px;margin-right:4px}
+.pilot-special{grid-column:1/-1;display:flex;gap:12px;align-items:flex-start}
+.pilot-special .weapon-icon,.pilot-attacks .weapon-icon{position:static;margin:0;transform:none;animation:none;filter:drop-shadow(1px 2px 0 #050b24);flex:0 0 auto}
+.pilot-special .weapon-icon,.pilot-special .weapon-icon svg{width:44px;height:44px}
+.pilot-special>div{display:flex;flex-direction:column;gap:3px;min-width:0}
+.pilot-special span{font-size:11px;font-weight:900;letter-spacing:.12em;color:var(--gold)}
+.pilot-special strong{font-size:17px;line-height:1.25;color:#fff;font-weight:900}
+.pilot-special p{margin:0;font-size:13px;line-height:1.35;color:#c9d7f3}
+.pilot-attacks{grid-column:1/-1;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.pilot-attacks>span{display:grid;grid-template-columns:30px 1fr;grid-template-rows:auto auto;column-gap:7px;align-items:center;min-width:0;padding:5px 7px;background:#14214b;border:1px solid #2c4580}
+.pilot-attacks .weapon-icon,.pilot-attacks .weapon-icon svg{width:30px;height:30px;grid-row:1/3}
+.pilot-attacks b{font-size:12px;line-height:1.2;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pilot-attacks i{font-size:11px;font-style:normal;line-height:1.2;color:#a9bde4;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pilot-stats{grid-column:1/-1;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px 14px}
+.pilot-stats>div,.arcade-app .arcade-stats>div{display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:12px;color:#dfe8fb}
+.pips{display:flex;gap:3px;flex:0 0 auto}
+.pips i{display:block;width:11px;height:9px;transform:skew(-12deg);background:#334e7c;border:1px solid #57719b}
+.pips i.full{background:#ffd144;border-color:#ffeda0;box-shadow:0 1px #8e621c}
+
+/* ——— Cars ——— */
+.arcade-app .arcade-car{gap:4px;min-height:96px}
+.arcade-app .arcade-car strong{font-size:14px;line-height:1.15;color:#fff}
+.arcade-app .arcade-car small{font-size:11px;color:#bcd0f2;line-height:1.1}
+.arcade-app .arcade-car.selected small{color:#3b2506;font-weight:700}
+.arcade-app .arcade-car.selected strong{color:#1c1204}
+.arcade-app .arcade-car.selected{animation:pilot-pop .32s ease-out}
+.arcade-app .car-banter{font-size:14px;line-height:1.35;color:#e6edff;margin:10px 16px 8px}
+.arcade-app .arcade-stats{gap:8px 20px}
+
+/* ——— Worlds and modes ——— */
+.arcade-app .arcade-world-card>b{font-size:14px}
+.arcade-app .arcade-world-card>span{font-size:12px;line-height:1.3}
+.arcade-app .arcade-mode strong{font-size:17px}
+.arcade-app .arcade-mode span,.arcade-app .arcade-mode small,.arcade-app .arcade-mode p{font-size:12px;line-height:1.35}
+.arcade-app .arcade-footer>span{font-size:11px}
+.arcade-app .arcade-footer button{font-size:13px}
+.arcade-app .arcade-header nav button{font-size:12px}
+.arcade-app .arcade-heading p{font-size:14px}
+.arcade-app .arcade-heading>span{font-size:11px}
+
+/* ——— Most laptops: the eyebrow steps aside so the cards keep their room. ——— */
+@media (max-height:820px) and (min-width:701px){
+ .arcade-app .arcade-heading>span{display:none}
+ .arcade-app .arcade-heading{padding-top:10px;padding-bottom:10px}
+ .arcade-app .arcade-heading h1{margin:0 0 4px}
+}
+/* ——— Short screens (laptops, tablets landscape) ——— */
+@media (max-height:680px) and (min-width:701px){
+ .pilot-roster{gap:6px;padding:9px 9px 6px}
+ .pilot-card{min-height:56px;padding:4px 8px 4px 4px;gap:8px}
+ .pilot-card .driver-portrait,.pilot-card.selected .driver-portrait{width:46px;height:46px}
+ .pilot-card-text strong{font-size:14px}
+ .pilot-sheet{padding:9px 11px;gap:6px 12px;margin:0 9px 9px}
+ .pilot-special .weapon-icon,.pilot-special .weapon-icon svg{width:36px;height:36px}
+ .pilot-special strong{font-size:15px}
+}
+/* ——— Narrow (tablets portrait, small laptops) ——— */
+@media (max-width:950px){
+ .pilot-roster{grid-template-columns:repeat(3,minmax(0,1fr))}
+ .pilot-card{flex-direction:column;align-items:center;text-align:center;padding:8px 4px;gap:5px;border-left-width:2px;border-top:5px solid var(--pc)}
+ .pilot-card-text{align-items:stretch;width:100%;text-align:center}
+ .pilot-stats{grid-template-columns:repeat(2,minmax(0,1fr))}
+ .pilot-attacks{grid-template-columns:1fr}
+}
+/* ——— Phones, portrait ——— */
+@media (max-width:700px) and (orientation:portrait){
+ .pilot-pick{overflow:visible}
+ .pilot-card-text strong{font-size:14px}
+ .arcade-app .arcade-preview-name strong{font-size:24px}
+ .arcade-app .arcade-car strong{font-size:13px}
+}
+/* ——— Phones, landscape: the step tabs say where you are, so the big heading steps aside. ——— */
+@media (max-height:500px) and (orientation:landscape){
+ .arcade-app .arcade-heading{display:none}
+ .arcade-app .arcade-header{min-height:46px}
+ .arcade-app .arcade-header nav button{font-size:11px;min-height:34px;padding:4px 10px}
+ .arcade-app .arcade-footer{min-height:48px}
+ .arcade-app .arcade-footer button{font-size:12px;min-height:38px}
+ .arcade-app .arcade-footer>span{font-size:11px}
+ .arcade-app .arcade-main{padding-top:8px}
+ .arcade-app .arcade-garage,.arcade-app .arcade-worlds,.arcade-app .arcade-setup{height:100%;min-height:0}
+ .arcade-app .arcade-selection{min-height:0;overflow:hidden}
+ .arcade-app .panel-strip{font-size:12px;padding:7px 11px}
+ .arcade-app .panel-strip>span{font-size:11px}
+ .arcade-app .arcade-preview-name{padding:6px 10px;bottom:8px;left:8px}
+ .arcade-app .arcade-preview-name>span{font-size:11px}
+ .arcade-app .arcade-preview-name strong{font-size:20px}
+ .arcade-app .arcade-preview-name small{display:none}
+ .arcade-app .preview-player-tag span{font-size:13px}
+ .pilot-roster{gap:5px;padding:7px}
+ .pilot-card{flex-direction:row;text-align:left;align-items:center;min-height:44px;padding:3px 6px 3px 3px;gap:6px;border-top-width:2px;border-left-width:5px}
+ .pilot-card-text{align-items:flex-start}
+ .pilot-card .driver-portrait,.pilot-card.selected .driver-portrait{width:36px;height:36px;border-radius:6px}
+ .pilot-card-text strong{font-size:13px}
+ .pilot-card-text small{display:none}
+ .pilot-badge{font-size:11px;top:-6px;right:-4px;padding:2px 4px}
+ .pilot-sheet{margin:0 7px 7px;padding:8px 10px 16px;gap:6px 10px}
+ .pilot-tagline{display:none}
+ .pilot-special .weapon-icon,.pilot-special .weapon-icon svg{width:32px;height:32px}
+ .pilot-special strong{font-size:14px}
+ .pilot-special p{font-size:12px}
+ .pilot-attacks{grid-template-columns:repeat(3,minmax(0,1fr));gap:5px}
+ .pilot-attacks>span{grid-template-columns:24px 1fr;padding:3px 5px}
+ .pilot-attacks .weapon-icon,.pilot-attacks .weapon-icon svg{width:24px;height:24px}
+ .pilot-attacks i{display:none}
+ .pilot-stats{grid-template-columns:repeat(4,minmax(0,1fr));gap:4px 10px}
+ .pilot-stats>div,.arcade-app .arcade-stats>div{font-size:11px}
+ .pips i{width:8px;height:7px}
+ .arcade-app .arcade-cars{gap:5px;padding:7px 7px 0}
+ .arcade-app .arcade-car{min-height:62px;padding:3px}
+ .arcade-app .arcade-car strong{font-size:12px}
+ .arcade-app .arcade-car small{display:none}
+ .arcade-app .car-banter{font-size:12px;margin:6px 10px}
+ .arcade-app .arcade-stats{padding:0 10px 8px;gap:5px 14px}
+ .arcade-app .arcade-world-card>b{font-size:12px}
+ .arcade-app .arcade-world-card>span{font-size:11px}
+ .arcade-app .arcade-mode strong{font-size:14px}
+ .arcade-app .arcade-mode span,.arcade-app .arcade-mode small,.arcade-app .arcade-mode p{font-size:11px}
+}
+
+/* ——— Setup (step 4) ——— */
+.arcade-app .setup-combination>div{font-size:15px}
+.arcade-app .setup-combination strong{font-size:15px}
+.arcade-app .setup-combination span{font-size:13px;color:#c9d8f3}
+.arcade-app .setup-fields label{font-size:11px;color:#f0dcae}
+.arcade-app .setup-fields input,.arcade-app .setup-fields select,.arcade-app .arcade-join input{font-size:15px}
+.arcade-app .setup-banter{font-size:13px;line-height:1.4}
+.arcade-app .arcade-primary{font-size:16px}
+.arcade-app .arcade-secondary,.arcade-app .arcade-join button{font-size:13px}
+.arcade-app .title-links>button{font-size:12px}
+.arcade-app .insert-coin{font-size:11px}
+.arcade-app .title-content>p{font-size:15px}
+@media (max-height:500px) and (orientation:landscape){
+ .arcade-app .setup-combination{margin:7px 11px}
+ .arcade-app .setup-combination strong{font-size:13px}
+ .arcade-app .setup-combination span{font-size:11px}
+ .arcade-app .setup-fields label{font-size:11px}
+ .arcade-app .setup-fields input,.arcade-app .setup-fields select{font-size:13px;height:36px}
+ .arcade-app .setup-banter{font-size:11px}
+ .arcade-app .arcade-primary{font-size:14px}
+ .arcade-app .arcade-secondary,.arcade-app .arcade-join button{font-size:12px}
+ .arcade-app .title-links>button{font-size:11px}
+ .arcade-app .insert-coin{font-size:11px}
+ .arcade-app .title-content>p{font-size:12px}
+}
+@media (prefers-reduced-motion:reduce){.pilot-card.selected,.arcade-app .arcade-car.selected{animation:none}.pilot-card:hover{transform:none}}
