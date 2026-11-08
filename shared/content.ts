@@ -10,6 +10,7 @@ export const CHARACTERS: CharacterDefinition[] = [
  { id:'enanonitas',name:'Enanonitas',initials:'EN',color:'#bf8873',shirt:'#ab4944',basics:[a('Una cebolla','onion','🧅',1,'slow'),a('Dos cebollas','onion','🧅',2,'slow'),a('Tres cebollas','onion','🧅',3,'slow')],special:a('Yo te invoco, Claudia Salinas','claudia','🧅',6,'stun') },
  { id:'jorsi',name:'Jorsi',initials:'JO',color:'#66b5c0',shirt:'#317e91',basics:[a('Plumazo de pintura','brush','🖌',1,'paint'),a('Lápiz con resorte','pencil','✏'),a('Borrador volador','eraser','▰',1,'spin','boomerang')],special:a('Yo te pinto la mochila','backpack','🎒',1,'stun') },
  { id:'roman',name:'Roman',initials:'RO',color:'#d9435b',shirt:'#d84a45',beard:true,basics:[a('Tenedor para nacatamal','fork','🍴'),a('Control de play que explota','gamepad','🎮',1,'spin'),a('La ternerita…','calf','🐄',1,'spin','bounce')],special:a('Moonwalk de Michael Jackson (Bailado por Romie)','moonwalk','🕺',1,'stun','area') },
+ { id:'cucukis',name:'Cucukis',initials:'CU',color:'#3f8cff',shirt:'#2f6fd0',basics:[a('Midamos mesas','table','🍺'),a('Bombazo de los Beatles','bomb','💣'),a('Megabombazo de los Beatles','megabomb','💥')],special:a('Invocación de Peeerrrrisss','peers','💃',7,'stun') },
  { id:'raulin',name:'Raulín',initials:'RA',color:'#909fc6',shirt:'#58759d',basics:[a('Un pepino','cucumber','🥒'),a('Dos pepinos','cucumber','🥒',2),a('Tres pepinos','cucumber','🥒',3)],special:a('Balde de leche','milk','🥛',1,'stun','area') },
 ];
 export const VEHICLES: VehicleDefinition[] = [
@@ -18,6 +19,7 @@ export const VEHICLES: VehicleDefinition[] = [
  { id:'hola-willy',name:'Hola Willy',model:'Volkswagen Golf IV · ALF a bordo',color:'#f3efe3',kind:'golf',description:'ALF de copiloto. Él tampoco sabe llegar.',stats:[4,4,4,3,2] },
  { id:'orange-seed',name:'Orange Seed',model:'Mazda 3 · hatchback',color:'#f3782c',kind:'mazda',description:'Dobla precioso. Aguanta golpes como celular sin funda.',stats:[3,5,5,2,2] },
  { id:'black-diamond',name:'Black Diamond',model:'Daewoo Matiz · aprox. 2009',color:'#27353c',kind:'matiz',description:'Corre como si debiera plata. Pesa como el recibo.',stats:[5,4,3,1,1] },
+ { id:'el-tiburon',name:'El Tiburón',model:'Toyota Yaris sedán · 2000',color:'#f2f0e8',kind:'sedan',description:'Más golpes que kilómetros. El tiburón de atrás es lo único que muerde.',stats:[3,4,4,2,3] },
  { id:'la-raulina',name:'La Raulina',model:'Chevrolet S-10 · cabina sencilla',color:'#f7f3df',kind:'pickup-single',description:'Una cabina, cero delicadeza. El resto que se quite.',stats:[3,3,3,5,3] },
 ];
 const p = (x:number,z:number,y=0) => ({x,y,z});

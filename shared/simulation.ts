@@ -568,7 +568,8 @@ export class Simulation {
       // Electric slipper jumps once to a rival nearby; the six-pack and the PS3 splash around the target.
       if(shot.object==='slipper'){const next=s.players.find(v=>v.id!==p.id&&v.id!==shot.owner&&v.finishTime<0&&!shot.hit.includes(v.id)&&Math.hypot(v.x-p.x,v.z-p.z)<9);if(next&&this.applyHit(shot,next,{x:p.x,y:p.y,z:p.z})){for(const same of s.shots)if(same.cast===shot.cast)same.hit.push(next.id);}}
       // The PlayStation controller explodes: everyone close to the one it hit gets caught too.
-      if(shot.object==='gamepad')for(const v of s.players){if(v.id===shot.owner||v.finishTime>=0||shot.hit.includes(v.id)||Math.hypot(v.x-p.x,v.z-p.z)>5)continue;if(this.applyHit(shot,v)){for(const same of s.shots)if(same.cast===shot.cast)same.hit.push(v.id);}}
+      const splash=shot.object==='gamepad'?5:shot.object==='bomb'?5:shot.object==='megabomb'?8:0;
+      if(splash)for(const v of s.players){if(v.id===shot.owner||v.finishTime>=0||shot.hit.includes(v.id)||Math.hypot(v.x-p.x,v.z-p.z)>splash)continue;if(this.applyHit(shot,v)){for(const same of s.shots)if(same.cast===shot.cast)same.hit.push(v.id);}}
       if(shot.special&&(shot.object==='sixpack'||shot.object==='console'))for(const v of s.players){if(v.id===shot.owner||v.finishTime>=0||shot.hit.includes(v.id)||Math.hypot(v.x-p.x,v.z-p.z)>5.5)continue;if(this.applyHit(shot,v)){for(const same of s.shots)if(same.cast===shot.cast)same.hit.push(v.id);}}
       // Thrown objects and dropped traps are used up on contact; clouds and boomerangs keep going.
       if(shot.delivery==='projectile'||shot.delivery==='rear'||shot.delivery==='bounce')shot.life=Math.min(shot.life,0);

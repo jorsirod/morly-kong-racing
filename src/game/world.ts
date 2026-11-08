@@ -1,4 +1,7 @@
-import { Vector3 } from '@babylonjs/core/Maths/math.vector';
+import { Matrix, Quaternion, Vector3 } from '@babylonjs/core/Maths/math.vector';
+import { Color3 } from '@babylonjs/core/Maths/math.color';
+import { StandardMaterial } from '@babylonjs/core/Materials/standardMaterial';
+import '@babylonjs/core/Meshes/thinInstanceMesh';
 import { MeshBuilder } from '@babylonjs/core/Meshes/meshBuilder';
 import { Mesh } from '@babylonjs/core/Meshes/mesh';
 import { TransformNode } from '@babylonjs/core/Meshes/transformNode';
@@ -6,7 +9,7 @@ import type { Scene } from '@babylonjs/core/scene';
 import { track } from '../../shared/content';
 import { routeFor, sample } from '../../shared/track';
 import { cylinder,sphere,material,textLabel } from './models';
-import { Kit,surfaceTexture,type Anim } from './worlds/kit';
+import { Kit,rng,surfaceTexture,type Anim } from './worlds/kit';
 import { buildCourse,type TrackStyle } from './worlds/course';
 import { buildLaSalle } from './worlds/lasalle';
 import { dressOriental,dressManagua,dressMasaya,dressSanJuan,managuaLandmarks } from './worlds/others';
@@ -74,8 +77,28 @@ export function buildWorld(scene:Scene,id:string,battle=false) {
  if(!night){for(let i=0;i<7;i++){const cloud=new TransformNode('cloud',scene);cloud.parent=root;cloud.position.set(-250+i*75,48+(i%3)*5,-220);for(let k=0;k<3;k++)sphere(scene,cloud,'cloud-puff',k*8,Math.sin(k)*2,0,17,'#fff6df',new Vector3(1.15,.5,.7));}
  if(!battle)for(let d=20;d<L;d+=35){if(special(d))continue;const p=sample(route,d);if(id==='la-salle'&&p.x>140&&p.z>-75&&p.z<65)continue;for(const side of [-1,1]){const x=p.x+Math.cos(p.yaw)*(def.width*.85+4)*side,z=p.z-Math.sin(p.yaw)*(def.width*.85+4)*side;if(!kit.blocked(x,z,1.5)){for(let k=0;k<3;k++)sphere(scene,root,'roadside-bush',x+k*.8,p.y+1.1,z,2.4,['#62ad43','#85c84e','#b8dc5a'][k]);}const next=sample(route,d+15);if(Math.abs(Math.atan2(Math.sin(next.yaw-p.yaw),Math.cos(next.yaw-p.yaw)))>.15){const fx=p.x+Math.cos(p.yaw)*(def.width*.72+.7)*side,fz=p.z-Math.sin(p.yaw)*(def.width*.72+.7)*side;if(kit.onLane(fx,fz,1.5))continue;const sign=box(scene,root,'curve-arrow',fx,p.y+1.8,fz,2.2,1.1,.12,'#ffdc49');sign.rotation.y=p.yaw;const mark=textLabel(scene,root,side>0?'‹':'›',fx,p.y+1.8,fz,1.7,.9,'#1a355c','#ffdc49');if(mark)mark.rotation.y=p.yaw;cylinder(scene,root,'arrow-post',fx,p.y+.8,fz,1.6,.12,'#597080');}}}
  for(let i=0;i<14;i++){const a=i*2.4,x=Math.sin(a)*(285+i*6),z=Math.cos(a)*(285+i*6);sphere(scene,root,'hill',x,8,z,90,def.ground,new Vector3(1,.45,1));}}
+ if(!battle&&!night)scatterDetail(kit,route,id);
  // Bake static primitives into a small set of material batches.
- const groups=new Map<string,Mesh[]>();for(const m of root.getChildMeshes(false) as Mesh[]){if(!m.material||m.name.startsWith('label')||m.parent?.metadata?.animate)continue;const k=m.material.name,g=groups.get(k)??[];g.push(m);groups.set(k,g);}
+ const groups=new Map<string,Mesh[]>();for(const m of root.getChildMeshes(false) as Mesh[]){if(!m.material||m.name.startsWith('label')||m.parent?.metadata?.animate||m.metadata?.keep)continue;const k=m.material.name,g=groups.get(k)??[];g.push(m);groups.set(k,g);}
  for(const group of groups.values())if(group.length>1){const m=Mesh.MergeMeshes(group,true,true,undefined,false,false);if(m){m.parent=root;m.isPickable=false;}}
  root.getChildMeshes().forEach(m=>{m.isPickable=false;m.receiveShadows=true;if(!m.parent?.metadata?.animate)m.freezeWorldMatrix();});root.metadata={anims:kit.anims as Anim[],gates:kit.gates};return root;
+}
+
+/** Grass tufts and wild flowers along the verges, as thin instances (one draw call each). Masaya gets dry tufts and
+ * pebbles, San Juan sea grass. Deterministic, so every player sees the same verge. */
+function scatterDetail(kit:Kit,route:ReturnType<typeof routeFor>,id:string){
+ const scene=kit.scene,r=rng(id.length*131+7),dry=id==='masaya',sand=id==='san-juan';
+ const tuftColor=dry?'#9c8a5a':sand?'#8fbf5a':'#5fae3e',tipColor=dry?'#c9b47a':sand?'#c8e07a':'#9ad65a';
+ // Tuft: three crossed blades, double sided.
+ const blades:Mesh[]=[];for(let i=0;i<3;i++){const b=MeshBuilder.CreatePlane('tuft-blade',{width:.9,height:.8,sideOrientation:2},scene);b.position.y=.38;b.rotation.y=i*Math.PI/3;b.bakeCurrentTransformIntoVertices();blades.push(b);}
+ const tuft=Mesh.MergeMeshes(blades,true)!;tuft.name='verge-tufts';const tm=new StandardMaterial('verge-tufts',scene);tm.diffuseColor=Color3.FromHexString(tuftColor);tm.emissiveColor=Color3.FromHexString(tipColor).scale(.18);tm.specularColor=Color3.Black();tm.backFaceCulling=false;tuft.material=tm;tuft.parent=kit.root;tuft.isPickable=false;
+ const flower=MeshBuilder.CreateSphere('verge-flowers',{diameter:.42,segments:3},scene);const fm=new StandardMaterial('verge-flowers',scene);fm.diffuseColor=Color3.White();fm.emissiveColor=new Color3(.15,.15,.15);fm.specularColor=Color3.Black();flower.material=fm;flower.parent=kit.root;flower.isPickable=false;
+ const tufts:number[]=[],flowers:number[]=[],colors:number[]=[],palette=dry?['#8a7a6a','#6d625a','#a39484']:['#ff5a8a','#ffd33d','#ffffff','#b77bff','#ff8a3d','#4fc3f7'];
+ const m=Matrix.Identity();
+ for(let d=0;d<route.length;d+=1.6){const p=sample(route,d);if(p.y>.5)continue;
+  for(const side of [-1,1]){if(r()<.25)continue;const off=(route.width*.72+1.2+r()*r()*26)*side,x=p.x+Math.cos(p.yaw)*off+(r()-.5)*2,z=p.z-Math.sin(p.yaw)*off+(r()-.5)*2;if(kit.blocked(x,z,.6))continue;
+   const s=.7+r()*.9;Matrix.ComposeToRef(new Vector3(s,s*(.8+r()*.6),s),Quaternion.RotationYawPitchRoll(r()*6.28,0,0),new Vector3(x,-.12,z),m);m.copyToArray(tufts,tufts.length);
+   if(r()<.32){const f=.6+r()*.7;Matrix.ComposeToRef(new Vector3(f,f*(dry?.5:1),f),Quaternion.Identity(),new Vector3(x+(r()-.5)*1.4,dry?.08:.55,z+(r()-.5)*1.4),m);m.copyToArray(flowers,flowers.length);const c=Color3.FromHexString(palette[Math.floor(r()*palette.length)]);colors.push(c.r,c.g,c.b,1);}}}
+ tuft.thinInstanceSetBuffer('matrix',new Float32Array(tufts),16,true);flower.thinInstanceSetBuffer('matrix',new Float32Array(flowers),16,true);flower.thinInstanceSetBuffer('color',new Float32Array(colors),4,true);
+ tuft.metadata={keep:true};flower.metadata={keep:true};
 }

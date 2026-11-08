@@ -79,7 +79,7 @@ const LOOKS:Record<string,Look>={
  // Semilla: the tallest of the gang (confirmed). Long face, short beard, half smile.
  semilla:{skin:'#c88b68',hair:'#2e2525',head:[.96,1.14,.94],eyes:.16,brow:.06,browTilt:.04,haircut:'crop',height:1.22,width:.94,neck:.2,cheeks:.04,ears:.21,nose:.25,smile:'smirk',beard:'short',moustache:'thick'},
  // Morly: the darkest skin of the group (confirmed), light cap, big grin, beard and moustache.
- morly:{skin:'#7d4e33',hair:'#1f1a1b',head:[1.06,1.04,.96],eyes:.16,brow:.05,browTilt:-.02,haircut:'crop',height:1,width:1.05,neck:0,cheeks:.04,ears:.21,nose:.27,smile:'grin',beard:'short',moustache:'thick'},
+ morly:{skin:'#7d4e33',hair:'#1f1a1b',head:[1.1,1.02,.98],eyes:.15,brow:.0,browTilt:-.04,haircut:'crop',height:1,width:1.05,neck:0,cheeks:.04,ears:.42,nose:.3,smile:'grin',beard:'short',moustache:'thick'},
  // Chete: the only one with big round cheeks (confirmed). Side part, confident smile, gold chain.
  chete:{skin:'#d3a07c',hair:'#332c25',head:[1.08,1.02,.98],eyes:.15,brow:-.04,browTilt:.06,haircut:'side',height:.98,width:1.1,neck:-.04,cheeks:.36,ears:.2,nose:.24,smile:'wide'},
  // Coconitas: basketball player look — spiky hair, sweatband, open laugh.
@@ -94,6 +94,8 @@ const LOOKS:Record<string,Look>={
  jorsi:{skin:'#c58f71',hair:'#302b2a',head:[.99,1.06,.98],eyes:.16,brow:.1,browTilt:.03,haircut:'quiff',height:1.04,width:.98,neck:.02,cheeks:.04,ears:.21,nose:.25,smile:'grin',beard:'goatee'},
  // Roman (Romie): full dark beard and moustache, short curly hair, red polo (from his photo).
  roman:{skin:'#d6a382',hair:'#1f1815',head:[1,1.08,.97],eyes:.16,brow:.07,browTilt:.05,haircut:'curly',height:1.05,width:1.02,neck:.02,cheeks:.04,ears:.21,nose:.3,smile:'smirk',beard:'full',moustache:'thick'},
+ // Cucukis: very thin, fair skin, narrow eyes; sailor hat and sailor top.
+ cucukis:{skin:'#f2d3ba',hair:'#5c4331',head:[.84,1.14,.9],eyes:.15,brow:.06,browTilt:-.04,haircut:'crop',height:1.08,width:.72,neck:.12,cheeks:.04,ears:.2,nose:.24,smile:'smirk'},
  // Raulín: round face and buzz cut, easy laugh.
  raulin:{skin:'#c39479',hair:'#392d27',head:[1.14,1.04,.96],eyes:.18,brow:-.03,browTilt:0,haircut:'buzz',height:.98,width:1.08,neck:-.02,cheeks:.04,ears:.23,nose:.28,smile:'open'},
 };
@@ -147,6 +149,11 @@ export function buildCharacter(scene:Scene,id:string,parent:TransformNode){
  if(f.haircut==='crop')sphere(scene,head,'hair-fringe',0,1.6,.24,.5,f.hair,new Vector3(1.4*hx,.3,.5));
  if(f.haircut==='curly')for(let i=0;i<16;i++){const a=i*2.399,r=.12+((i*.37)%1)*.26;sphere(scene,head,'hair-curl',Math.cos(a)*r*hx,1.66+Math.cos(r*4)*.05-(r>.3?.05:0),-.05+Math.sin(a)*r*.9+.04,.26,f.hair);}
  if(c.cap){sphere(scene,head,'cap-crown',0,1.64,-.035,.91,c.cap,new Vector3(1.03*hx,.47,.95));const brim=box(scene,head,'cap-brim',0,1.58,.4,.7,.055,.54,c.cap);brim.rotation.x=.1;box(scene,head,'cap-badge',0,1.68,.41,.18,.13,.025,c.id==='calin'?'#fff9e9':'#e8b52b');}
+ // Cucukis: narrow eyes (squashed whites, half lids) and a white sailor hat with a navy band.
+ if(c.id==='cucukis'){for(const m of head.getChildMeshes())if(/^(eye-white|iris|pupil|eye-glint)/.test(m.name))m.scaling.y*=.5;for(const x of [-f.eyes,f.eyes])sphere(scene,head,'eyelid',x*hx,1.335,.43*hz,.23,f.skin,new Vector3(.9,.42,.5));
+  sphere(scene,head,'sailor-hat-crown',0,1.7,-.04,.96,'#f7f7f2',new Vector3(1.02*hx,.5,1));const rim=torus(scene,head,'sailor-hat-rim',0,1.6,-.04,.98*hx,.15,'#f7f7f2');rim.scaling.y=.75;const band=torus(scene,head,'sailor-hat-band',0,1.66,-.04,.9*hx,.05,'#1d3a7a');band.scaling.y=.6;}
+ // Morly «Kong»: a little monkey face — light muzzle, wide flat nose with nostrils, heavy brow and round ears.
+ if(c.id==='morly'){sphere(scene,head,'monkey-muzzle',0,1.03,.27*hz,.66,'#d2a47c',new Vector3(1.3*hx,.82,.56));sphere(scene,head,'monkey-nose',0,1.14,.5*hz,.3,'#5a3522',new Vector3(1.35,.62,.7));for(const x of [-1,1])sphere(scene,head,'monkey-nostril',x*.065,1.12,.56*hz,.07,'#2a1a12');tube(scene,head,'monkey-brow',[[-.34*hx,1.42,.4*hz],[0,1.38,.47*hz],[.34*hx,1.42,.4*hz]],.07,'#5a3522');for(const x of [-1,1])sphere(scene,head,'monkey-ear-inner',x*.55*hx,1.17,.07,.26,'#b98a66',new Vector3(.45,.9,.5));}
  if(c.id==='coconitas'){const band=torus(scene,head,'sweatband',0,1.46,0,.92*hx,.07,'#fff6e2');band.scaling.z=.98;}
  if(c.id==='jorsi'){const pencil=cylinder(scene,head,'ear-pencil',.46*hx,1.3,-.04,.62,.07,'#f3c12d');pencil.rotation.x=1.2;pencil.rotation.z=.3;}
  // Arms and hands on the wheel; thin pilots get thin arms.
@@ -187,6 +194,13 @@ export function buildCharacter(scene:Scene,id:string,parent:TransformNode){
   sphere(scene,root,'heart-lobe',-.07,by+.12,backZ-.29,.16,'#ffd34d',new Vector3(1,1,.3));sphere(scene,root,'heart-lobe',.07,by+.12,backZ-.29,.16,'#ffd34d',new Vector3(1,1,.3));const tip=box(scene,root,'heart-tip',0,by+.04,backZ-.29,.15,.15,.04,'#ffd34d');tip.rotation.z=Math.PI/4;
   for(const x of [-1,1])sphere(scene,root,'heart-eye',x*.05,by+.12,backZ-.315,.035,'#1d2430');tube(scene,root,'heart-smile',[[-.05,by+.06,backZ-.315],[0,by+.04,backZ-.32],[.05,by+.06,backZ-.315]],.012,'#1d2430');
  }
+ else if(c.id==='cucukis'){
+  // Sailor top: big square collar with white stripes front and back, red neckerchief tied in a bow.
+  box(scene,root,'sailor-collar-back',0,backY+.36,backZ-.02,.62,.38,.04,'#1d3a7a');for(const y of [.2,.5])box(scene,root,'sailor-stripe',0,backY+y,backZ-.045,.58,.03,.02,'#ffffff');
+  for(const x of [-1,1]){const lap=box(scene,root,'sailor-lapel',x*.13,.5,.33,.18,.34,.04,'#1d3a7a');lap.rotation.z=x*.45;}
+  sphere(scene,root,'sailor-bow',0,.42,.36,.16,'#e53b35',new Vector3(1.6,.8,.6));for(const x of [-1,1]){const t=box(scene,root,'sailor-bow-tail',x*.06,.3,.36,.06,.2,.03,'#e53b35');t.rotation.z=x*.3;}
+  textLabel(scene,root,'CUCUKIS',0,backY+.05,backZ-.02,.46,.11,'#ffffff',c.shirt);
+ }
  else if(c.id==='roman'){
   // Red polo: collar, placket with buttons, and his name on the back.
   for(const x of [-1,1])box(scene,root,'shirt-collar',x*.12,.64,.28,.2,.12,.05,'#b8343a').rotation.z=x*.35;
@@ -208,14 +222,23 @@ export { buildVehicle, buildAlf } from './vehicles';
 /** Runtime-only decals (canvas text cannot live in the GLB): rear name plates the chase camera
  * reads, a Nicaraguan plate, and each car's signature sticker. */
 /** Where the rear name plate and the licence plate go on each body (z, y, width; plate z, y). */
-const REAR:Record<string,{z:number;y:number;w:number;pz:number;py:number}>={suv:{z:-2.41,y:1.32,w:.66,pz:-2.11,py:.72},'pickup-double':{z:-2.43,y:1.0,w:1.55,pz:-2.58,py:.54},'pickup-single':{z:-2.43,y:.92,w:1.55,pz:-2.58,py:.48},golf:{z:-2.04,y:1.36,w:1.2,pz:-2.11,py:.92},mazda:{z:-2.12,y:1.42,w:1.2,pz:-2.07,py:.95},matiz:{z:-1.75,y:1.36,w:1.1,pz:-1.755,py:.9}};
+const REAR:Record<string,{z:number;y:number;w:number;pz:number;py:number}>={suv:{z:-2.41,y:1.32,w:.66,pz:-2.11,py:.72},'pickup-double':{z:-2.43,y:1.0,w:1.55,pz:-2.58,py:.54},'pickup-single':{z:-2.43,y:.92,w:1.55,pz:-2.58,py:.48},golf:{z:-2.04,y:1.36,w:1.2,pz:-2.11,py:.92},mazda:{z:-2.12,y:1.42,w:1.2,pz:-2.07,py:.95},matiz:{z:-1.75,y:1.36,w:1.1,pz:-1.755,py:.9},sedan:{z:-2.04,y:1.36,w:1.1,pz:-2.06,py:.92}};
 export function addVehicleDecals(scene:Scene,body:TransformNode,id:string):TransformNode|null{
  if(typeof document==='undefined')return null;
  const v=vehicle(id),r=REAR[v.kind]??REAR.golf,dark=v.id==='black-diamond',group=new TransformNode('decals',scene);group.parent=body;body=group;
  // Planes face -z by default, which is exactly where the chase camera sits: no turning needed.
  textLabel(scene,body,v.name.toUpperCase(),0,r.y+(v.kind==='suv'?.08:.06),r.z,r.w,r.w*.2,dark?'#ffd33d':'#13234d',dark?'#27353c':v.color);
  if(v.kind==='suv'){textLabel(scene,body,'EL MÁS CULITO',0,r.y-.12,r.z,.62,.12,'#2fa5cd','#e9eef1');}
- textLabel(scene,body,v.id==='la-raulina'?'M 2003':v.id==='white-empanade'?'M 1999':v.id==='black-diamond'?'M 2009':'M 2008',0,r.py,r.pz,.56,.18,'#163a7a','#f7f4ea');
+ textLabel(scene,body,v.id==='el-tiburon'?'M 2000':v.id==='la-raulina'?'M 2003':v.id==='white-empanade'?'M 1999':v.id==='black-diamond'?'M 2009':'M 2008',0,r.py,r.pz,.56,.18,'#163a7a','#f7f4ea');
+ // El Tiburón: a big cartoon shark sticker across the trunk lid, mouth open.
+ if(v.id==='el-tiburon'){const d=decal(scene,body,'shark-sticker',0,1.66,-1.43,1.45,.72,ctx=>{ctx.clearRect(0,0,512,256);ctx.lineJoin='round';ctx.lineWidth=10;ctx.strokeStyle='#1b2a3a';
+  ctx.fillStyle='#6f8fa8';ctx.beginPath();ctx.moveTo(40,140);ctx.quadraticCurveTo(170,40,330,90);ctx.lineTo(380,30);ctx.lineTo(395,100);ctx.quadraticCurveTo(450,110,490,70);ctx.lineTo(470,140);ctx.lineTo(495,205);ctx.quadraticCurveTo(450,170,400,180);ctx.quadraticCurveTo(230,230,40,140);ctx.closePath();ctx.fill();ctx.stroke();
+  ctx.fillStyle='#f4f1e8';ctx.beginPath();ctx.moveTo(52,148);ctx.quadraticCurveTo(200,215,360,175);ctx.quadraticCurveTo(220,160,120,130);ctx.closePath();ctx.fill();
+  ctx.fillStyle='#c43a3a';ctx.beginPath();ctx.moveTo(48,140);ctx.lineTo(140,118);ctx.lineTo(150,160);ctx.closePath();ctx.fill();ctx.stroke();
+  ctx.fillStyle='#fff';for(let i=0;i<4;i++){ctx.beginPath();ctx.moveTo(70+i*20,133-i*5);ctx.lineTo(80+i*20,147-i*4);ctx.lineTo(90+i*20,129-i*5);ctx.fill();}
+  ctx.beginPath();ctx.arc(150,100,15,0,7);ctx.fill();ctx.fillStyle='#111';ctx.beginPath();ctx.arc(154,102,7,0,7);ctx.fill();
+  for(let i=0;i<3;i++){ctx.beginPath();ctx.moveTo(230+i*18,110);ctx.lineTo(225+i*18,140);ctx.stroke();}});
+  if(d)d.rotation.x=-.42;}
  if(dark)for(const x of [-1,1]){const gem=textLabel(scene,body,'◆',x*.97,1.12,-.2,.34,.34,'#7ef3ff','#27353c');if(gem)gem.rotation.y=x>0?-Math.PI/2:Math.PI/2;}
  return group;
 }
@@ -238,7 +261,7 @@ function leaf(scene:Scene,root:TransformNode){
  }
  const m=new Mesh('seven-point-cannabis-leaf',scene),data=new VertexData();data.positions=positions;data.indices=indices;data.uvs=uvs;data.normals=[];VertexData.ComputeNormals(positions,indices,data.normals);data.applyToMesh(m);m.parent=root;m.material=material(scene,'#55aa43');(m.material as StandardMaterial).backFaceCulling=false;tube(scene,root,'leaf-stem',[[0,0,-.48],[0,0,-.88]],.044,'#75c351');root.rotation.x=-.38;
 }
-export function buildProjectile(scene:Scene,object:string,special=false){
+export function buildProjectile(scene:Scene,object:string,special=false,variant=0){
  const root=new TransformNode('attack-'+object,scene);
  if(['victoria','tona','rum','flor'].includes(object)){bottle(scene,root,object);}
  else if(object==='sixpack'){
@@ -268,6 +291,26 @@ export function buildProjectile(scene:Scene,object:string,special=false){
  }
  else if(object==='console'){
   box(scene,root,'ps3-body',0,0,0,1.48,.37,1.08,'#17202b');sphere(scene,root,'ps3-curved-top',0,.15,0,1.15,'#273440',new Vector3(1.27,.29,.92));box(scene,root,'ps3-disc-slot',0,.07,.55,1.01,.034,.021,'#8694a8');box(scene,root,'ps3-status-led',.48,-.035,.564,.11,.025,.017,'#8adb59');textLabel(scene,root,'PLAYSTATION 3',0,.14,.571,1.14,.15,'#d9e2ee','#1c2a37');
+ }
+ else if(object==='table'){
+  // «Midamos mesas»: a little bar table with a Victoria on top.
+  cylinder(scene,root,'table-top',0,.35,0,.1,1.4,'#b8864e',1.4);cylinder(scene,root,'table-leg',0,-.15,0,1,.14,'#5b4a3a');cylinder(scene,root,'table-foot',0,-.66,0,.06,.8,'#5b4a3a');
+  const b=new TransformNode('table-bottle',scene);b.parent=root;b.position.set(.2,.75,0);b.scaling.setAll(.42);bottle(scene,b,'victoria');
+ }
+ else if(object==='bomb'||object==='megabomb'){
+  // Cartoon bomb with a lit fuse and music notes around it; the mega one is huge and striped.
+  const big=object==='megabomb',s=big?1.6:1;sphere(scene,root,'bomb-body',0,0,0,1.2*s,'#1f2230');cylinder(scene,root,'bomb-cap',0,.62*s,0,.22*s,.42*s,'#5d6270');
+  tube(scene,root,'bomb-fuse',[[0,.72*s,0],[.12*s,.95*s,.05],[.05*s,1.12*s,.12*s]],.04*s,'#c9a36a');const spark=sphere(scene,root,'bomb-spark',.05*s,1.18*s,.12*s,.26*s,'#ffb02e');spark.material=material(scene,'#ffb02e',true);
+  if(big)for(const y of [-.2,.2]){const band=torus(scene,root,'bomb-band',0,y*s,0,1.22*s,.05*s,'#e53b35');band.scaling.y=1;}
+  for(let i=0;i<3;i++){const a=i*2.1,n=new TransformNode('note',scene);n.parent=root;n.position.set(Math.cos(a)*.95*s,.25*s+i*.12,Math.sin(a)*.95*s);cylinder(scene,n,'note-stem',.06,.18,0,.36,.04,'#ffe36b');const head=sphere(scene,n,'note-head',0,0,0,.16,'#ffe36b');head.scaling.set(1.3,.9,1);head.material=material(scene,'#ffe36b',true);}
+ }
+ else if(object==='peers'){
+  // The avalanche: girls dressed for a night out running together, each one different.
+  const dress=['#ff4fa3','#ffd33d','#2ee6d6','#b77bff','#ff8a3d','#9bff4f','#e53b35'][variant%7],hair=['#2b1d17','#6b3e1f','#e8c06a','#1b1b1b','#8a2b2b'][variant%5],skin=['#e8b996','#c48a64','#8d5a3c','#f2d3ba'][variant%4];
+  sphere(scene,root,'peers-dress',0,-.05,0,.9,dress,new Vector3(.75,1.35,.65));cylinder(scene,root,'peers-skirt',0,-.55,0,.4,.95,dress,.6);
+  sphere(scene,root,'peers-head',0,.72,.02,.55,skin);sphere(scene,root,'peers-hair',0,.82,-.1,.62,hair,new Vector3(1,1.05,.95));sphere(scene,root,'peers-hair-long',0,.5,-.22,.5,hair,new Vector3(1.1,1.3,.5));
+  for(const x of [-1,1]){sphere(scene,root,'peers-eye',x*.1,.76,.27,.08,'#1b1b1b');cylinder(scene,root,'peers-leg',x*.14,-1.02,0,.6,.13,skin);sphere(scene,root,'peers-shoe',x*.14,-1.32,.05,.18,dress,new Vector3(.8,.5,1.4));tube(scene,root,'peers-arm',[[x*.28,.25,0],[x*.5,.5,.1],[x*.48,.8,.15]],.06,skin);}
+  sphere(scene,root,'peers-smile',0,.62,.27,.14,'#c43a5a',new Vector3(1.2,.4,.3));
  }
  else if(object==='fork'){
   // A big fork with a nacatamal on the tines: banana leaf parcel tied with string.

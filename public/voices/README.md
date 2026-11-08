@@ -1,6 +1,6 @@
 # Voces de Morly Kong Racing
 
-Estado: **0 de 110 líneas tienen grabación real.** Las que faltan suenan con una voz sintética
+Estado: **0 de 121 líneas tienen grabación real.** Las que faltan suenan con una voz sintética
 del sistema (genérica, no imita a nadie) y el subtítulo las marca como **VOZ PROVISIONAL**. Esa voz no es la versión final.
 
 ## Cómo grabar
@@ -165,6 +165,22 @@ Graba solo **tu propia voz** o la de alguien que te haya dado permiso. Las frase
 | Recibe | `roman/hurt-2.mp3` | «¡Ay, mi nacatamal!» | FALTA |
 | Caída | `roman/fall-1.mp3` | «¡Moonwalk directo al hoyo!» | FALTA |
 | Gana | `roman/win-1.mp3` | «¡Gané bailando, Romie!» | FALTA |
+
+### Cucukis
+
+| Línea | Archivo | Texto | Estado |
+|---|---|---|---|
+| Especial | `cucukis/special.mp3` | **«Invocación de Peeerrrrisss»** | FALTA |
+| Salto | `cucukis/jump-1.mp3` | «¡Ahoy, marinero!» | FALTA |
+| Salto | `cucukis/jump-2.mp3` | «¡Al agua, patos!» | FALTA |
+| Rebase | `cucukis/overtake-1.mp3` | «¡Midamos mesas!» | FALTA |
+| Rebase | `cucukis/overtake-2.mp3` | «¡Te pasé, grumete!» | FALTA |
+| Pega | `cucukis/hit-1.mp3` | «¡Bombazo!» | FALTA |
+| Pega | `cucukis/hit-2.mp3` | «¡Megabombazo!» | FALTA |
+| Recibe | `cucukis/hurt-1.mp3` | «¡Se me cayó la Victoria!» | FALTA |
+| Recibe | `cucukis/hurt-2.mp3` | «¡Hombre al agua!» | FALTA |
+| Caída | `cucukis/fall-1.mp3` | «¡Naufragué!» | FALTA |
+| Gana | `cucukis/win-1.mp3` | «¡Mesa para todos, gané yo!» | FALTA |
 
 ### Raulín
 

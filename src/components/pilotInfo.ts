@@ -12,6 +12,7 @@ export const TAGLINES:Record<string,string>={
  jorsi:'El artista: pintura, lápiz y borrador.',
  raulin:'Pepinos de sobra y un balde de leche.',
  roman:'Barba, camisa roja y tenedor de nacatamal listo.',
+ cucukis:'Flaco, de marinerito y siempre midiendo mesas.',
 };
 /** What each special does, in a sentence, for the cards and the special banner. */
 export const SPECIAL_INFO:Record<string,string>={
@@ -24,6 +25,7 @@ export const SPECIAL_INFO:Record<string,string>={
  enanonitas:'Una aparición que deja aturdidos a los de adelante.',
  jorsi:'Le pinta un corazón sonriente en la mochila y lo aturde.',
  raulin:'Riega leche: quien pasa resbala y se queda inmóvil.',
+ cucukis:'Invoca a Peeerrrrisss: una avalancha de muchachas arrasa con los de adelante.',
  roman:'Romie se baila el moonwalk: a todos los de alrededor los pone a ir de reversa.',
 };
 export const EFFECT_LABEL:Record<AttackDefinition['effect'],string>={spin:'hace girar',stun:'aturde',paint:'pinta la pantalla',slow:'frena',smoke:'humo',slip:'resbala'};

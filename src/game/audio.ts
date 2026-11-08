@@ -16,6 +16,7 @@ export const audioSettings = {
 /** Engine character per car: tanks growl low, light hatchbacks buzz high. */
 const ENGINES:Record<string,{base:number;range:number;filter:number;wave:OscillatorType;gears:number}> = {
  'white-empanade':{base:30,range:40,filter:150,wave:'sawtooth',gears:4},
+ 'el-tiburon':{base:46,range:62,filter:210,wave:'sawtooth',gears:4},
  'la-raulina':{base:34,range:44,filter:170,wave:'sawtooth',gears:4},
  'silver-surfer':{base:44,range:52,filter:230,wave:'sawtooth',gears:5},
  'hola-willy':{base:48,range:56,filter:250,wave:'sawtooth',gears:5},

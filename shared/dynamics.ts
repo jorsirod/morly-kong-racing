@@ -12,6 +12,7 @@ const DYNAMICS:Record<string,VehicleDynamics>={
  'hola-willy':{mass:1.25,halfWidth:1.08,halfLength:2.14,steeringResponse:8.2,grip:9.3,driftGrip:3,impactDamping:1.65},
  'orange-seed':{mass:1.08,halfWidth:1.08,halfLength:2.14,steeringResponse:9.1,grip:9.7,driftGrip:2.8,impactDamping:1.6},
  'black-diamond':{mass:.75,halfWidth:.98,halfLength:1.75,steeringResponse:8.1,grip:8.6,driftGrip:2.7,impactDamping:1.5},
+ 'el-tiburon':{mass:1.0,halfWidth:1.0,halfLength:2.08,steeringResponse:8.4,grip:9,driftGrip:3.1,impactDamping:1.55},
  'la-raulina':{mass:2.15,halfWidth:1.16,halfLength:2.46,steeringResponse:6.8,grip:9.1,driftGrip:3,impactDamping:1.75},
 };
 export const vehicleDynamics=(id:string):Readonly<VehicleDynamics>=>DYNAMICS[id]??DYNAMICS['silver-surfer'];

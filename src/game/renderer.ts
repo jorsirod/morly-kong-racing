@@ -26,6 +26,8 @@ import {INTRO} from '../../shared/simulation';
 import {RaceEffects} from './effects';
 import {AttackView} from './attacks';
 import {grade,lightColors,lookFor,skyDome} from './look';
+import {DefaultRenderingPipeline} from '@babylonjs/core/PostProcesses/RenderPipeline/Pipelines/defaultRenderingPipeline';
+import '@babylonjs/core/PostProcesses/RenderPipeline/postProcessRenderPipelineManagerSceneComponent';
 import '@babylonjs/loaders/glTF';
 import '@babylonjs/core/Engines/Extensions/engine.dynamicTexture';
 import '@babylonjs/core/Rendering/outlineRenderer';
@@ -75,7 +77,7 @@ export class RaceRenderer{
   this.quality=chosen==='auto'?(matchMedia?.('(pointer:coarse)').matches?'media':'alta'):chosen;
   this.engine.setHardwareScalingLevel(QUALITY[this.quality].scale);
   this.scene=new Scene(this.engine);
-  this.trackId=state.trackId;grade(this.scene,lookFor(this.trackId));this.arena=state.mode==='battle';this.light();this.camera=new FreeCamera('race-camera',new Vector3(0,6,-12),this.scene);this.camera.minZ=.15;this.camera.maxZ=650;this.camera.fov=.9;
+  this.trackId=state.trackId;grade(this.scene,lookFor(this.trackId));this.arena=state.mode==='battle';this.light();this.camera=new FreeCamera('race-camera',new Vector3(0,6,-12),this.scene);this.camera.minZ=.15;this.camera.maxZ=650;this.camera.fov=.9;this.post();
   this.world=buildWorld(this.scene,this.trackId,this.arena);this.effects=new RaceEffects(this.scene);this.attacks=new AttackView(this.scene);this.hazardView=new HazardView(this.scene);this.birds=new Birds(this.scene);this.effects.setQuality(QUALITY[this.quality].low);window.addEventListener('resize',this.resize);
  }
  private light(){
@@ -103,9 +105,23 @@ export class RaceRenderer{
   for(const x of [-d.halfWidth,d.halfWidth])for(const z of [-d.halfLength*.6,d.halfLength*.6]){const wheel=cylinder(this.scene,root,'lod-wheel',x,.45,z,.32,.9,'#202a39');wheel.rotation.z=Math.PI/2;}return root;
  }
  resize=()=>this.engine.resize();
+ private pipeline:DefaultRenderingPipeline|null=null;
+ /** Post effects by quality: alta gets a soft glow on lights, neon and turbos plus smooth edges; media only smooth
+  * edges; baja nothing. The colour grade (look.ts) runs inside the pipeline so it is applied once. */
+ private post(){
+  this.pipeline?.dispose();this.pipeline=null;if(this.quality==='baja')return;
+  try{
+   const p=new DefaultRenderingPipeline('race-post',false,this.scene,[this.camera]);
+   p.fxaaEnabled=true;p.imageProcessingEnabled=true;
+   p.bloomEnabled=this.quality==='alta';p.bloomThreshold=this.trackId==='hipa-hipa'?.62:.9;p.bloomWeight=this.trackId==='hipa-hipa'?.5:.26;p.bloomKernel=48;p.bloomScale=.5;
+   p.sharpenEnabled=this.quality==='alta';p.sharpen.edgeAmount=.18;p.sharpen.colorAmount=1;
+   this.pipeline=p;
+  }catch{this.pipeline=null;}
+ }
  setQuality(q:Exclude<Quality,'auto'>){
   if(q===this.quality)return;this.quality=q;const level=QUALITY[q];this.engine.setHardwareScalingLevel(level.scale);this.effects.setQuality(level.low);
   if(!level.shadows&&this.shadowMap){this.shadowMap.dispose();this.shadowMap=null;}
+  this.post();
  }
  render(state:GameState,id:string,dt:number){
   if(state.trackId!==this.trackId){this.world.dispose();this.shadowMap?.dispose();this.shadowMap=null;this.scene.lights.slice().forEach(l=>l.dispose());this.trackId=state.trackId;this.light();this.world=buildWorld(this.scene,this.trackId,this.arena);this.cam.ready=false;this.boxes.forEach(v=>v.dispose());this.boxes.clear();const shadows=this.shadowMap as ShadowGenerator|null;for(const c of this.cars.values())for(const mesh of c.model.body.getChildMeshes())shadows?.addShadowCaster(mesh,false);}
@@ -370,7 +386,7 @@ export class RaceRenderer{
   const fov=.9+Math.max(0,Math.min(1,(speed-10)/12))*.06+(boost?me.boostLevel>=4?.13:.08:0)+this.cam.air*.05+cine*.06;this.camera.fov=lerp(this.camera.fov,fov,k(boost?7:3));
   this.sun.position.set(me.x-35,me.y+60,me.z-40);
  }
- dispose(){window.removeEventListener('resize',this.resize);this.labelLayer?.remove();this.attacks.dispose();this.hazardView.dispose();this.birds.dispose();this.effects.dispose();this.assets.forEach(a=>a.dispose());this.shadowMap?.dispose();this.scene.dispose();this.engine.dispose();}
+ dispose(){window.removeEventListener('resize',this.resize);this.pipeline?.dispose();this.labelLayer?.remove();this.attacks.dispose();this.hazardView.dispose();this.birds.dispose();this.effects.dispose();this.assets.forEach(a=>a.dispose());this.shadowMap?.dispose();this.scene.dispose();this.engine.dispose();}
 }
 export function garagePreview(canvas:HTMLCanvasElement,vehicleId:string,characterId:string){
  const engine=new Engine(canvas,true,{powerPreference:'low-power'},false),scene=new Scene(engine);scene.clearColor=new Color4(0,0,0,0);grade(scene,{...lookFor('la-salle'),saturation:26});scene.imageProcessingConfiguration.vignetteEnabled=false;const camera=new ArcRotateCamera('garage',Math.PI/3,1.12,8.4,new Vector3(0,1.1,0),scene);camera.lowerRadiusLimit=6;camera.upperRadiusLimit=12;camera.lowerBetaLimit=.7;camera.upperBetaLimit=1.4;camera.attachControl(canvas,true);

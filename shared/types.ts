@@ -3,7 +3,7 @@ export type Phase = 'lobby' | 'countdown' | 'running' | 'results' | 'cup-results
 export type Effect = 'spin' | 'smoke' | 'slip' | 'slow' | 'stun' | 'paint';
 export interface AttackDefinition { name: string; object: string; icon: string; count: number; effect: Effect; delivery: 'projectile' | 'rear' | 'area' | 'boomerang' | 'bounce' | 'homing'; }
 export interface CharacterDefinition { id: string; name: string; color: string; shirt: string; initials: string; cap?: string; beard?: boolean; glasses?: boolean; basics: AttackDefinition[]; special: AttackDefinition; }
-export interface VehicleDefinition { id: string; name: string; model: string; color: string; kind: 'suv' | 'pickup-double' | 'golf' | 'mazda' | 'matiz' | 'pickup-single'; description: string; stats: [number, number, number, number, number]; }
+export interface VehicleDefinition { id: string; name: string; model: string; color: string; kind: 'suv' | 'pickup-double' | 'golf' | 'mazda' | 'matiz' | 'pickup-single' | 'sedan'; description: string; stats: [number, number, number, number, number]; }
 export interface Point { x: number; y: number; z: number; }
 export interface TrackDefinition { id: string; name: string; subtitle: string; color: string; sky: string; ground: string; width: number; points: Point[]; landmarks: string[]; }
 export interface PlayerInput { seq: number; steer: number; brake: boolean; drift: boolean; attack: number; actionSeq: number; assist: boolean; }

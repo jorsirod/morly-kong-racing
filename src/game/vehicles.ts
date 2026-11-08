@@ -219,6 +219,33 @@ function matiz(scene:Scene,body:TransformNode,paint:string){
  mirrors(scene,body,hw,belt+.18,.64,paint);
  return{S,...wheels(scene,body,{radius:.44,width:.32,z:[1.12,-1.1],x:.96,rim:'#9aa6b0',style:'cap',lip:dark})};
 }
+/** Toyota Yaris sedan 2000 (Echo/Platz), Cucukis's: tall roof, short nose, little trunk, black unpainted bumpers and
+ * black steel wheels. Beat up on purpose: dents, rust, a primer-grey door, taped tail lamp and a crooked bumper. */
+function yaris(scene:Scene,body:TransformNode,paint:string){
+ const dark='#1c1f24',bumper='#2a2d33',S=-.12,belt=1.3,yt=2.1,hw=.98,roofFront=-.46;
+ loft(scene,body,'hull',[{z:1.98,w:.86,y0:.52,y1:.98,r:.22,rb:.16},{z:1.86,w:.94,y0:.46,y1:1.08,r:.26},{z:1.4,w:.97,y0:.44,y1:1.2,r:.28},{z:.9,w:hw,y0:.44,y1:belt,r:.28},{z:-1.3,w:hw,y0:.44,y1:1.34,r:.26},{z:-1.86,w:.96,y0:.48,y1:1.32,r:.22},{z:-2.02,w:.9,y0:.54,y1:1.26,r:.18}],paint);
+ // Rounded nose: oval lamps, thin grille, the black bumper hanging a little crooked.
+ for(const s of [-1,1]){const cover=sphere(scene,body,'headlight-cover',s*.6,1.04,1.86,.56,'#d5e4ea',new Vector3(1.2,.62,.4));cover.material=material(scene,'#d5e4ea',false,.55);lamp(scene,body,'headlight',s*.58,1.04,1.92,.24,'#fff1b7');lamp(scene,body,'turn-signal',s*.82,.98,1.82,.12,'#ff9f35');}
+ box(scene,body,'grille',0,.96,1.95,.7,.1,.04,dark);box(scene,body,'badge',0,.96,1.98,.16,.1,.02,'#c9d2d9');
+ const fb=box(scene,body,'front-bumper',0,.66,1.96,1.9,.26,.22,bumper);fb.rotation.z=.04;box(scene,body,'front-intake',0,.6,2.07,1.0,.1,.04,dark);
+ for(const s of [-1,1]){box(scene,body,'door-handle',s*1.0,1.18,.15,.04,.05,.16,bumper);box(scene,body,'door-handle',s*1.0,1.2,-.6,.04,.05,.16,bumper);box(scene,body,'door-line',s*.985,.95,roofFront-.04,.02,.74,.03,dark);box(scene,body,'side-molding',s*.99,.84,-.1,.03,.07,2.8,bumper);}
+ cabin(scene,body,{S,belt,yt,hw,wsBase:.9,roofFront,frame:paint,bpillar:dark});
+ // Tall greenhouse, rear door glass, sloped rear window and the short trunk lid.
+ box(scene,body,'rear-roof',0,yt+.04,(roofFront-1.18)/2,hw*2-.14,.12,1.18+roofFront,paint);sideGlass(scene,body,hw-.03,belt+.06,yt-.05,roofFront-.1,-1.1);
+ for(const s of [-1,1])quad(scene,body,'c-pillar',[[s*(hw-.02),belt+.04,-1.1],[s*(hw-.04),belt+.04,-1.46],[s*(hw-.12),yt-.02,-1.18],[s*(hw-.1),yt+.02,-1.1]],paint);
+ quad(scene,body,'rear-glass',[[-.82,belt+.06,-1.5],[.82,belt+.06,-1.5],[.8,yt-.04,-1.2],[-.8,yt-.04,-1.2]],glass,.55);
+ box(scene,body,'trunk-lid',0,belt+.03,-1.76,1.78,.08,.54,paint);box(scene,body,'trunk-face',0,1.12,-2.0,1.74,.36,.06,paint);
+ for(const s of [-1,1]){box(scene,body,'tail-light',s*.7,1.14,-2.03,.36,.24,.05,'#d72f3c').material=material(scene,'#d72f3c',true);box(scene,body,'tail-light-white',s*.7,1.06,-2.05,.3,.06,.04,'#f3eee6');}
+ const rb=box(scene,body,'rear-bumper',0,.66,-2.02,1.86,.28,.22,bumper);rb.rotation.z=-.05;box(scene,body,'plate-recess',0,.9,-2.04,.56,.18,.03,dark);cylinder(scene,body,'exhaust',.62,.5,-2.06,.25,.1,'#8a8f96').rotation.x=Math.PI/2;
+ // The damage: a primer-grey rear door, dents, rust, a taped lamp, a cracked windscreen corner.
+ box(scene,body,'primer-door',1.0,1.0,-.62,.03,.56,.86,'#a7adb3');
+ for(const [x,y,z,w,h] of [[-1,.95,.75,.04,.18],[1,.82,1.35,.04,.12],[-1,.78,-1.2,.04,.16]] as number[][])box(scene,body,'dent',x,y,z,.04,h,w*6,'#c9c6bd');
+ for(const [x,y,z] of [[-.99,.6,1.6],[.99,.62,-1.65],[-.99,.58,-.3],[.99,.6,.9]] as number[][])sphere(scene,body,'rust',x,y,z,.16,'#8a4a24',new Vector3(.2,1,1.4));
+ for(const a of [-.5,.5]){const tape=box(scene,body,'duct-tape',-.7,1.14,-2.06,.42,.06,.02,'#b9b9b4');tape.rotation.z=a;}
+ tube(scene,body,'windscreen-crack',[[.55,belt+.12,.86],[.62,belt+.25,.78],[.5,belt+.36,.72]],.012,'#e6f2f6');
+ mirrors(scene,body,hw,belt+.18,.72,bumper);
+ return{S,...wheels(scene,body,{radius:.44,width:.32,z:[1.24,-1.26],x:.99,rim:'#22252b',style:'steel',lip:bumper})};
+}
 /** ALF plush, built in parts (body, head, two arms) so he can wave, look back and cheer. */
 export function buildAlf(scene:Scene,parent:TransformNode){
  const root=new TransformNode('ALF-plush',scene);root.parent=parent;root.position.set(.47,1.16,.3);root.scaling.setAll(1.12);
@@ -238,7 +265,7 @@ export function buildAlf(scene:Scene,parent:TransformNode){
 
 export function buildVehicle(scene:Scene,id:string,characterId?:string):VehicleModel{
  const v=vehicle(id),root=new TransformNode('vehicle-'+id,scene),body=new TransformNode('body',scene);body.parent=root;const paint=v.color;
- const built=v.kind==='suv'?jimny(scene,body,paint):v.kind==='pickup-double'?pickup(scene,body,paint,false):v.kind==='pickup-single'?pickup(scene,body,paint,true):v.kind==='golf'?golf(scene,body,paint):v.kind==='mazda'?mazda(scene,body,paint):matiz(scene,body,paint);
+ const built=v.kind==='suv'?jimny(scene,body,paint):v.kind==='pickup-double'?pickup(scene,body,paint,false):v.kind==='pickup-single'?pickup(scene,body,paint,true):v.kind==='golf'?golf(scene,body,paint):v.kind==='mazda'?mazda(scene,body,paint):v.kind==='sedan'?yaris(scene,body,paint):matiz(scene,body,paint);
  const driverSocket=new TransformNode('driver-socket',scene);driverSocket.parent=body;driverSocket.position.z=built.S;
  // The Matiz is all roof: its pilot sits upright and high, as in the real car, so the head clears it.
  if(v.kind==='matiz')driverSocket.position.y=.14;
