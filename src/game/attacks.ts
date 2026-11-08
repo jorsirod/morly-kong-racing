@@ -10,6 +10,7 @@ import type { Scene } from '@babylonjs/core/scene';
 import { character } from '../../shared/content';
 import type { GameEvent, GameState, PlayerState, Shot } from '../../shared/types';
 import { buildProjectile, textLabel } from './models';
+import { TrailMesh } from '@babylonjs/core/Meshes/trailMesh';
 import '@babylonjs/core/Meshes/Builders/planeBuilder';
 import '@babylonjs/core/Meshes/Builders/discBuilder';
 import '@babylonjs/core/Meshes/Builders/torusBuilder';
@@ -21,7 +22,7 @@ import '@babylonjs/core/Meshes/Builders/tubeBuilder';
 export const OBJECT_COLORS:Record<string,string>={victoria:'#ffcf3d',tona:'#5fe07a',rum:'#d9f4ff',flor:'#ff9c3a',cigarettes:'#ff5964',ashtray:'#9fe6ff',sixpack:'#ffd33d',basketball:'#ff8a2a',leaf:'#7be05a',frog:'#8ef05c',onion:'#fff1d6',cucumber:'#6fdc5a',bill:'#7dffa8',coin:'#ffd84a',diamond:'#7ef3ff',console:'#b48cff',ice:'#a6ecff',slipper:'#5ff1ff',pizza:'#ffa63d',milk:'#ffffff',backpack:'#ff6f9f',brush:'#ff6f9f',pencil:'#ffd23d',eraser:'#ff8ab8',claudia:'#ff8fc8',talc:'#ffffff',smoke:'#c9f2b8',coco:'#c69a5b',chilero:'#ff3b1f',bong:'#9be35a'};
 type Motion='tumble'|'bounce'|'hop'|'roll'|'spinY'|'flutter'|'spear'|'frisbee'|'lob'|'still';
 const MOTION:Record<string,Motion>={victoria:'tumble',tona:'tumble',rum:'tumble',flor:'tumble',cigarettes:'tumble',sixpack:'lob',console:'lob',basketball:'bounce',frog:'hop',onion:'roll',cucumber:'roll',coin:'spinY',diamond:'spinY',eraser:'spinY',slipper:'spinY',bill:'flutter',leaf:'flutter',pencil:'spear',brush:'tumble',pizza:'frisbee',backpack:'tumble',ice:'still',ashtray:'still',milk:'still',talc:'still',smoke:'still',coco:'roll',chilero:'still',bong:'spinY'};
-interface View { node:TransformNode; halo:Mesh; shadow:Mesh; extra?:TransformNode; motion:Motion; }
+interface View { node:TransformNode; halo:Mesh; shadow:Mesh; extra?:TransformNode; motion:Motion; trail?:TrailMesh; trailWanted?:boolean; }
 interface Transient { node:TransformNode; born:number; life:number; update:(t:number)=>void; }
 
 /** Projectiles, traps, clouds, cast pillars, lightning and dizzy stars. Visual only. */
@@ -60,12 +61,14 @@ export class AttackView {
    extra=new TransformNode('area-cloud',this.scene);const dome=MeshBuilder.CreateSphere('area-dome',{diameter:2,segments:12},this.scene);dome.scaling.set(shot.radius,shot.radius*(shot.object==='milk'?.06:.55),shot.radius);const domeMat=this.mat('solid',shot.object==='milk'?'#fff8ea':color,shot.object==='milk'?.7:.3,false);domeMat.backFaceCulling=true;dome.material=domeMat;dome.parent=extra;dome.isPickable=false;
    const ring=this.plane('area-ring',2,this.mat('ring',color,.9),false);ring.scaling.setAll(shot.radius);ring.rotation.x=Math.PI/2;ring.position.y=.12;ring.parent=extra;
   }
-  return{node,halo,shadow,extra,motion:shot.delivery==='area'?'still':MOTION[shot.object]??'tumble'};
+  // A ribbon in the object's colour follows everything that flies, so arcs and curves read at a glance.
+  // (Created on the first update, once the node stands where the shot is: otherwise the ribbon starts at the origin.)
+  return{node,halo,shadow,extra,trailWanted:shot.delivery!=='area'&&shot.delivery!=='rear',motion:shot.delivery==='area'?'still':MOTION[shot.object]??'tumble'};
  }
  private me='';
  update(state:GameState,players:PlayerState[],dt:number,reduced:boolean,me=''){this.me=me;
   this.time+=dt;const live=new Set(state.shots.map(s=>s.id));
-  for(const [key,v] of this.views)if(!live.has(key)){v.node.dispose();v.shadow.dispose();v.extra?.dispose();this.views.delete(key);}
+  for(const [key,v] of this.views)if(!live.has(key)){v.trail?.dispose();v.node.dispose();v.shadow.dispose();v.extra?.dispose();this.views.delete(key);}
   for(const shot of state.shots){
    let v=this.views.get(shot.id);if(!v){v=this.create(shot);this.views.set(shot.id,v);}
    const ground=shot.y-1,age=shot.age,heading=Math.hypot(shot.vx,shot.vz)>.1?Math.atan2(shot.vx,shot.vz):0,n=v.node;let lift=1.4;
@@ -90,6 +93,8 @@ export class AttackView {
     n.position.set(shot.x,ground+lift,shot.z);
     if(v.extra){v.extra.position.set(shot.x,ground+.08,shot.z);const pulse=reduced?1:1+Math.sin(this.time*7)*.12;v.extra.getChildMeshes()[0]?.scaling.setAll(pulse);}
    }
+   if(v.trailWanted&&!v.trail){n.computeWorldMatrix(true);const color=OBJECT_COLORS[shot.object]??'#ffd33d',anchor=new TransformNode('trail-anchor',this.scene);anchor.parent=n;anchor.scaling.setAll(1/n.scaling.x);anchor.computeWorldMatrix(true);
+    v.trail=new TrailMesh('attack-trail',anchor,this.scene,shot.special?.6:.32,shot.delivery==='homing'?40:20,true);v.trail.material=this.mat('solid',color,shot.special?.55:.45,true);v.trail.isPickable=false;}
    v.halo.visibility=.75+Math.sin(this.time*12+shot.id)*.25;
    if(shot.delivery==='homing'){n.position.y=shot.y+Math.sin(age*5)*.3;n.rotation.z=Math.sin(age*7)*.35;}
    v.shadow.position.set(shot.x,(shot.delivery==='homing'?shot.y-4.2:ground)+.06,shot.z);v.shadow.scaling.setAll(shot.delivery==='area'?1:1/(1+Math.max(0,lift-.8)*.35));
@@ -110,6 +115,12 @@ export class AttackView {
  }
  private event(event:GameEvent,state:GameState){
   const caster=state.players.find(p=>p.id===event.playerId);
+  // Every throw: a puff and a swoosh ring at the pilot's hand, in the object's colour.
+  if(event.type==='attack'&&caster){const color=OBJECT_COLORS[event.object??'']??'#ffd33d',fx=Math.sin(caster.yaw),fz=Math.cos(caster.yaw),rx=Math.cos(caster.yaw),rz=-Math.sin(caster.yaw);
+   const at=new Vector3(caster.x-rx*.9+fx*.6,caster.y+2.3,caster.z-rz*.9+fz*.6),puff=this.plane('throw-puff',1.4,this.mat('halo',color,.9));puff.position.copyFrom(at);
+   const swoosh=this.plane('throw-ring',1.2,this.mat('ring',color,.9),false);swoosh.position.copyFrom(at);swoosh.rotation.set(Math.PI/2-.4,caster.yaw,0);
+   this.fx.push({node:puff,born:this.time,life:.3,update:t=>{puff.scaling.setAll(1+t*1.8);puff.visibility=1-t;}});
+   this.fx.push({node:swoosh,born:this.time,life:.32,update:t=>{swoosh.scaling.setAll(.6+t*2.6);swoosh.visibility=1-t;swoosh.position.set(at.x+fx*t*2.2,at.y,at.z+fz*t*2.2);}});}
   if(event.type==='attack'&&event.special&&caster){
    const color=character(caster.characterId).color,x=caster.x,y=caster.y,z=caster.z;
    // A tall pillar in the caster's colour tells the whole track who used a special.
@@ -135,6 +146,9 @@ export class AttackView {
   }
   if(event.type==='hit'&&event.x!==undefined){
    const at=new Vector3(event.x,(event.y??0)+1.2,event.z??0),color=OBJECT_COLORS[event.object??'']??'#ffffff';
+   // Basic hits get a comic word too, smaller than the specials', by what the object does.
+   if(!event.special&&event.text!=='hazard'&&event.targetId!==this.me){const words:Record<string,string>={victoria:'¡PLAF!',tona:'¡PLAF!',rum:'¡CLINK!',flor:'¡CLINK!',cigarettes:'¡COF COF!',ashtray:'¡ZAS!',basketball:'¡TOING!',leaf:'¡FIUU!',frog:'¡CROAC!',onion:'¡LLORA!',cucumber:'¡PUM!',bill:'¡TOMA!',coin:'¡CLING!',diamond:'¡BLING!',brush:'¡SPLASH!',pencil:'¡PIC!',eraser:'¡BORRADO!',ice:'¡RESBALA!'};
+    this.callout(words[event.object??'']??'¡PUM!',color,new Vector3(event.x,(event.y??0)+3.6,event.z??0),.9);}
    const ring=this.plane('hit-ring',2,this.mat('ring',color,1));ring.position.copyFrom(at);
    this.fx.push({node:ring,born:this.time,life:.35,update:t=>{ring.scaling.setAll(1+t*(event.special?5:3));ring.visibility=1-t;}});
    if(event.special&&(event.object==='sixpack'||event.object==='console')){const wave=this.plane('shockwave',2,this.mat('ring',color,1),false);wave.rotation.x=Math.PI/2;wave.position.set(event.x,(event.y??0)+.2,event.z??0);this.fx.push({node:wave,born:this.time,life:.5,update:t=>{wave.scaling.setAll(1+t*11);wave.visibility=1-t;}});}
@@ -153,5 +167,5 @@ export class AttackView {
   const label=textLabel(this.scene,null,text,at.x,at.y,at.z,3.6,.9,'#13234d',color) as Mesh|null;if(!label)return;label.billboardMode=Mesh.BILLBOARDMODE_ALL;label.renderingGroupId=1;
   this.fx.push({node:label,born:this.time,life,update:t=>{label.position.y=at.y+t*1.6;const pop=Math.min(1,t*6);label.scaling.setAll(.6+pop*.5-(t>.8?(t-.8)*2:0));label.visibility=t<.75?1:1-(t-.75)*4;}});
  }
- dispose(){for(const v of this.views.values()){v.node.dispose();v.shadow.dispose();v.extra?.dispose();}this.views.clear();for(const f of this.fx)f.node.dispose();this.fx=[];for(const d of this.dizzy.values())d.dispose();this.dizzy.clear();this.materials.forEach(m=>m.dispose());this.textures.forEach(t=>t.dispose());}
+ dispose(){for(const v of this.views.values()){v.trail?.dispose();v.node.dispose();v.shadow.dispose();v.extra?.dispose();}this.views.clear();for(const f of this.fx)f.node.dispose();this.fx=[];for(const d of this.dizzy.values())d.dispose();this.dizzy.clear();this.materials.forEach(m=>m.dispose());this.textures.forEach(t=>t.dispose());}
 }

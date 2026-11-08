@@ -33,7 +33,7 @@ function threat(state:GameState,me:PlayerState){
 export function HUD({state,id,input,banner,cue,fps,rtt,muted,onMute,onMenu,stats,calm,screen,subtitle}:{calm?:boolean;state:GameState;id:string;input:InputController;banner:GameEvent|null;cue:FeedbackCue|null;fps:number;rtt:number;muted:boolean;onMute:()=>void;onMenu:()=>void;stats?:boolean;screen?:ScreenFx;subtitle?:Subtitle|null}){
  const me=state.players.find(p=>p.id===id)??state.players[0],c=character(me?.characterId??'semilla');
  const [stick,setStick]=useState(0),[choosing,setChoosing]=useState(false),[,refresh]=useState(0);
- const joy=useRef<{x:number;id:number}|null>(null),fire=useRef<{x:number;y:number;at:number;timer:ReturnType<typeof setTimeout>;moved:boolean}|null>(null);
+ const joy=useRef<{x:number;id:number}|null>(null),[base,setBase]=useState<{x:number;y:number}|null>(null),fire=useRef<{x:number;y:number;at:number;timer:ReturnType<typeof setTimeout>;moved:boolean}|null>(null);
  useEffect(()=>()=>{if(fire.current)clearTimeout(fire.current.timer);},[]);
  const map=useMemo(()=>{const r=routeFor(state.trackId),xs=r.points.map(p=>p.x),zs=r.points.map(p=>p.z),minX=Math.min(...xs),maxX=Math.max(...xs),minZ=Math.min(...zs),maxZ=Math.max(...zs),size=Math.max(maxX-minX,maxZ-minZ)*1.12,cx=(minX+maxX)/2,cz=(minZ+maxZ)/2;
   const at=(x:number,z:number)=>({x:50+(x-cx)/size*100,y:50+(z-cz)/size*100});return{at,path:r.points.map((p,i)=>{const q=at(p.x,p.z);return(i?'L':'M')+q.x.toFixed(1)+','+q.y.toFixed(1);}).join(' ')+'Z'};},[state.trackId]);
@@ -45,7 +45,7 @@ export function HUD({state,id,input,banner,cue,fps,rtt,muted,onMute,onMenu,stats
  const charge=me.driftCharge,tier=charge>=DRIVE.driftTier2?2:charge>=DRIVE.driftTier1?1:0,danger=state.phase==='running'?threat(state,me):null;
  const lap=Math.min(3,me.lap+1);
  const intro=state.phase==='countdown'&&state.countdown>3,count=state.phase==='countdown'&&!intro?Math.max(1,Math.ceil(state.countdown)):0,go=state.phase==='running'&&state.time<.75;
- const releaseStick=()=>{joy.current=null;input.steer=0;setStick(0);};
+ const releaseStick=()=>{joy.current=null;input.steer=0;setStick(0);setBase(null);};
  const select=(i:number)=>{if(input.selected!==i){input.selected=i;refresh(n=>n+1);if(navigator.vibrate)navigator.vibrate(8);}};
  const closeWheel=()=>{const f=fire.current;if(f)clearTimeout(f.timer);fire.current=null;setChoosing(false);};
  const item=me.item as ItemId|'',rolling=me.roulette>0,shown=rolling?ROULETTE[Math.floor(state.time*12)%ROULETTE.length]:item,target=state.players.find(p=>p.id===banner?.targetId);
@@ -115,7 +115,13 @@ export function HUD({state,id,input,banner,cue,fps,rtt,muted,onMute,onMenu,stats
   </div>
 
   {touch&&<div className="hx-touch-controls">
-   <button className="hx-stick" aria-label="Dirección: arrastra a izquierda o derecha" onPointerDown={e=>{e.currentTarget.setPointerCapture(e.pointerId);const r=e.currentTarget.getBoundingClientRect();joy.current={x:r.left+r.width/2,id:e.pointerId};const dx=Math.max(-44,Math.min(44,e.clientX-joy.current.x));input.steer=shape(dx/44);setStick(dx);}} onPointerMove={e=>{const j=joy.current;if(!j||j.id!==e.pointerId)return;const dx=Math.max(-44,Math.min(44,e.clientX-j.x));input.steer=shape(dx/44);setStick(dx);}} onPointerUp={releaseStick} onPointerCancel={releaseStick} onLostPointerCapture={releaseStick}><span className="hx-arrows"><i/><i/></span><i className="hx-knob" style={{transform:'translateX('+stick+'px)'}}/></button>
+   {/* Floating stick: it appears wherever the thumb lands on the left side and follows the thumb if it slides too far. */}
+   <div className="hx-stick-zone" role="slider" aria-label="Dirección: toca en cualquier parte del lado izquierdo y arrastra a izquierda o derecha" aria-valuemin={-1} aria-valuemax={1} aria-valuenow={Math.round(stick/44*10)/10}
+    onPointerDown={e=>{e.preventDefault();e.currentTarget.setPointerCapture(e.pointerId);const zone=e.currentTarget.getBoundingClientRect();joy.current={x:e.clientX,id:e.pointerId};setBase({x:e.clientX-zone.left,y:e.clientY-zone.top});input.steer=0;setStick(0);}}
+    onPointerMove={e=>{const j=joy.current;if(!j||j.id!==e.pointerId)return;let dx=e.clientX-j.x;const reach=52;if(Math.abs(dx)>reach){const shift=dx-Math.sign(dx)*reach;j.x+=shift;setBase(b=>b&&{x:b.x+shift,y:b.y});dx=Math.sign(dx)*reach;}const v=Math.max(-44,Math.min(44,dx));input.steer=shape(v/44);setStick(v);}}
+    onPointerUp={releaseStick} onPointerCancel={releaseStick} onLostPointerCapture={releaseStick}>
+    <span className={'hx-stick'+(base?' live':'')} style={base?{left:base.x-75,top:base.y-48,bottom:'auto'}:undefined}><span className="hx-arrows"><i/><i/></span><i className="hx-knob" style={{transform:'translateX('+stick+'px)'}}/></span>
+   </div>
    <button className={'hx-drift-btn'+(me.driftDir?' active t'+tier:'')} aria-label="Derrape: mantén en las curvas y suelta para el turbo" onPointerDown={e=>{e.currentTarget.setPointerCapture(e.pointerId);input.drift=true;}} onPointerUp={()=>input.drift=false} onPointerCancel={()=>input.drift=false} onLostPointerCapture={()=>input.drift=false}><ControlIcon kind="drift"/><small>DERRAPE</small></button>
    <button className="hx-brake" aria-label="Freno" onPointerDown={e=>{e.currentTarget.setPointerCapture(e.pointerId);input.brake=true;}} onPointerUp={()=>input.brake=false} onPointerCancel={()=>input.brake=false} onLostPointerCapture={()=>input.brake=false}><ControlIcon kind="brake"/><small>FRENO</small></button>
   </div>}

@@ -68,6 +68,7 @@ export class RaceEffects {
   }else if(event.type==='pickup'){
    this.emit('ring',COLORS.blue,x,y+1.1,z,.65,.5,0,1,0,1.55,.9);this.burst(x,y+1.4,z,COLORS.gold,7,2.2,true);
   }else if(event.type==='boost'){
+   if(event.object==='quesillo'){this.burst(x,y+.9,z,COLORS.gold,6,2.4,true);this.emit('ring',COLORS.gold,x,y+.6,z,.5,.4,0,.6,0,1.4,.7);}
    for(const side of [-1,1]){const rear=this.rear(p,side);this.emit('flame',COLORS.blue,rear.x,rear.y,rear.z,.95,.36,-Math.sin(p.yaw)*2,.2,-Math.cos(p.yaw)*2,.3);}
   }else if(event.type==='land'){
    for(let i=0;i<6;i++){const a=i*Math.PI/3;this.emit('dust',COLORS.dust,x+Math.sin(a)*.8,y+.18,z+Math.cos(a)*.8,.48,.58,Math.sin(a)*2.8,.5,Math.cos(a)*2.8,1.12,.65);}

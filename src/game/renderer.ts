@@ -25,6 +25,7 @@ import {buildWorld} from './world';
 import {INTRO} from '../../shared/simulation';
 import {RaceEffects} from './effects';
 import {AttackView} from './attacks';
+import {grade,lightColors,lookFor,skyDome} from './look';
 import '@babylonjs/loaders/glTF';
 import '@babylonjs/core/Engines/Extensions/engine.dynamicTexture';
 import '@babylonjs/core/Rendering/outlineRenderer';
@@ -33,7 +34,8 @@ import '@babylonjs/core/Lights/Shadows/shadowGeneratorSceneComponent';
 type Car=VehicleModel;
 type Actor={model:Car;vehicleId:string;characterId:string;shadow:TransformNode;lod:TransformNode;steer:number;spin:number;label?:HTMLElement|null;
  driftYaw:number;hop:number;lastDrift:number;lastStun:number;spinStart:number;stunTotal:number;faded:boolean;meshes:AbstractMesh[];lastImpact:number;wobble:number;decals?:TransformNode|null;
- /** Race time of this pilot's last special (pose) and of the last landing (squash). */ cast:number;landed:number;lastAir:number;shield?:Mesh|null;roll:number;suspension:number;alf:AlfState;arms?:{l?:TransformNode;r?:TransformNode}};
+ /** Race time of this pilot's last special (pose) and of the last landing (squash). */ cast:number;landed:number;lastAir:number;shield?:Mesh|null;roll:number;suspension:number;alf:AlfState;arms?:{l?:TransformNode;r?:TransformNode};
+ /** Face life: eye meshes for blinking, the head node, last cheer (a hit landed) and last flinch (got hit). */ face?:{eyes:AbstractMesh[];head?:TransformNode;nextBlink:number};cheer?:number;hurt?:number};
 /** ALF's little routine: what he is doing now and until when. */
 type AlfState={action:'idle'|'wave'|'look'|'cheer'|'hold';until:number;next:number};
 const PLAYER_COLORS=['#f14d53','#459be9','#78ce50','#ffc63c','#bd76e5','#54d5d9'];
@@ -72,14 +74,16 @@ export class RaceRenderer{
   // Phones start one notch lower; the automatic mode only steps down, quietly.
   this.quality=chosen==='auto'?(matchMedia?.('(pointer:coarse)').matches?'media':'alta'):chosen;
   this.engine.setHardwareScalingLevel(QUALITY[this.quality].scale);
-  this.scene=new Scene(this.engine);this.scene.imageProcessingConfiguration.toneMappingEnabled=true;this.scene.imageProcessingConfiguration.toneMappingType=1;this.scene.imageProcessingConfiguration.exposure=1.1;this.scene.imageProcessingConfiguration.contrast=1.12;
-  this.trackId=state.trackId;this.arena=state.mode==='battle';this.light();this.camera=new FreeCamera('race-camera',new Vector3(0,6,-12),this.scene);this.camera.minZ=.15;this.camera.maxZ=650;this.camera.fov=.9;
+  this.scene=new Scene(this.engine);
+  this.trackId=state.trackId;grade(this.scene,lookFor(this.trackId));this.arena=state.mode==='battle';this.light();this.camera=new FreeCamera('race-camera',new Vector3(0,6,-12),this.scene);this.camera.minZ=.15;this.camera.maxZ=650;this.camera.fov=.9;
   this.world=buildWorld(this.scene,this.trackId,this.arena);this.effects=new RaceEffects(this.scene);this.attacks=new AttackView(this.scene);this.hazardView=new HazardView(this.scene);this.birds=new Birds(this.scene);this.effects.setQuality(QUALITY[this.quality].low);window.addEventListener('resize',this.resize);
  }
  private light(){
-  const night=this.trackId==='hipa-hipa';this.scene.clearColor=Color4.FromHexString((night?'#15274b':'#6dcefb')+'ff');this.scene.fogMode=Scene.FOGMODE_LINEAR;this.scene.fogStart=220;this.scene.fogEnd=560;this.scene.fogColor=Color3.FromHexString(night?'#15274b':'#bae9fd');this.baseFog={start:220,end:560,color:this.scene.fogColor.clone()};this.tunnelLight=null;
-  const hemi=new HemisphericLight('sky',new Vector3(0,1,0),this.scene);hemi.intensity=night?.82:.85;hemi.groundColor=Color3.FromHexString('#537638').toLinearSpace();hemi.diffuse=Color3.FromHexString('#d9f3ff').toLinearSpace();
-  this.sun=new DirectionalLight('sun',new Vector3(-.45,-1,.4),this.scene);this.sun.position.set(-40,60,-40);this.sun.intensity=night?.45:1.45;this.sun.diffuse=Color3.FromHexString('#fff2c9').toLinearSpace();this.sun.shadowMinZ=1;this.sun.shadowMaxZ=190;this.sun.shadowFrustumSize=75;
+  const night=this.trackId==='hipa-hipa',look=lookFor(this.trackId),colors=lightColors(look);
+  this.scene.clearColor=Color4.FromHexString(look.horizon+'ff');this.scene.fogMode=Scene.FOGMODE_LINEAR;this.scene.fogStart=look.fogStart;this.scene.fogEnd=look.fogEnd;this.scene.fogColor=Color3.FromHexString(look.horizon);this.baseFog={start:look.fogStart,end:look.fogEnd,color:this.scene.fogColor.clone()};this.tunnelLight=null;
+  skyDome(this.scene,look);
+  const hemi=new HemisphericLight('sky',new Vector3(0,1,0),this.scene);hemi.intensity=look.hemiPower;hemi.groundColor=colors.hemiGround;hemi.diffuse=colors.hemiSky;
+  this.sun=new DirectionalLight('sun',new Vector3(-.45,-1,.4),this.scene);this.sun.position.set(-40,60,-40);this.sun.intensity=look.sunPower;this.sun.diffuse=colors.sun;this.sun.shadowMinZ=1;this.sun.shadowMaxZ=190;this.sun.shadowFrustumSize=75;
   const size=QUALITY[this.quality].shadows;
   if(!night&&size){this.shadowMap=new ShadowGenerator(size,this.sun);this.shadowMap.usePercentageCloserFiltering=true;this.shadowMap.filteringQuality=ShadowGenerator.QUALITY_LOW;this.shadowMap.bias=.002;this.shadowMap.normalBias=.035;this.shadowMap.setDarkness(.24);}
   if(night)for(let i=0;i<3;i++){const light=new PointLight('club-'+i,new Vector3((i-1)*55,12,0),this.scene);light.diffuse=Color3.FromHexString(['#f262ac','#46dce6','#ffd249'][i]);light.intensity=2.3;light.range=110;}
@@ -107,7 +111,9 @@ export class RaceRenderer{
   if(state.trackId!==this.trackId){this.world.dispose();this.shadowMap?.dispose();this.shadowMap=null;this.scene.lights.slice().forEach(l=>l.dispose());this.trackId=state.trackId;this.light();this.world=buildWorld(this.scene,this.trackId,this.arena);this.cam.ready=false;this.boxes.forEach(v=>v.dispose());this.boxes.clear();const shadows=this.shadowMap as ShadowGenerator|null;for(const c of this.cars.values())for(const mesh of c.model.body.getChildMeshes())shadows?.addShadowCaster(mesh,false);}
   const me=state.players.find(p=>p.id===id)??state.players[0];
   this.hazardView.update(state,me,state.time);
-  for(const event of state.events)if(event.id>this.lastEvent){this.lastEvent=event.id;if(event.type==='attack'&&event.special&&event.object==='claudia'){const p=state.players.find(v=>v.id===event.playerId);if(p){const node=buildProjectile(this.scene,'claudia',true);this.guests.push({node,until:state.time+1.4,owner:p.id,born:state.time});}}if(event.type==='land'&&event.playerId===id)this.cam.dip=.12+.22*Math.min(1,event.intensity??.3);if(event.type==='attack'&&event.special){const a=this.cars.get(event.playerId);if(a)a.cast=state.time;if(event.playerId===id)this.cam.cast=state.time;}}
+  for(const event of state.events)if(event.id>this.lastEvent){this.lastEvent=event.id;if(event.type==='attack'&&event.special&&event.object==='claudia'){const p=state.players.find(v=>v.id===event.playerId);if(p){const node=buildProjectile(this.scene,'claudia',true);this.guests.push({node,until:state.time+1.4,owner:p.id,born:state.time});}}if(event.type==='land'&&event.playerId===id)this.cam.dip=.12+.22*Math.min(1,event.intensity??.3);if(event.type==='attack'&&event.special){const a=this.cars.get(event.playerId);if(a)a.cast=state.time;if(event.playerId===id)this.cam.cast=state.time;}
+   if(event.type==='hit'&&event.text!=='hazard'&&event.targetId&&event.targetId!==event.playerId){const a=this.cars.get(event.playerId),v=this.cars.get(event.targetId);if(a)a.cheer=state.time;if(v)v.hurt=state.time;}
+   if(event.type==='hit'&&event.text==='hazard'&&event.targetId){const v=this.cars.get(event.targetId);if(v)v.hurt=state.time;}}
   // Claudia appears beside the caster (never in front of the camera) and rides along briefly.
   for(const g of this.guests){const owner=state.players.find(p=>p.id===g.owner);if(g.until<state.time||!owner){g.node.dispose();continue;}const t=state.time-g.born,rx=Math.cos(owner.yaw),rz=-Math.sin(owner.yaw),fx=Math.sin(owner.yaw),fz=Math.cos(owner.yaw),pop=Math.min(1,t/.2)*Math.min(1,(g.until-state.time)/.2);g.node.position.set(owner.x+rx*3.4+fx*2.5,owner.y+1.6+Math.sin(t*9)*.15,owner.z+rz*3.4+fz*2.5);g.node.rotation.set(0,owner.yaw+Math.PI*.85,Math.sin(t*6)*.1);g.node.scaling.setAll(1.25*pop);}
   this.guests=this.guests.filter(g=>g.until>=state.time&&state.players.some(p=>p.id===g.owner));
@@ -121,7 +127,8 @@ export class RaceRenderer{
    if(full){this.animate(c,p,state,dt,p.id===id);const decals=c.decals??(c.decals=c.model.body.getChildTransformNodes(true).find(n=>n.name==='decals')??null);decals?.setEnabled(distance<30||p.id===id);}
    const ground=this.arena?0:sample(routeFor(state.trackId),p.progress).y;c.shadow.setEnabled(p.fall<=0&&p.y>ground-1);c.shadow.position.set(p.x,ground+.075,p.z);c.shadow.rotation.y=p.yaw+c.driftYaw;c.shadow.scaling.x=1/(1+Math.max(0,p.y-ground)*.16);c.shadow.scaling.z=1.8*c.shadow.scaling.x;
   }
-  for(const pick of state.pickups){let node=this.boxes.get(pick.id);if(!node||node.metadata?.kind!==pick.kind){node?.dispose();node=pick.kind===1?this.itemBox():this.chargeBox();node.metadata={kind:pick.kind};this.boxes.set(pick.id,node);}
+  for(const pick of state.pickups){let node=this.boxes.get(pick.id);if(!node||node.metadata?.kind!==pick.kind){node?.dispose();node=pick.kind===1?this.itemBox():pick.kind===2?this.quesillo():this.chargeBox();node.metadata={kind:pick.kind};this.boxes.set(pick.id,node);}
+   if(pick.kind===2){this.placeTreat(node,pick,state.time);continue;}
    const ready=pick.availableAt<=state.time;node.setEnabled(ready||pick.availableAt-state.time<.6);node.scaling.setAll(ready?1:Math.max(.05,1-(pick.availableAt-state.time)/.6));
    node.position.set(pick.x,pick.y+1.6+Math.sin(state.time*3+pick.id)*.2,pick.z);node.rotation.y=state.time*1.4+pick.id;node.rotation.x=Math.sin(state.time*1.1+pick.id)*.25;}
   this.attacks.update(state,poses,dt,this.reduced,id);
@@ -155,6 +162,28 @@ export class RaceRenderer{
   return node;
  }
  /** Surprise box: translucent violet cube, rainbow edges and a big «?», unmistakable next to the gold charge boxes. */
+ /** La Salle's quesillo: tortilla, cheese, cream and pickled onion, with a glow on the road so it reads from afar. */
+ private quesillo(){
+  const node=new TransformNode('quesillo',this.scene);
+  const halo=MeshBuilder.CreateDisc('quesillo-halo',{radius:1.5,tessellation:20},this.scene);halo.rotation.x=Math.PI/2;halo.position.y=-.2;halo.material=material(this.scene,'#ffe58a',true,.35);halo.parent=node;
+  const tortilla=cylinder(this.scene,node,'quesillo-tortilla',0,0,0,.2,1.5,'#e9c47e');tortilla.scaling.z=.62;
+  const cheese=cylinder(this.scene,node,'quesillo-cheese',0,.13,0,.12,1.25,'#fff6e2');cheese.scaling.z=.55;
+  const cream=sphere(this.scene,node,'quesillo-cream',0,.2,0,1,'#fffdf4',new Vector3(1.05,.22,.55));void cream;
+  for(let i=0;i<5;i++)sphere(this.scene,node,'quesillo-onion',Math.cos(i*1.3)*.35,.3,Math.sin(i*1.3)*.18,.16,'#e985b9');
+  node.scaling.setAll(1.25);node.getChildMeshes().forEach(m=>m.isPickable=false);return node;
+ }
+ private treatOrigin=new Map<number,Vector3>();private senoraArm:TransformNode|null=null;
+ /** Lies on the road when ready; in the last 0.9 s before it is ready it flies in from the cafeteria counter. */
+ private placeTreat(node:TransformNode,pick:{id:number;x:number;y:number;z:number;availableAt:number},time:number){
+  let from=this.treatOrigin.get(pick.id);
+  if(!from){const r=routeFor(this.trackId),t=r.course.treats[0];let o=new Vector3(pick.x,pick.y+2,pick.z);if(t){const q=sample(r,t.at),off=t.side*(r.width*.72+5.5);o=new Vector3(q.x+Math.cos(q.yaw)*off,q.y+1.7,q.z-Math.sin(q.yaw)*off);}from=o;this.treatOrigin.set(pick.id,from);}
+  const left=pick.availableAt-time;
+  if(left>0&&left<1.3){this.senoraArm??=this.scene.getTransformNodeByName('senora-arm');if(this.senoraArm){const u=clamp((1.3-left)/1.3,0,1);this.senoraArm.rotation.x=-Math.sin(u*Math.PI)*2.4;}}
+  if(left>.9){node.setEnabled(false);return;}
+  node.setEnabled(true);
+  if(left>0){const u=1-left/.9;node.position.set(lerp(from.x,pick.x,u),lerp(from.y,pick.y+.3,u)+Math.sin(u*Math.PI)*4.5,lerp(from.z,pick.z,u));node.rotation.set(u*9,u*4,0);node.scaling.setAll(1.25);return;}
+  node.position.set(pick.x,pick.y+.28,pick.z);node.rotation.set(0,time*.6+pick.id,0);node.scaling.setAll(1.25+Math.sin(time*5+pick.id)*.06);
+ }
  private itemTemplate:Mesh[]|null=null;
  private itemBox(){
   if(!this.itemTemplate){
@@ -247,12 +276,21 @@ export class RaceRenderer{
    driver.rotation.y=lerp(driver.rotation.y,p.stun>0?Math.sin(t*14)*.4:throwing?.25:posing?Math.sin(cast*7)*.15:0,k(10));
    driver.position.y=lerp(driver.position.y,1.02+(celebrate?Math.abs(Math.sin(t*7))*.22:0)+(p.vy>0?.06:0)+pose*.55,k(14));
    driver.scaling.setAll(lerp(driver.scaling.x,1+pose*.22,k(14)));
+   // Face: blinks every few seconds, squeezes the eyes when hit, looks at the closest rival nearby or back at whoever just got hit.
+   const face=c.face??(c.face={eyes:driver.getChildMeshes(false).filter(m=>/^(eye-white|iris|pupil|eye-glint)/.test(m.name)),head:driver.getChildTransformNodes(false).find(n=>n.name==='head-root'),nextBlink:t+1+Math.random()*3});
+   const hurt=c.hurt!==undefined&&t-c.hurt<.9,cheer=c.cheer!==undefined&&t-c.cheer<.95&&!hurt;
+   if(t>face.nextBlink+.12)face.nextBlink=t+2.2+((p.color*7.3+t*3.1)%1)*3.2;
+   const closed=hurt||(t>face.nextBlink&&t<face.nextBlink+.12);for(const e of face.eyes)e.scaling.y=lerp(e.scaling.y,closed?.12:1,k(30));
+   if(face.head){let look=0;if(!posing&&!hurt){let best=14;for(const o of state.players){if(o.id===p.id)continue;const dx=o.x-p.x,dz=o.z-p.z,d=Math.hypot(dx,dz);if(d<best){best=d;look=clamp(angle(Math.atan2(dx,dz)-p.yaw),-1.1,1.1);}}}
+    face.head.rotation.y=lerp(face.head.rotation.y,cheer?Math.sin(t*12)*.25:look*.8,k(6));face.head.rotation.x=lerp(face.head.rotation.x,hurt?.3:cheer?-.25:0,k(10));face.head.rotation.z=lerp(face.head.rotation.z,hurt?Math.sin(t*22)*.18:0,k(12));}
+   if(hurt){const q=t-(c.hurt??t);c.model.body.scaling.set(1+Math.sin(q*24)*.06*(1-q/.9),1-Math.sin(q*24)*.08*(1-q/.9),1);}else if(c.model.body.scaling.y!==1&&!(c.landed!==undefined&&t-c.landed<.4))c.model.body.scaling.setAll(1);
    // Arms: hands on the wheel (turning it), the outer arm throws, both go up for the special and the win.
    const arms=c.arms??(c.arms=pilotArms(driver));
    for(const [arm,sx] of [[arms.l,-1],[arms.r,1]] as const){
     if(!arm)continue;const rest=arm.metadata?.rest as Vector3;let dir:Vector3;
     if(posing)dir=throwT<.05?new Vector3(sx*.55,.85,.05+Math.sin(cast*9+sx)*.12):new Vector3(sx*.22,.35,.9);
     else if(celebrate)dir=new Vector3(sx*.45,.9,.1+Math.sin(t*8+sx*1.3)*.35);
+    else if(c.cheer!==undefined&&t-c.cheer<.95&&!(c.hurt!==undefined&&t-c.hurt<.9))dir=sx<0?new Vector3(-.25,1,.15+Math.sin(t*16)*.25):new Vector3(rest.x,rest.y,rest.z);
     else if(p.stun>0)dir=new Vector3(sx*.7,.3+Math.sin(t*15+sx)*.45,.4);
     else if(throwing&&sx<0)dir=new Vector3(-.35,.75,.55);
     else if(p.air>.3)dir=new Vector3(sx*.6,.55,.45);
@@ -330,7 +368,7 @@ export class RaceRenderer{
  dispose(){window.removeEventListener('resize',this.resize);this.labelLayer?.remove();this.attacks.dispose();this.hazardView.dispose();this.birds.dispose();this.effects.dispose();this.assets.forEach(a=>a.dispose());this.shadowMap?.dispose();this.scene.dispose();this.engine.dispose();}
 }
 export function garagePreview(canvas:HTMLCanvasElement,vehicleId:string,characterId:string){
- const engine=new Engine(canvas,true,{powerPreference:'low-power'},false),scene=new Scene(engine);scene.clearColor=new Color4(0,0,0,0);scene.imageProcessingConfiguration.toneMappingEnabled=true;scene.imageProcessingConfiguration.toneMappingType=1;scene.imageProcessingConfiguration.exposure=1.05;scene.imageProcessingConfiguration.contrast=1.08;const camera=new ArcRotateCamera('garage',Math.PI/3,1.12,8.4,new Vector3(0,1.1,0),scene);camera.lowerRadiusLimit=6;camera.upperRadiusLimit=12;camera.lowerBetaLimit=.7;camera.upperBetaLimit=1.4;camera.attachControl(canvas,true);
+ const engine=new Engine(canvas,true,{powerPreference:'low-power'},false),scene=new Scene(engine);scene.clearColor=new Color4(0,0,0,0);grade(scene,{...lookFor('la-salle'),saturation:26});scene.imageProcessingConfiguration.vignetteEnabled=false;const camera=new ArcRotateCamera('garage',Math.PI/3,1.12,8.4,new Vector3(0,1.1,0),scene);camera.lowerRadiusLimit=6;camera.upperRadiusLimit=12;camera.lowerBetaLimit=.7;camera.upperBetaLimit=1.4;camera.attachControl(canvas,true);
  const hemi=new HemisphericLight('sky',new Vector3(0,1,.5),scene);hemi.intensity=1.05;hemi.groundColor=Color3.FromHexString('#6583a3').toLinearSpace();const sun=new DirectionalLight('sun',new Vector3(-.4,-1,-.5),scene);sun.intensity=1.4;sun.diffuse=Color3.FromHexString('#fff1c5').toLinearSpace();cylinder(scene,null,'plinth',0,-.1,0,.3,7,'#233d76');const car=buildVehicle(scene,vehicleId,characterId);
  for(let i=0;i<10;i++){const a=i*Math.PI/5;const dash=MeshBuilder.CreateBox('plinth-stripe',{width:.08,height:.02,depth:.35},scene);dash.position.set(Math.sin(a)*3.1,.065,Math.cos(a)*3.1);dash.rotation.y=a;dash.material=material(scene,'#d6cfae');}
  const resize=()=>engine.resize();window.addEventListener('resize',resize);engine.runRenderLoop(()=>{const t=performance.now();car.body.position.y=Math.sin(t/700)*.035;scene.render();});
@@ -338,8 +376,8 @@ export function garagePreview(canvas:HTMLCanvasElement,vehicleId:string,characte
 }
 export function arcadeBackdrop(canvas:HTMLCanvasElement,id:string,overview=false){
  const engine=new Engine(canvas,true,{powerPreference:'low-power'},false),scene=new Scene(engine),def=track(id);
- scene.clearColor=Color4.FromHexString(def.sky+'ff');scene.fogMode=Scene.FOGMODE_LINEAR;scene.fogStart=overview?600:260;scene.fogEnd=overview?950:650;scene.fogColor=Color3.FromHexString(def.sky);scene.imageProcessingConfiguration.toneMappingEnabled=true;scene.imageProcessingConfiguration.toneMappingType=1;scene.imageProcessingConfiguration.exposure=1.05;scene.imageProcessingConfiguration.contrast=1.08;
- const hemi=new HemisphericLight('sky',new Vector3(0,1,.3),scene);hemi.intensity=.95;const sun=new DirectionalLight('sun',new Vector3(-.5,-1,.4),scene);sun.intensity=1.2;buildWorld(scene,id);
+ const look=lookFor(id),lc=lightColors(look);void def;scene.clearColor=Color4.FromHexString(look.horizon+'ff');scene.fogMode=Scene.FOGMODE_LINEAR;scene.fogStart=overview?600:260;scene.fogEnd=overview?950:650;scene.fogColor=Color3.FromHexString(look.horizon);grade(scene,look);skyDome(scene,look);
+ const hemi=new HemisphericLight('sky',new Vector3(0,1,.3),scene);hemi.intensity=look.hemiPower+.05;hemi.diffuse=lc.hemiSky;hemi.groundColor=lc.hemiGround;const sun=new DirectionalLight('sun',new Vector3(-.5,-1,.4),scene);sun.intensity=look.sunPower*.9;sun.diffuse=lc.sun;buildWorld(scene,id);
  const r=routeFor(id),start=sample(r,45),focus=overview?new Vector3(0,12,0):new Vector3(start.x,start.y+1,start.z);
  let camera:ArcRotateCamera|FreeCamera;if(overview){const orbit=new ArcRotateCamera('arcade-camera',Math.PI/3,.78,420,focus,scene);orbit.lowerRadiusLimit=300;orbit.upperRadiusLimit=550;orbit.attachControl(canvas,true);camera=orbit;}else{const hero=new Vector3(start.x-Math.cos(start.yaw)*3.8,start.y+1.2,start.z+Math.sin(start.yaw)*3.8);const shot=new FreeCamera('arcade-camera',new Vector3(hero.x+Math.sin(start.yaw)*11+Math.cos(start.yaw)*7,start.y+6.2,hero.z+Math.cos(start.yaw)*11-Math.sin(start.yaw)*7),scene);shot.setTarget(hero);shot.fov=.85;camera=shot;}
  if(!overview){for(let i=0;i<3;i++){const car=buildVehicle(scene,['silver-surfer','orange-seed','hola-willy'][i],['morly','semilla','chete'][i]);const pos=sample(r,45-i*6);car.root.position.set(pos.x+Math.cos(pos.yaw)*(i-1)*3.8,pos.y,pos.z-Math.sin(pos.yaw)*(i-1)*3.8);car.root.rotation.y=pos.yaw;}}

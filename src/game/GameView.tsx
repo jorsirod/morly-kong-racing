@@ -53,7 +53,7 @@ export default function GameView({session,onExit}:{session:Session;onExit:()=>vo
       const mine=event.playerId===session.id,target=state.players.find(p=>p.id===event.targetId);
       if(event.type==='attack'&&!event.special&&mine)cueFor(event.text??'¡Va el regalito!','attack',700);
       if(event.type==='pickup'&&mine)cueFor('+3 CARGAS','pickup',700);
-      if(event.type==='boost'&&mine){if(event.text==='launch')cueFor('¡SALIDA PERFECTA!','good',1100);else if(event.text==='early')cueFor('MUY TEMPRANO. AHOGASTE EL CARRO','warn',1100);else if((event.intensity??0)>=3)cueFor('¡TURBO NARANJA!','boost',650);}
+      if(event.type==='boost'&&mine){if(event.text==='quesillo')cueFor('¡QUESILLO DE LA SEÑORA! TURBO','good',900);else if(event.text==='launch')cueFor('¡SALIDA PERFECTA!','good',1100);else if(event.text==='early')cueFor('MUY TEMPRANO. AHOGASTE EL CARRO','warn',1100);else if((event.intensity??0)>=3)cueFor('¡TURBO NARANJA!','boost',650);}
       if(event.type==='draft'&&mine)cueFor('¡REBUFO!','boost',600);
       const HAZARD_CUE:Record<string,string>={pedestrian:'¡PERMISO! LA SEÑORA NI SE INMUTÓ',dancer:'¡TE SACARON A BAILAR!',crab:'¡UN CANGREJO! QUÉ PENA',cart:'¡LA CARRETILLA TENÍA PRIORIDAD!',crate:'¡CAJAS DE TOMATE POR TODOS LADOS!',ball:'¡BALONAZO!',hoop:'¡LA CANASTA NO SE MUEVE!',slipper:'¡CHINELA EN LA PISTA!',geyser:'¡LA FUMAROLA TE MANDÓ A VOLAR!',rock:'¡PIEDRA VOLCÁNICA!',wave:'¡OLA! TODO MOJADO',bus:'¡EL BUS NO FRENA PA NADIE!'};
       if(event.type==='hit'&&me&&!event.special){if(event.playerId===session.id&&event.targetId!==session.id)voices.say(me.characterId,'hit');else if(event.targetId===session.id)voices.say(me.characterId,'hurt');}

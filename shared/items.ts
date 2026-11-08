@@ -18,18 +18,19 @@ export const ITEMS:Record<ItemId,ItemDef>={
  * (laps and checkpoints included), never in straight-line distance.
  */
 export const BONG={
- /** Minimum lead of the leader over second place, in metres of progress (≈5–6 s). */ lead:110,
- /** Chance per surprise box for the last place; second place gets 40 % of it. */ chance:.45,
+ /** Minimum lead of the leader over second place, in metres of progress (≈3 s). */ lead:56,
+ /** Chance per surprise box for the last place; second place gets 55 % of it. */ chance:.72,
+ /** Seconds a leader may stay escaped before the next box behind is guaranteed to be the Bong. */ pity:14,
  /** Flight speed along the road (faster than any boosted car); it flies faster while far away. */ speed:52,
  /** Seconds of spin, of reduced top speed, and the top-speed factor during the hangover. */ stun:1.05, slow:2.4, slowFactor:.72,
- /** Seconds after a launch during which nobody can get or throw another one. */ cooldown:32,
+ /** Seconds after a launch during which nobody can get or throw another one. */ cooldown:21,
  /** Seconds of warning the leader gets before the impact (minimum). */ warn:2.2,
  life:16,
 };
 /** Weighted table by position: 0 = leader, 1 = last. Deterministic with the given random numbers. */
-export function rollItem(fraction:number,players:number,bongAllowed:boolean,r1:number,r2:number):ItemId{
+export function rollItem(fraction:number,players:number,bongAllowed:boolean,r1:number,r2:number,forceBong=false):ItemId{
  const f=Math.max(0,Math.min(1,fraction));
- if(bongAllowed&&f>0&&r2<BONG.chance*(.4+.6*f))return 'bong';
+ if(bongAllowed&&f>0&&(forceBong||r2<BONG.chance*(.55+.45*f)))return 'bong';
  const table:[ItemId,number][]=players<=1?[['cafe',30],['coco',25],['chilero',20],['casco',25]]
   :f<.2?[['coco',30],['chilero',30],['casco',26],['cafe',14]]
   :f<.6?[['cafe',24],['coco',20],['chilero',12],['casco',16],['cohetes',20],['cafe3',8]]

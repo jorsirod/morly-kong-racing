@@ -2,6 +2,7 @@ import { Vector3 } from '@babylonjs/core/Maths/math.vector';
 import { MeshBuilder } from '@babylonjs/core/Meshes/meshBuilder';
 import { TransformNode } from '@babylonjs/core/Meshes/transformNode';
 import { sample, sampleLane, type Route } from '../../../shared/track';
+import type { Lane } from '../../../shared/course';
 import { material } from '../models';
 import { Kit, rng, surfaceTexture } from './kit';
 
@@ -114,19 +115,57 @@ export function buildLaSalle(k:Kit,route:Route,battle:boolean){
  }
  barKiosk(k,48,116,Math.PI);
  k.sign('EL BAR →',-6,52,Math.PI*.8,7,1.5);
- // ── Patio central (dentro del circuito): cancha de fútbol, árboles y bancas ──
- const field=k.box('football-field',-20,.03,-55,96,.08,58,'#5f9e45');field.material=surfaceTexture(k.scene,'grass','#5f9e45');
- for(const dz of [-29,29])k.box('field-line',-20,.09,-55+dz,96,.02,.25,'#f3f3e6');for(const dx of [-48,0,48])k.box('field-line',-20+dx,.09,-55,.25,.02,58,'#f3f3e6');
- for(const s of [-1,1]){const gx=-20+s*48;k.box('goal-post',gx,1.2,-55-3.6,.18,2.4,.18,'#f6f6f0');k.box('goal-post',gx,1.2,-55+3.6,.18,2.4,.18,'#f6f6f0');k.box('goal-bar',gx,2.4,-55,.18,.18,7.4,'#f6f6f0');}
- for(let i=0;i<14;i++){const a=i/14*Math.PI*2,tx=-20+Math.cos(a)*64+r()*4,tz=-55+Math.sin(a)*40+r()*4;if(k.blocked(tx,tz,3))continue;k.tree(tx,tz,i%4===0?'malinche':i%4===1?'ceiba':'mango',0,.9+r()*.3);}
+ // ── La cancha de fútbol: el atajo cruza la cancha de portería a portería ──
+ const pitchLane=route.lanes.find(l=>l.id==='futbol');
+ if(pitchLane)footballPitch(k,pitchLane);
+ for(let i=0;i<10;i++){const a=i/10*Math.PI*2,tx=-20+Math.cos(a)*40+r()*4,tz=-45+Math.sin(a)*26+r()*4;if(k.blocked(tx,tz,3))continue;k.tree(tx,tz,i%4===0?'malinche':i%4===1?'ceiba':'mango',0,.9+r()*.3);}
+ // ── La cafetería: la señora tira quesillos a la calle (turbo para quien lo agarre) ──
+ const treat=route.course.treats[0];if(treat)cafeteria(k,route,treat.at,treat.side);
  // ── Oeste: gimnasio y biblioteca; norte: el viejo edificio con el nombre ──
  block(k,-212,-30,70,16,Math.PI/2,{color:'#e9d8b0',signs:['GIMNASIO','BIBLIOTECA']});
  block(k,-110,124,74,18,Math.PI,{floors:3,color:'#ecd9a8',signs:['LA SALLE','FUNDADO EN 1913']});
  // Ramp at the north-west bend: wooden planks, arrows and people on the wall.
  const ramp=sample(route,route.length*.68);k.sign('¡SALTO!',ramp.x-Math.sin(ramp.yaw)*14+Math.cos(ramp.yaw)*12,ramp.z-Math.cos(ramp.yaw)*14-Math.sin(ramp.yaw)*12,ramp.yaw+Math.PI,6,1.6);
  // Trees along the outside of the circuit.
- for(let d=20;d<route.length;d+=26){const p=sample(route,d);if(d>220&&d<345)continue;if(Math.abs(p.z+158)<14&&d<130)continue;for(const s of [-1,1]){if(r()<.35)continue;const off=19+r()*10;const x=p.x+Math.cos(p.yaw)*off*s,z=p.z-Math.sin(p.yaw)*off*s;if(Math.hypot(x-47,z-86)<34||Math.hypot(x+20,z+55)<52||(z<-170&&z>-215)||k.blocked(x,z,3))continue;k.tree(x,z,r()<.2?'malinche':r()<.5?'mango':'bush',0,.8+r()*.4);}}
+ for(let d=20;d<route.length;d+=26){const p=sample(route,d);if(d>220&&d<345)continue;if(Math.abs(p.z+158)<14&&d<130)continue;for(const s of [-1,1]){if(r()<.35)continue;const off=19+r()*10;const x=p.x+Math.cos(p.yaw)*off*s,z=p.z-Math.sin(p.yaw)*off*s;if(Math.hypot(x-47,z-86)<34||Math.hypot(x+95,z+112)<46||(z<-170&&z>-215)||k.blocked(x,z,3))continue;k.tree(x,z,r()<.2?'malinche':r()<.5?'mango':'bush',0,.8+r()*.4);}}
  k.box('lawn-path',-20,.04,-100,4,.06,30,CONCRETE);
+}
+/** Full-size pitch laid along the shortcut lane, with both goals spanning the lane: you drive through them. */
+function footballPitch(k:Kit,lane:Lane){
+ const a=sampleLane(lane,lane.length*.24),b=sampleLane(lane,lane.length*.78),cx=(a.x+b.x)/2,cz=(a.z+b.z)/2,yaw=Math.atan2(b.x-a.x,b.z-a.z),len=Math.hypot(b.x-a.x,b.z-a.z),wid=42;
+ const g=new TransformNode('football-pitch',k.scene);g.parent=k.root;g.position.set(cx,0,cz);g.rotation.y=yaw;
+ for(let i=0;i<8;i++){const stripe=k.box('pitch-stripe',0,.03,-len/2+len/16+i*len/8,wid,.06,len/8,i%2?'#4f9a3c':'#5fae45',0,g);stripe.material=surfaceTexture(k.scene,'grass',i%2?'#4f9a3c':'#5fae45');}
+ const line=(x:number,z:number,w:number,d:number)=>k.box('pitch-line',x,.09,z,w,.02,d,'#f6f6ee',0,g);
+ for(const s of [-1,1]){line(s*wid/2,0,.3,len);line(0,s*len/2,wid,.3);line(0,s*(len/2-8),18,.3);for(const x of [-9,9])line(x,s*(len/2-4),.3,8);}
+ line(0,0,wid,.3);const circle=MeshBuilder.CreateTorus('pitch-circle',{diameter:14,thickness:.3,tessellation:36},k.scene);circle.parent=g;circle.position.y=.09;circle.scaling.y=.05;circle.material=material(k.scene,'#f6f6ee');
+ // Goals at both ends, posts just outside the lane so the whole road goes under the crossbar. Nets in white mesh.
+ for(const s of [-1,1]){const z=s*len/2;for(const x of [-7.8,7.8])k.cyl('goal-post',x,2.6,z,5.2,.35,'#ffffff',.35,g);k.box('goal-bar',0,5.2,z,15.9,.35,.35,'#ffffff',0,g);
+  const net=k.box('goal-net',0,2.6,z+s*2.2,15.6,5,.05,'#ffffff',0,g);net.material=material(k.scene,'#ffffff',false,.35);for(const x of [-7.8,7.8]){const side=k.box('goal-net-side',x,2.6,z+s*1.1,.05,5,2.2,'#ffffff',0,g);side.material=net.material;}
+  for(const x of [-wid/2,wid/2]){k.cyl('corner-flag-pole',x,.8,z,1.6,.06,'#ffffff',.06,g);k.box('corner-flag',x+.25,1.45,z,.5,.35,.03,'#ffd33d',0,g);}}
+ // Stands with the school watching the shortcut and a scoreboard.
+ k.box('pitch-stand',wid/2+6,1.1,0,4,2.2,len*.7,'#c9b48c',0,g);k.box('pitch-stand-step',wid/2+8,2.4,0,3,.5,len*.7,'#b39f78',0,g);
+ const r=rng(91);for(let i=0;i<4;i++){const z=-len*.3+i*len*.2,lx=wid/2+8.2,wx=cx+Math.cos(yaw)*lx+Math.sin(yaw)*z,wz=cz-Math.sin(yaw)*lx+Math.cos(yaw)*z;k.crowd(wx,wz,yaw-Math.PI/2,7,2.6,1.1);}void r;
+ const board=new TransformNode('scoreboard',k.scene);board.parent=g;board.position.set(-wid/2-5,0,0);board.rotation.y=Math.PI/2;
+ for(const x of [-3,3])k.cyl('score-post',x,2.5,0,5,.3,'#555',.3,board);k.box('score-board',0,5.8,0,8,2.8,.3,'#1b2a2a',0,board);k.label('LA SALLE 2 · 1 VISITA',0,5.8,-.17,7.4,1.2,Math.PI,'#ffd33d','#1b2a2a',board);
+}
+/** The cafeteria by the road: counter, menu, tables and the lady who tosses quesillos onto the street. */
+function cafeteria(k:Kit,route:Route,at:number,side:number){
+ const p=sample(route,at),off=side*(route.width*.72+7.5),x=p.x+Math.cos(p.yaw)*off,z=p.z-Math.sin(p.yaw)*off,yaw=p.yaw+(side>0?-Math.PI/2:Math.PI/2);
+ const g=new TransformNode('cafeteria',k.scene);g.parent=k.root;g.position.set(x,p.y,z);g.rotation.y=yaw;
+ k.box('cafe-body',0,2,-2,16,4,6,'#f3e2b0',0,g);k.box('cafe-roof',0,4.25,-1,17.5,.5,8.5,ROOF,0,g);k.box('cafe-counter',0,.6,1.4,14,1.2,1.2,'#b9773f',0,g);k.box('cafe-counter-top',0,1.25,1.4,14.4,.12,1.5,'#e8d2a6',0,g);
+ for(let i=0;i<9;i++)k.box('cafe-awning',-7.2+i*1.8,3.75,2.6,1.8,.2,3,i%2?'#f6efe1':'#2f7a4e',0,g);
+ k.label('CAFETERÍA',0,5.3,3.1,9,1.5,0,'#fff3d0','#2f7a4e',g);k.box('cafe-sign-back',0,5.3,3,9.4,1.9,.15,'#f6efe1',0,g);
+ k.label('QUESILLOS · VIGORÓN · ENCHILADAS · GASEOSA',0,3.1,1.02,12,.6,0,'#2b3a2c','#fff3d0',g);
+ for(let i=0;i<4;i++)k.box('cafe-jar',-5+i*1.4,1.6,1.4,.8,.6,.8,['#f2c14e','#d23b3b','#fff4e0','#7cc36b'][i],0,g);
+ for(let i=0;i<3;i++){const tx=-5+i*5;k.cyl('cafe-table',tx,.75,-7.5,.12,2,'#c49a62',2,g);k.cyl('cafe-table-leg',tx,.4,-7.5,.8,.15,'#555',.15,g);}
+ // La señora: apron, hairnet, and the throwing arm the renderer swings with every quesillo.
+ const lady=new TransformNode('senora',k.scene);lady.parent=g;lady.position.set(2.5,0,.2);
+ k.cyl('senora-skirt',0,.65,0,1.3,1.1,'#5a6fb0',.8,lady);k.cyl('senora-body',0,1.55,0,.9,.8,'#e85a6a',.7,lady);k.box('senora-apron',0,1.2,.38,.75,1.2,.06,'#ffffff',0,lady);
+ k.ball('senora-head',0,2.3,0,.66,'#b77d58',undefined,lady);k.ball('senora-hair',0,2.45,-.08,.7,'#2b2018',new Vector3(1,.75,1),lady);k.ball('senora-net',0,2.55,0,.62,'#e9e2d0',new Vector3(1,.45,1),lady);
+ const arm=new TransformNode('senora-arm',k.scene);arm.parent=lady;arm.position.set(.45,1.85,0);arm.metadata={animate:true};k.cyl('senora-arm-mesh',0,-.35,0,.75,.18,'#b77d58',.16,arm);k.cyl('senora-arm-other',-.9,1.5,0,.75,.18,'#b77d58',.16,lady);
+ k.crowd(x+Math.sin(yaw)*-9.5,z+Math.cos(yaw)*-9.5,yaw,5,p.y,1.2);
+ const ahead=sample(route,at-route.length*.06),q={x:ahead.x+Math.cos(ahead.yaw)*side*(route.width*.72+2.5),z:ahead.z-Math.sin(ahead.yaw)*side*(route.width*.72+2.5)};
+ k.sign('¡QUESILLO GRATIS! → TURBO',q.x,q.z,ahead.yaw+Math.PI,8,1.4,ahead.y+3,'#13234d','#ffd33d');
 }
 function barKiosk(k:Kit,x:number,z:number,yaw:number){
  const g=new TransformNode('el-bar',k.scene);g.parent=k.root;g.position.set(x,0,z);g.rotation.y=yaw;

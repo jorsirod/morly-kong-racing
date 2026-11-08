@@ -19,10 +19,14 @@ export interface GapDef { from:number; to:number; kind:GapKind; lane?:string }
 export interface EdgeDef { from:number; to:number; side:-1|0|1; kind:GapKind|'cliff'; lane?:string }
 export interface AltDef { id:string; name:string; from:number; to:number; via:[number,number][]; width:number; rough?:boolean; laps?:number[]; lift?:number; sign?:string }
 export interface RowDef { at:number; lane?:string }
+export interface TreatDef { at:number; offsets:number[]; kind:'quesillo'; /** Roadside the thrower stands on (-1 left, 1 right). */ side:-1|1; lane?:string }
 export interface CourseDef {
  elev?:ElevDef[]; ramps?:RampDef[]; pads?:PadDef[]; gaps?:GapDef[]; edges?:EdgeDef[]; alts?:AltDef[];
  /** Visual: road on pillars instead of an embankment. */ bridges?:[number,number][];
  /** Visual: covered section (Masaya). */ tunnels?:[number,number][];
+ /** Visual: the road runs through a building (Galerías, the club). Keeps roadside dressing out. */ covered?:[number,number][];
+ /** Visual: cross streets where buses cross the course (fractions of the lap). */ crossings?:number[];
+ /** Treats a character drops on the road (La Salle's quesillo): a small turbo for whoever grabs one. */ treats?:TreatDef[];
  rough?:[number,number][]; charges:RowDef[]; items:RowDef[];
 }
 
@@ -31,17 +35,21 @@ export interface CRamp { lane:string; at:number; len:number; height:number; lift
 export interface CPad { lane:string; at:number; len:number; offset:number; width:number; power:number; super:boolean; laps:number[]|null }
 export interface CGap { lane:string; from:number; to:number; kind:GapKind }
 export interface CEdge { lane:string; from:number; to:number; side:number; kind:string }
-export interface Course { ramps:CRamp[]; pads:CPad[]; gaps:CGap[]; edges:CEdge[]; bridges:[number,number][]; tunnels:[number,number][]; rough:[number,number][]; charges:{lane:string;at:number}[]; items:{lane:string;at:number}[]; elev:ElevDef[] }
+export interface CTreat { lane:string; at:number; offsets:number[]; kind:string; side:number }
+export interface Course { ramps:CRamp[]; pads:CPad[]; gaps:CGap[]; edges:CEdge[]; bridges:[number,number][]; tunnels:[number,number][]; covered:[number,number][]; treats:CTreat[]; crossings:number[]; rough:[number,number][]; charges:{lane:string;at:number}[]; items:{lane:string;at:number}[]; elev:ElevDef[] }
 
 export const COURSES:Record<string,CourseDef>={
- // La Salle: túmulos, la loma del norte, las canchas (se abren en la 2.ª vuelta) y el gran salto sobre la zanja.
+ // La Salle: túmulos, la loma del norte, las canchas (se abren en la 2.ª vuelta), el gran salto sobre la zanja, la
+ // cafetería (la señora tira quesillos a la calle: turbo para quien lo agarre) y el atajo por la cancha de fútbol.
  'la-salle':{
   elev:[{from:.598,to:.668,height:4.5,ramp:30},{from:.706,to:.80,height:4,ramp:26}],
-  ramps:[{at:.152,lift:3.2,height:.35,len:3},{at:.578,lift:4.2,height:.45,len:3.5},{at:.727,len:13,height:2.2,lift:8,minSpeed:19,big:true},
-   {lane:'canchas',at:.43,len:7,height:1,lift:5.2,minSpeed:15,width:7}],
-  pads:[{at:.025,offset:-4,power:.8},{at:.372,offset:3.5,power:.9},{at:.708,power:1.5,super:true,width:10},{at:.905,offset:4,power:.8},{lane:'canchas',at:.32,power:1.2,super:true,width:5}],
+  ramps:[{at:.152,lift:3.2,height:.35,len:3},{at:.578,lift:4.2,height:.45,len:3.5},{at:.727,len:13,height:2.2,lift:8,minSpeed:19,big:true},{at:.905,lift:3.4,height:.36,len:3},{at:.085,lift:3,height:.3,len:3,offset:4,width:6},
+   {lane:'canchas',at:.43,len:7,height:1,lift:5.2,minSpeed:15,width:7},{lane:'futbol',at:.52,len:5,height:.7,lift:4.6,minSpeed:14,width:6}],
+  pads:[{at:.025,offset:-4,power:.8},{at:.372,offset:3.5,power:.9},{at:.708,power:1.5,super:true,width:10},{at:.89,offset:4,power:.8},{lane:'canchas',at:.32,power:1.2,super:true,width:5},{lane:'futbol',at:.38,power:1.2,super:true,width:5}],
   gaps:[{from:.7395,to:.7555,kind:'mud'},{lane:'canchas',from:.48,to:.535,kind:'water'}],
-  alts:[{id:'canchas',name:'POR LAS CANCHAS',from:.385,to:.565,via:[[96,82],[60,81],[26,80],[2,80]],width:9,lift:1.2,laps:[1,2],sign:'CANCHAS ABIERTAS →'}],
+  alts:[{id:'canchas',name:'POR LAS CANCHAS',from:.385,to:.565,via:[[96,82],[60,81],[26,80],[2,80]],width:9,lift:1.2,laps:[1,2],sign:'CANCHAS ABIERTAS →'},
+   {id:'futbol',name:'POR LA CANCHA DE FÚTBOL',from:.826,to:.968,via:[[-140,-92],[-110,-104],[-80,-120],[-55,-140]],width:10,rough:true,sign:'⚽ POR LA CANCHA →'}],
+  treats:[{at:.468,offsets:[-4.2,0,4.2],kind:'quesillo',side:1}],
   bridges:[],charges:[{at:.06},{at:.2},{at:.33},{at:.48},{at:.62},{at:.84},{at:.95}],items:[{at:.31},{at:.68},{at:.87}],
  },
  // Mercado Oriental: calles angostas, peatones, el cauce y el callejón de los chinamos.
@@ -52,54 +60,64 @@ export const COURSES:Record<string,CourseDef>={
    {lane:'callejon',at:.52,len:5,height:.8,lift:4.4,minSpeed:14,width:6}],
   pads:[{at:.06,offset:3.5,power:.8},{at:.55,power:1.5,super:true,width:10},{at:.69,offset:-3.5,power:.9},{at:.9,offset:-3,power:.8},{lane:'callejon',at:.2,power:1,width:5}],
   gaps:[{from:.5775,to:.5915,kind:'mud'}],
+  crossings:[.958],
   alts:[{id:'callejon',name:'CALLEJÓN DE LOS CHINAMOS',from:.70,to:.865,via:[[-175,30],[-178,-20],[-176,-62]],width:8,rough:true,sign:'CALLEJÓN →'}],
   charges:[{at:.04},{at:.17},{at:.29},{at:.41},{at:.66},{at:.79},{at:.93}],items:[{at:.13},{at:.53},{at:.69}],
  },
  // Managua: malecón, paso a desnivel (figura de ocho), Loma de Tiscapa y la calle rota.
  managua:{
-  elev:[{from:.79,to:.865,height:4,ramp:24}],
-  ramps:[{at:.06,lift:3.2,height:.35,len:3},{at:.335,lift:3.4,height:.35,len:3},{at:.826,len:12,height:2.2,lift:8,minSpeed:19,big:true}],
-  pads:[{at:.02,offset:-4.5,power:.9},{at:.27,offset:4.5,power:.9},{at:.56,power:1.1,width:10},{at:.808,power:1.5,super:true,width:11},{at:.93,offset:4.5,power:.8},{lane:'mirador',at:.25,power:1.2,width:5,super:true}],
-  gaps:[{from:.8385,to:.8525,kind:'water'}],
+  elev:[{from:.7763,to:.8487,height:4,ramp:24}],
+  ramps:[{at:.0585,lift:3.2,height:.35,len:3},{at:.3291,lift:3.4,height:.35,len:3},{at:.8114,len:12,height:2.2,lift:8,minSpeed:19,big:true}],
+  pads:[{at:.0195,offset:-4.5,power:.9},{at:.2651,offset:4.5,power:.9},{at:.5505,power:1.1,width:10},{at:.7937,power:1.5,super:true,width:11},{at:.884,offset:-4.5,power:1,width:5},{at:.9303,offset:4.5,power:.8},{lane:'mirador',at:.25,power:1.2,width:5,super:true}],
+  gaps:[{from:.8239,to:.8377,kind:'water'}],
   edges:[{lane:'mirador',from:.18,to:.86,side:1,kind:'water'}],
-  alts:[{id:'mirador',name:'MIRADOR DE TISCAPA',from:.335,to:.475,via:[[160,95],[178,58],[177,8]],width:8,sign:'MIRADOR · SIN BARANDA'}],
-  bridges:[[.54,.68]],
-  charges:[{at:.04},{at:.15},{at:.25},{at:.5},{at:.62},{at:.74},{at:.9}],items:[{at:.31},{at:.79},{at:.97}],
+  alts:[{id:'mirador',name:'MIRADOR DE TISCAPA',from:.3291,to:.4668,via:[[160,95],[178,58],[177,8]],width:8,sign:'MIRADOR · SIN BARANDA'}],
+  bridges:[[.5308,.6686]],covered:[[.928,.972]],crossings:[.122,.0683],
+  charges:[{at:.039},{at:.147},{at:.2454},{at:.4914},{at:.6095},{at:.7275},{at:.9015}],items:[{at:.3045},{at:.7763},{at:.9698}],
  },
- // Hipa Hipa: pads al ritmo, la pista de baile y el salto sobre la piscina VIP.
+ // Hipa Hipa: pads al ritmo, el salto sobre la piscina VIP, la espiral alrededor de la palmera gigante (una vuelta completa
+ // subiendo, pasando por encima de su propia entrada) y la bajada con brinco por la terraza.
  'hipa-hipa':{
-  elev:[{from:.645,to:.715,height:3.6,ramp:20}],
-  ramps:[{at:.12,lift:3,height:.3,len:3},{at:.46,lift:3.8,height:.4,len:3},{at:.664,len:11,height:2,lift:7.6,minSpeed:18.5,big:true}],
-  pads:[{at:.05,offset:3.5,power:.9},{at:.30,offset:-3,power:.9},{at:.648,power:1.5,super:true,width:10},{at:.86,offset:-4,power:.8},{lane:'baile',at:.5,power:1.1,width:6}],
-  gaps:[{from:.6765,to:.6915,kind:'water'}],
-  alts:[{id:'baile',name:'POR LA TERRAZA VIP',from:.205,to:.38,via:[[166,-10],[168,30],[158,64]],width:10,sign:'TERRAZA VIP →'}],
-  charges:[{at:.04},{at:.16},{at:.27},{at:.44},{at:.55},{at:.77},{at:.93}],items:[{at:.19},{at:.62},{at:.83}],
+  ramps:[{at:.06,lift:3.2,height:.32,len:3},{at:.196,len:11,height:2,lift:7.6,minSpeed:18.5,big:true},{at:.33,lift:3.6,height:.35,len:3},
+   {at:.674,lift:4.6,height:.5,len:4,minSpeed:15},{at:.78,lift:3.6,height:.38,len:3},{lane:'barra',at:.5,len:4,height:.6,lift:4.4,minSpeed:14,width:6}],
+  pads:[{at:.03,offset:3.5,power:.9},{at:.183,power:1.5,super:true,width:10},{at:.29,offset:-4,power:.9},{at:.47,power:1,width:6,offset:-2},{at:.535,power:1,width:6,offset:-2},{at:.6,power:1,width:6,offset:-2},
+   {at:.645,power:1.4,super:true,width:9},{at:.86,offset:-4,power:.8},{at:.95,offset:4,power:.8},{lane:'barra',at:.35,power:1.3,super:true,width:5},{lane:'barra',at:.7,power:1,width:5}],
+  gaps:[{from:.2075,to:.2215,kind:'water'}],
+  alts:[{id:'barra',name:'POR LA BARRA DE AFUERA',from:.805,to:.895,via:[[-146,-48],[-128,-96]],width:9,sign:'🍹 POR LA BARRA →'}],
+  bridges:[[.488,.765]],
+  charges:[{at:.04},{at:.14},{at:.27},{at:.4},{at:.52},{at:.71},{at:.84},{at:.93}],items:[{at:.165},{at:.43},{at:.79}],
  },
- // Volcán Masaya: la cresta de lava enfriada, el túnel de magma con saltos y el gran salto de salida.
+ // Volcán Masaya: la entrada del parque, lomas para volar, la cresta de lava enfriada, el túnel de magma con saltos y el
+ // gran salto de salida.
  masaya:{
-  rough:[[.12,.58],[.76,.88]],
-  ramps:[{at:.398,lift:3.4,height:.35,len:3},{at:.6205,len:4,height:.7,lift:4.6,minSpeed:15},{at:.656,len:4,height:.7,lift:4.6,minSpeed:15},{at:.716,len:13,height:2.4,lift:8.2,minSpeed:19.5,big:true},
+  elev:[{from:.085,to:.095,height:2.4,ramp:12},{from:.284,to:.29,height:2.2,ramp:11},{from:.445,to:.452,height:2.6,ramp:12},{from:.855,to:.862,height:2.4,ramp:12}],
+  rough:[[.12,.24],[.32,.58],[.78,.84]],
+  ramps:[{at:.045,lift:3.2,height:.32,len:3,offset:-4,width:6},{at:.175,lift:3.6,height:.38,len:3},{at:.33,lift:3.8,height:.4,len:3.2,offset:4,width:6},{at:.398,lift:3.4,height:.35,len:3},{at:.52,lift:4,height:.45,len:3.5},
+   {at:.6205,len:4,height:.7,lift:4.6,minSpeed:15},{at:.656,len:4,height:.7,lift:4.6,minSpeed:15},{at:.716,len:13,height:2.4,lift:8.2,minSpeed:19.5,big:true},{at:.80,lift:3.6,height:.38,len:3},{at:.93,lift:3.4,height:.35,len:3,offset:4,width:6},
    {lane:'cresta',at:.47,len:4,height:.6,lift:4.2,minSpeed:14,width:6}],
-  pads:[{at:.05,offset:4,power:.9},{at:.3,offset:-4,power:.9},{at:.61,power:.8,width:8},{at:.70,power:1.6,super:true,width:12},{at:.9,offset:-4,power:.8},{lane:'cresta',at:.2,power:1,width:5}],
+  pads:[{at:.05,offset:4,power:.9},{at:.16,offset:-4,power:.9},{at:.3,offset:-4,power:.9},{at:.49,power:1,width:8},{at:.61,power:.8,width:8},{at:.70,power:1.6,super:true,width:12},{at:.78,offset:4,power:.9},{at:.9,offset:-4,power:.8},{lane:'cresta',at:.2,power:1,width:5}],
   gaps:[{from:.6245,to:.632,kind:'lava'},{from:.660,to:.6675,kind:'lava'},{from:.7275,to:.7495,kind:'lava'},{lane:'cresta',from:.53,to:.6,kind:'lava'}],
   edges:[{from:.592,to:.70,side:-1,kind:'lava'},{lane:'cresta',from:.12,to:.88,side:0,kind:'cliff'}],
   alts:[{id:'cresta',name:'CRESTA DE LAVA ENFRIADA',from:.163,to:.245,via:[[171,-66],[172,-40],[162,-20]],width:7,rough:true,sign:'CRESTA · SIN MUROS'}],
   tunnels:[[.585,.705]],
-  charges:[{at:.04},{at:.14},{at:.26},{at:.36},{at:.5},{at:.8},{at:.92}],items:[{at:.15},{at:.57},{at:.68}],
+  charges:[{at:.04},{at:.14},{at:.27},{at:.36},{at:.5},{at:.82},{at:.92}],items:[{at:.15},{at:.57},{at:.68}],
  },
- // San Juan del Sur: malecón, pueblo, subida al Cristo, el salto de la quebrada, el puente y la playa.
+ // San Juan del Sur: malecón, pueblo, subida al Cristo, el salto de la quebrada, el puente y la playa: el salto del
+ // estero junto al mar, rampas de arena entre las palmeras y la orilla con dunas.
  'san-juan':{
   elev:[{from:.585,to:.655,height:3.6,ramp:24},{from:.768,to:.812,height:2.6,ramp:16}],
   rough:[[.86,.9]],
-  ramps:[{at:.12,lift:3,height:.3,len:3},{at:.37,lift:3.6,height:.4,len:3},{at:.613,len:12,height:2.2,lift:8,minSpeed:19,big:true},
-   {lane:'playa',at:.55,len:6,height:1,lift:5,minSpeed:16,width:7}],
-  pads:[{at:.03,offset:4,power:.8},{at:.25,offset:-4,power:.9},{at:.596,power:1.5,super:true,width:10},{at:.82,offset:3.5,power:.8},{lane:'playa',at:.42,power:1.2,width:5,super:true}],
-  gaps:[{from:.6245,to:.639,kind:'pit'},{lane:'playa',from:.60,to:.66,kind:'water'}],
+  ramps:[{at:.054,len:11,height:2,lift:7.4,minSpeed:18.5,big:true},{at:.12,lift:3,height:.3,len:3},{at:.37,lift:3.6,height:.4,len:3},{at:.613,len:12,height:2.2,lift:8,minSpeed:19,big:true},
+   {at:.93,lift:3.6,height:.4,len:3.5,offset:-4,width:6},{at:.965,lift:3.6,height:.4,len:3.5,offset:4,width:6},
+   {lane:'playa',at:.2,len:4,height:.6,lift:4.4,minSpeed:14,width:7},{lane:'playa',at:.38,len:4,height:.6,lift:4.4,minSpeed:14,width:7},{lane:'playa',at:.55,len:6,height:1,lift:5,minSpeed:16,width:7},{lane:'playa',at:.8,len:4,height:.7,lift:4.6,minSpeed:14,width:7}],
+  pads:[{at:.03,offset:4,power:.8},{at:.042,power:1.5,super:true,width:10},{at:.25,offset:-4,power:.9},{at:.596,power:1.5,super:true,width:10},{at:.82,offset:3.5,power:.8},{lane:'playa',at:.1,power:1,width:5},{lane:'playa',at:.45,power:1.2,width:5,super:true}],
+  gaps:[{from:.0635,to:.0765,kind:'water'},{from:.6245,to:.639,kind:'pit'},{lane:'playa',from:.60,to:.66,kind:'water'}],
   edges:[{lane:'playa',from:.15,to:.9,side:1,kind:'water'}],
-  alts:[{id:'playa',name:'POR LA ORILLA DE LA PLAYA',from:.875,to:.985,via:[[-126,-186],[-84,-212],[-38,-204]],width:9,rough:true,lift:1.4,sign:'ORILLA · CUIDADO CON LAS OLAS'}],
+  alts:[{id:'playa',name:'POR LA ARENA',from:.875,to:.985,via:[[-126,-186],[-84,-214],[-38,-206]],width:10,rough:true,lift:.6,sign:'🏖 POR LA ARENA · RAMPAS'}],
   bridges:[[.775,.805]],
-  charges:[{at:.04},{at:.15},{at:.27},{at:.4},{at:.52},{at:.72},{at:.94}],items:[{at:.2},{at:.58},{at:.86}],
+  charges:[{at:.022},{at:.15},{at:.27},{at:.4},{at:.52},{at:.72},{at:.94}],items:[{at:.2},{at:.58},{at:.86}],
  },
+
 };
 
 const smooth=(t:number)=>t<=0?0:t>=1?1:t*t*(3-2*t);
@@ -129,7 +147,7 @@ export function compileCourse(def:CourseDef|undefined,length:number,lanes:Lane[]
   pads:(d.pads??[]).map(p=>({lane:p.lane??'',at:m(p.lane,p.at),len:p.len??(p.super?7:5),offset:p.offset??0,width:p.width??4.2,power:p.power??.8,super:!!p.super,laps:p.laps??null})),
   gaps:(d.gaps??[]).map(g=>({lane:g.lane??'',from:m(g.lane,g.from),to:m(g.lane,g.to),kind:g.kind})),
   edges:(d.edges??[]).map(e=>({lane:e.lane??'',from:m(e.lane,e.from),to:m(e.lane,e.to),side:e.side,kind:e.kind})),
-  bridges:(d.bridges??[]).map(([a,b])=>[a*length,b*length]),tunnels:(d.tunnels??[]).map(([a,b])=>[a*length,b*length]),rough:(d.rough??[]).map(([a,b])=>[a*length,b*length]),
+  bridges:(d.bridges??[]).map(([a,b])=>[a*length,b*length]),tunnels:(d.tunnels??[]).map(([a,b])=>[a*length,b*length]),covered:(d.covered??[]).map(([a,b])=>[a*length,b*length]),crossings:(d.crossings??[]).map(f=>f*length),treats:(d.treats??[]).map(t=>({lane:t.lane??'',at:m(t.lane,t.at),offsets:t.offsets,kind:t.kind,side:t.side})),rough:(d.rough??[]).map(([a,b])=>[a*length,b*length]),
   charges:d.charges.map(r=>({lane:r.lane??'',at:m(r.lane,r.at)})),items:d.items.map(r=>({lane:r.lane??'',at:m(r.lane,r.at)})),elev:d.elev??[],
  };
 }

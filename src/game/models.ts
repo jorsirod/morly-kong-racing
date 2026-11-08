@@ -236,6 +236,9 @@ export function buildProjectile(scene:Scene,object:string,special=false){
   box(scene,root,'sixpack-carrier',0,-.18,0,1.56,.74,1.06,'#e6c94c');for(let i=0;i<6;i++)bottle(scene,root,'victoria',(i%3-1)*.51,.18,(Math.floor(i/3)-.5)*.49,.69);
   box(scene,root,'carrier-handle',0,.72,0,.65,.36,.11,'#ddbb32');textLabel(scene,root,'VICTORIA',0,-.1,.55,1.24,.34,'#38522a','#ead772');
  }
+ else if(object==='football'){
+  sphere(scene,root,'football',0,0,0,1.3,'#f7f7f2');for(let i=0;i<10;i++){const a=i*2.4,b=Math.acos(1-2*(i+.5)/10);const patch=sphere(scene,root,'football-patch',Math.sin(b)*Math.cos(a)*.6,Math.cos(b)*.6,Math.sin(b)*Math.sin(a)*.6,.42,'#1b1b1b');patch.scaling.y=.55;patch.lookAt(new Vector3(0,0,0));}
+ }
  else if(object==='basketball'){
   sphere(scene,root,'basketball',0,0,0,1.28,'#ea772a');for(const rz of [0,Math.PI/2]){const line=torus(scene,root,'basketball-seam',0,0,0,1.282,.026,'#443021');line.rotation.z=rz;}const equator=torus(scene,root,'basketball-equator',0,0,0,1.284,.026,'#443021');equator.rotation.x=Math.PI/2;
  }

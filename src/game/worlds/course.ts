@@ -19,7 +19,7 @@ import '@babylonjs/core/Meshes/Builders/ribbonBuilder';
  * where the physics puts it. Static pieces are merged by material in buildWorld.
  */
 type Frame={x:number;y:number;z:number;yaw:number};
-export interface TrackStyle { road:string; rough:string; barrier:{body:string;top:string;stripe?:string;h:number;post?:boolean}; skirt:'grass'|'rock'|'dirt'|'sand'; skirtColor:string; shelf:number; ramp:'stripes'|'wood'|'neon'|'rock'; lane:Record<string,{kind:'court'|'dirt'|'concrete'|'neon'|'rock'|'planks';color:string}>; night?:boolean }
+export interface TrackStyle { road:string; rough:string; barrier:{body:string;top:string;stripe?:string;h:number;post?:boolean}; skirt:'grass'|'rock'|'dirt'|'sand'; skirtColor:string; shelf:number; ramp:'stripes'|'wood'|'neon'|'rock'; lane:Record<string,{kind:'court'|'dirt'|'sand'|'concrete'|'neon'|'rock'|'planks';color:string}>; night?:boolean }
 const SIDE=[-1,1] as const;
 const at=(f:Frame,offset:number,lift=0)=>new Vector3(f.x+Math.cos(f.yaw)*offset,f.y+lift,f.z-Math.sin(f.yaw)*offset);
 const within=(s:number,a:number,b:number)=>s>=a&&s<=b;
@@ -42,7 +42,7 @@ const courtMat=(scene:Scene)=>canvasMaterial(scene,'court',(c,s)=>{c.fillStyle='
 const neonFloor=(scene:Scene)=>canvasMaterial(scene,'neonfloor',(c,s)=>{const cols=['#ff5fb0','#45e0ff','#ffd33d','#8bff6a'];for(let i=0;i<4;i++)for(let j=0;j<4;j++){c.fillStyle=cols[(i+j*3)%4];c.fillRect(i*s/4+2,j*s/4+2,s/4-4,s/4-4);}},{emissive:'#3a2a4a'});
 function laneSurface(scene:Scene,kind:TrackStyle['lane'][string]['kind'],color:string){
  if(kind==='court')return courtMat(scene);if(kind==='neon')return neonFloor(scene);if(kind==='planks')return plankMat(scene,color);
- return surfaceTexture(scene,kind==='dirt'?'dirt':kind==='rock'?'rock':'asphalt',color);
+ return surfaceTexture(scene,kind==='dirt'?'dirt':kind==='rock'?'rock':kind==='sand'?'sand':'asphalt',color);
 }
 /** Ribbon between two polylines (left/right) with UVs tiled every `tile` metres along the road. */
 function strip(scene:Scene,root:TransformNode,name:string,left:Vector3[],right:Vector3[],mat:StandardMaterial,tile=14,across=1){
@@ -90,7 +90,7 @@ export function buildCourse(kit:Kit,route:Route,trackId:string,style:TrackStyle)
  }
  // ── Embankments under raised road, cliffs at open edges, pillars under bridges ──
  skirts(kit,mainAt,L,w,[...gapsMain,...c.bridges,...c.tunnels.map(([a,b])=>[a-2,b+2] as [number,number])],(s,side)=>open('',s,side),style,'');
- for(const [a,b] of c.bridges)bridge(kit,mainAt,a,b,w);
+ for(const [a,b] of c.bridges)bridge(kit,mainAt,a,b,w,route);
  // ── Gaps: cliff faces and what you fall into ──
  for(const g of c.gaps){
   const get=g.lane?(s:number)=>sampleLane(route.lanes.find(l=>l.id===g.lane)!,s) as Frame:mainAt,width=g.lane?route.lanes.find(l=>l.id===g.lane)!.width:w,a=get(g.from),b=get(g.to);
@@ -118,11 +118,18 @@ export function buildCourse(kit:Kit,route:Route,trackId:string,style:TrackStyle)
  // ── Barriers: none over gaps, on open edges or where a lane forks off ──
  const laneNear=(x:number,z:number,margin:number)=>route.lanes.some(l=>{for(let i=0;i<l.points.length;i+=2){const p=l.points[i];if(Math.hypot(p.x-x,p.z-z)<l.width/2+margin)return true;}return false;});
  const mainNear=(x:number,z:number,margin:number)=>{for(let i=0;i<route.points.length;i+=2){const p=route.points[i];if(Math.hypot(p.x-x,p.z-z)<half+margin)return true;}return false;};
- barrier(kit,mainAt,L,w*.72+.25,style.barrier,(d,side)=>{if(gapsMain.some(([a,b])=>within(d,a-1,b+1))||open('',d,side))return true;const p=at(mainAt(d),(w*.72+.25)*side);return laneNear(p.x,p.z,1.5);});
+ barrier(kit,mainAt,L,w*.72+.25,style.barrier,(d,side)=>{if(gapsMain.some(([a,b])=>within(d,a-1,b+1))||open('',d,side)||c.crossings.some(x=>Math.abs(d-x)<9))return true;const p=at(mainAt(d),(w*.72+.25)*side);return laneNear(p.x,p.z,1.5);});
  for(const lane of route.lanes){const holes=c.gaps.filter(g=>g.lane===lane.id);barrier(kit,s=>sampleLane(lane,s) as Frame,lane.length,lane.width*.72+.25,{...style.barrier,h:style.barrier.h*.8},(s,side)=>{if(s<6||s>lane.length-6||holes.some(g=>within(s,g.from-1,g.to+1))||open(lane.id,s,side))return true;const p=at(sampleLane(lane,s),(lane.width*.72+.25)*side);return mainNear(p.x,p.z,1.2);},false);}
  // Open edges get hazard paint on the lip and a sign before them.
  for(const e of c.edges){const lane=e.lane?route.lanes.find(l=>l.id===e.lane):undefined,get=lane?(s:number)=>sampleLane(lane,s) as Frame:mainAt,hw=(lane?lane.width:w)/2;
   for(const side of SIDE){if(e.side!==0&&e.side!==side)continue;const f=frames(get,e.from,e.to,2);strip(scene,root,'open-edge',f.map(q=>at(q,side*(hw+.1),.07)),f.map(q=>at(q,side*(hw+1.1),.07)),stripesMat(scene,'#ffffff','#d6402f'),3);}}
+ // Cross streets where the buses come through: asphalt both ways, zebra crossings and stop lines.
+ for(const x of c.crossings){const p=mainAt(x),rx=Math.cos(p.yaw),rz=-Math.sin(p.yaw);
+  for(const side of SIDE){const len=70,cx=p.x+rx*side*(half+len/2),cz=p.z+rz*side*(half+len/2);const street=kit.box('cross-street',cx,p.y+.02,cz,len,.05,13,'#555b66',p.yaw+Math.PI/2);street.rotation.y=p.yaw+Math.PI/2;street.material=roadMat;
+   for(let i=0;i<5;i++){const o=half+3+i*12;kit.box('cross-dash',p.x+rx*side*o,p.y+.06,p.z+rz*side*o,.25,.03,4,'#f4e3ba',p.yaw+Math.PI/2);}
+}
+  for(const dz of [-7.6,7.6])for(let i=-5;i<=5;i++){const q=at(mainAt(x+dz),i*1.3);kit.box('zebra',q.x,q.y+.075,q.z,.75,.03,2.6,'#f6f1e2',p.yaw);}
+  const stop=at(mainAt(x-10.5),0);kit.box('stop-line',stop.x,stop.y+.07,stop.z,w-1,.03,.45,'#f6f1e2',p.yaw);}
  // Tunnels (Masaya).
  for(const [a,b] of c.tunnels)tunnelShell(kit,mainAt,a,b,w,c.edges.find(e=>e.lane===''&&e.from<b&&e.to>a)?.side??0);
  // Warning signs ahead of each big jump.
@@ -151,8 +158,10 @@ function skirts(kit:Kit,get:(d:number)=>Frame,length:number,width:number,holes:[
  }
 }
 /** Concrete deck edges and pillars for overpasses and bridges. */
-function bridge(kit:Kit,get:(d:number)=>Frame,a:number,b:number,width:number){
- for(let d=a;d<=b;d+=8){const p=get(d);if(p.y<1.2)continue;for(const side of [-1,0,1]){const q=at(p,side*width*.42);kit.box('bridge-pillar',q.x,(q.y-.6)/2-.1,q.z,1.4,Math.max(.5,q.y-.6),1.4,'#b9b4a6',p.yaw);}
+function bridge(kit:Kit,get:(d:number)=>Frame,a:number,b:number,width:number,route?:Route){
+ // Never plant a pillar on a road that runs underneath (the spiral passes over its own entry).
+ const below=(x:number,z:number,y:number)=>!!route&&route.points.some(r=>r.y<y-3&&Math.hypot(r.x-x,r.z-z)<route.width*.75+1);
+ for(let d=a;d<=b;d+=8){const p=get(d);if(p.y<1.2)continue;for(const side of [-1,0,1]){const q=at(p,side*width*.42);if(below(q.x,q.z,q.y))continue;kit.box('bridge-pillar',q.x,(q.y-.6)/2-.1,q.z,1.4,Math.max(.5,q.y-.6),1.4,'#b9b4a6',p.yaw);}
   kit.box('bridge-beam',p.x,p.y-.55,p.z,width+1.6,.9,8.2,'#cfc9b9',p.yaw);}
 }
 /** Volcanic tunnel: arched rock shell with windows to the magma, glowing veins, lava channel. */

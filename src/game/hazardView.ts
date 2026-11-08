@@ -6,6 +6,7 @@ import { TransformNode } from '@babylonjs/core/Meshes/transformNode';
 import { StandardMaterial } from '@babylonjs/core/Materials/standardMaterial';
 import type { Scene } from '@babylonjs/core/scene';
 import { hazardsFor, type Hazard } from '../../shared/hazards';
+import { routeFor, sample } from '../../shared/track';
 import type { GameState, PlayerState } from '../../shared/types';
 import { box, cylinder, sphere, material, textLabel, buildProjectile } from './models';
 import '@babylonjs/core/Meshes/Builders/discBuilder';
@@ -40,7 +41,7 @@ export class HazardView{
   else if(h.kind==='crab'){const body=sphere(s,node,'crab-body',0,.35,0,1.1,'#e0442e',new Vector3(1.3,.5,.9));parts.body=body;for(const x of [-1,1]){const claw=sphere(s,node,'crab-claw',x*.75,.45,.45,.45,'#f05a3c',new Vector3(1,.7,1.2));parts[x<0?'clawL':'clawR']=claw;sphere(s,node,'crab-eye',x*.18,.72,.3,.16,'#1a1a1a');for(let i=0;i<3;i++){const leg=box(s,node,'crab-leg',x*.72,.2,-.25+i*.22,.6,.08,.08,'#b8321f');leg.rotation.z=x*.5;}}}
   else if(h.kind==='cart'){box(s,node,'cart-bed',0,1,0,1.9,.3,3.1,'#9a7046');for(const x of [-1.1,1.1]){const w=cylinder(s,node,'cart-wheel',x,.75,.6,.18,1.5,'#4a3b2c');w.rotation.z=Math.PI/2;}for(let j=0;j<9;j++)sphere(s,node,'cart-fruit',(j%3-1)*.55,1.4,(Math.floor(j/3)-1)*.8,.55,['#f39c4a','#7cc36b','#d9473b','#ffd24e'][j%4]);const v=new TransformNode('vendor',s);v.parent=node;v.position.set(0,0,-2.4);person(s,v,3);box(s,node,'cart-handle',0,1.4,-1.9,1.6,.1,.8,'#6b4a2c');}
   else if(h.kind==='crate'){for(let i=0;i<3;i++){const c=box(s,node,'crate',(i-1)*.4,.65+(i===1?1.25:0),i===1?0:.2,1.25,1.25,1.25,['#b8864e','#a2733f','#c99a5b'][i]);c.rotation.y=i*.3;}const warn=textLabel(s,node,'¡OJO!',0,3.3,0,1.6,.6,'#13234d','#ffd33d');if(warn)warn.billboardMode=7;}
-  else if(h.kind==='ball'){const b=buildProjectile(s,'basketball');b.parent=node;b.scaling.setAll(1.25);parts.ball=b;}
+  else if(h.kind==='ball'){const b=buildProjectile(s,h.variant===1?'football':'basketball');b.parent=node;b.scaling.setAll(1.25);parts.ball=b;}
   else if(h.kind==='slipper'){const b=buildProjectile(s,'slipper');b.parent=node;b.scaling.setAll(1.2);parts.ball=b;const warning=cylinder(s,node,'warning',0,-.65,0,.03,2.8,'#ffcb36');warning.material=material(s,'#ffcb36',true,.38);}
   else if(h.kind==='geyser'){
    cylinder(s,node,'vent-cone',0,.45,0,.9,4.4,'#3a302b',1.6);const mouth=cylinder(s,node,'vent-mouth',0,.92,0,.05,1.4,'#ff7a2e');mouth.material=this.lavaMat;
@@ -51,23 +52,32 @@ export class HazardView{
   else if(h.kind==='rock'){const shadow=MeshBuilder.CreateDisc('rock-shadow',{radius:h.radius+.4,tessellation:20},s);shadow.parent=node;shadow.rotation.x=Math.PI/2;shadow.position.y=.1;shadow.material=material(s,'#140c0a',false,.55);parts.shadow=shadow;const boulder=sphere(s,node,'boulder',0,1.1,0,2.4,'#4a3c35',new Vector3(1,.85,1.1));parts.boulder=boulder;const glow=sphere(s,node,'boulder-crack',.4,1.4,.6,.6,'#ff7a2e');glow.material=this.lavaMat;glow.parent=boulder;}
   else if(h.kind==='wave'){const wall=box(s,node,'wave-wall',0,1.2,0,.9,2.4,h.radius*2.4,'#4fb3d9');wall.material=material(s,'#4fb3d9',false,.78);parts.wall=wall;const foam=box(s,node,'wave-foam',0,2.45,0,1.2,.5,h.radius*2.5,'#f4fbff');foam.material=this.foamMat;parts.foam=foam;}
   else if(h.kind==='bus'){
+   // Managua's rutas: white-and-blue city bus, the repainted yellow school bus and the red «interlocal».
+   const look=[{body:'#f2efe6',s1:'#1f5fae',s2:'#e53b35',route:'RUTA 119',side:'MANAGUA'},{body:'#f2b81f',s1:'#1b1b1b',s2:'#e53b35',route:'RUTA 110',side:'ORIENTAL'},{body:'#d93b30',s1:'#f2efe6',s2:'#1f5fae',route:'RUTA 104',side:'MERCADO'}][h.variant%3];
    const bus=new TransformNode('ruta-bus',s);bus.parent=node;parts.bus=bus;
-   box(s,bus,'bus-body',0,1.9,0,2.8,2.6,10.5,'#f2efe6');box(s,bus,'bus-stripe',0,1.5,0,2.86,.5,10.56,'#1f5fae');box(s,bus,'bus-stripe-2',0,2.1,0,2.86,.18,10.56,'#e53b35');box(s,bus,'bus-windows',0,2.7,0,2.9,.9,8.6,'#3e6f80');box(s,bus,'bus-front',0,2.2,5.28,2.6,1.6,.1,'#3e6f80');
+   box(s,bus,'bus-body',0,1.9,0,2.8,2.6,10.5,look.body);box(s,bus,'bus-stripe',0,1.5,0,2.86,.5,10.56,look.s1);box(s,bus,'bus-stripe-2',0,2.1,0,2.86,.18,10.56,look.s2);box(s,bus,'bus-windows',0,2.7,0,2.9,.9,8.6,'#3e6f80');box(s,bus,'bus-front',0,2.2,5.28,2.6,1.6,.1,'#3e6f80');
+   box(s,bus,'bus-roof-rack',0,3.32,-.5,2.3,.12,6.5,'#5b5f63');for(let i=0;i<4;i++)box(s,bus,'bus-luggage',(i%2-.5)*1,3.62,-3+i*1.7,.9,.5,1.2,['#c8432f','#2f8fd0','#f2c14e','#4caf6d'][i]);
    for(const x of [-1.25,1.25])for(const z of [-3.4,3.6]){const w=cylinder(s,bus,'bus-wheel',x,.55,z,.5,1.1,'#222b33');w.rotation.z=Math.PI/2;}
-   const tag=textLabel(s,bus,'RUTA 119',0,3.45,5.33,2.2,.5,'#ffd33d','#1b1b1b');if(tag)tag.rotation.y=Math.PI;const side=textLabel(s,bus,'MANAGUA',1.45,2.3,0,5,.6,'#1f5fae','#f2efe6');if(side)side.rotation.y=-Math.PI/2;
+   for(const x of [-.9,.9])sphere(s,bus,'bus-light',x,1.2,5.3,.35,'#fff6c2').material=material(s,'#fff6c2',true);
+   const tag=textLabel(s,bus,look.route,0,3.45,5.33,2.2,.5,'#ffd33d','#1b1b1b');if(tag)tag.rotation.y=Math.PI;const side=textLabel(s,bus,look.side,1.45,2.3,0,5,.6,look.s1,look.body);if(side)side.rotation.y=-Math.PI/2;
   }
   else if(h.kind==='hoop'){/* built with the courts in the world */}
   return{node,kind:h.kind,parts,dodge:-9};
  }
  /** Traffic lights by each bus crossing: amber while it waits, red while it rolls. */
  private trafficLights(state:GameState){
-  if(this.lights.length||state.trackId!=='managua')return;
-  for(const h of hazardsFor(state.trackId,0).filter(v=>v.kind==='bus')){const node=new TransformNode('semaforo',this.scene);node.position.set(h.x+Math.sin(h.yaw)*-4,h.y,h.z+Math.cos(h.yaw)*-4);
+  if(this.lights.length||(state.trackId!=='managua'&&state.trackId!=='oriental'))return;
+  // Managua: one light by each crossing. Oriental: las 4 esquinas, a light on every corner tied to the first bus.
+  const buses=hazardsFor(state.trackId,0).filter(v=>v.kind==='bus'),route=routeFor(state.trackId);
+  const spots:{x:number;y:number;z:number;id:number;yaw:number}[]=state.trackId==='oriental'?(()=>{const c=sample(route,route.course.crossings[0]),rx=Math.cos(c.yaw),rz=-Math.sin(c.yaw),fx=Math.sin(c.yaw),fz=Math.cos(c.yaw),o=route.width*.5+2.2;return [[-1,-1],[1,-1],[-1,1],[1,1]].map(([a,b])=>({x:c.x+rx*a*o+fx*b*9,y:c.y,z:c.z+rz*a*o+fz*b*9,id:buses[0].id,yaw:c.yaw+Math.PI+(b>0?.25*a:0)}));})()
+   :buses.map(h=>({x:h.x+Math.sin(h.yaw)*-4,y:h.y,z:h.z+Math.cos(h.yaw)*-4,id:h.id,yaw:h.yaw+Math.PI/2}));
+  for(const h of spots){const node=new TransformNode('semaforo',this.scene);node.position.set(h.x,h.y,h.z);node.rotation.y=h.yaw;
    cylinder(this.scene,node,'semaforo-post',0,2.6,0,5.2,.22,'#3a4450');box(this.scene,node,'semaforo-box',0,5.6,0,.8,2.2,.6,'#1b2128');
    const mk=(c:string)=>{const m=new StandardMaterial('semaforo-'+c+h.id,this.scene);m.diffuseColor=Color3.FromHexString(c);m.emissiveColor=Color3.Black();return m;};const red=mk('#ff3b30'),amber=mk('#ffc130'),green=mk('#39d353');
    [[red,6.3],[amber,5.6],[green,4.9]].forEach(([m,y])=>{const lamp=sphere(this.scene,node,'semaforo-lamp',0,y as number,.32,.45,'#333');lamp.material=m as StandardMaterial;});
    const sign=textLabel(this.scene,node,'PARE',0,7.4,0,1.4,.6,'#ffffff','#c8321f');if(sign)sign.billboardMode=7;
    this.lights.push({node,red,amber,green,hazard:h.id});}
+  void buses;
  }
  update(state:GameState,me:PlayerState|undefined,time:number){
   if(state.trackId!==this.trackId){for(const v of this.views.values())v.node.dispose();this.views.clear();for(const l of this.lights)l.node.dispose();this.lights=[];this.trackId=state.trackId;}

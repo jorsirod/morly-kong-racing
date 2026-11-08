@@ -1,7 +1,7 @@
-import { hazardsFor, type Hazard } from './hazards';
+import { hazardGap, hazardsFor, type Hazard } from './hazards';
 import { resolveVehicleCollision, vehicleDynamics, vehicleVelocity } from './dynamics';
 import { character, vehicle, TRACKS } from './content';
-import { angle, clamp, closest, lerp, routeFor, sample, sampleLane, type RoadPoint, type Route } from './track';
+import { angle, clamp, closest, laneOpen, lerp, routeFor, sample, sampleLane, type RoadPoint, type Route } from './track';
 import { rampHeight, type CRamp } from './course';
 import { BONG, ITEMS, hash01, rollItem, type ItemId } from './items';
 import { EMPTY_INPUT, FIXED_DT, type AttackDefinition, type GameState, type Mode, type PlayerInput, type PlayerState, type Shot } from './types';
@@ -26,6 +26,10 @@ export const DRIVE = {
 export const AIR = { gravity: 12, fallTime: 1.25, fallDepth: 2.6, respawnSpeed: 8, respawnGrace: 1.6 } as const;
 /** A car that cannot get going is put back on safe road, Lakitu style: nearly stopped for LOW_TIME seconds, or gaining
  *  under MIN_GAIN metres of track in WINDOW seconds while driving. Holding the brake never counts as stuck. */
+/** Inner face of the road barriers as a fraction of the road width, and the cushion before it (metres). */
+export const WALL = { face: .72, inset: .025, soft: .9 } as const;
+/** La Salle's quesillo: turbo seconds, instant speed and seconds until the next one lands. */
+export const TREAT = { boost: 1.1, kick: 3, respawn: 4.5 } as const;
 export const STUCK = { speed: 1.8, lowTime: 3.2, window: 6, minGain: 5 } as const;
 /** Steering capacity at full lock, in rad/s. Tighter at low speed, calmer at top speed. */
 export function yawCapacity(speed:number,handling:number){
@@ -42,6 +46,14 @@ const within=(s:number,a:number,b:number)=>s>=a&&s<=b;
 /** Ramp under the car (lane, distance and lateral offset), if any. */
 export function rampAt(route:Route,q:RoadPoint):CRamp|undefined{return route.course.ramps.find(r=>r.lane===q.lane&&within(q.s,r.at,r.at+r.len)&&(r.width===0||Math.abs(q.offset-r.offset)<r.width/2+.6));}
 /** Open (wall-less) side at this point: 0 none, -1 left, 1 right, 2 both; plus what lies below. */
+/** True when the car is within the drivable width of a road other than `n` (the main road or an open lane). */
+function insideOtherRoad(route:Route,p:PlayerState,n:RoadPoint,reach:number){
+ if(!route.lanes.length)return false;
+ if(n.lane){const m=closest(route,p.x,p.z,{y:p.y,hint:p.progress,lanes:false});if(m.distance<route.width*WALL.face-WALL.inset-reach)return true;}
+ for(const lane of route.lanes){if(lane.id===n.lane||!laneOpen(lane,p.lap))continue;const lim=lane.width*WALL.face-WALL.inset-reach;
+  for(let i=0;i<lane.points.length-1;i++){const a=lane.points[i],b=lane.points[i+1];if(Math.abs(a.y-p.y)>3)continue;const dx=b.x-a.x,dz=b.z-a.z,l2=dx*dx+dz*dz;if(l2<1e-9)continue;const u=clamp(((p.x-a.x)*dx+(p.z-a.z)*dz)/l2,0,1);if(Math.hypot(p.x-a.x-dx*u,p.z-a.z-dz*u)<lim)return true;}}
+ return false;
+}
 export function openEdge(route:Route,q:RoadPoint){const e=route.course.edges.find(v=>v.lane===q.lane&&within(q.s,v.from,v.to));return e?{side:e.side===0?2:e.side,kind:e.kind}:{side:0,kind:''};}
 export function gapAt(route:Route,q:RoadPoint){return route.course.gaps.find(g=>g.lane===q.lane&&within(q.s,g.from,g.to));}
 /** Road surface height under (x,z) given its road point; null where there is nothing to stand on. */
@@ -165,9 +177,15 @@ export function stepPlayer(p:PlayerState,input:PlayerInput,route:Route,mode:Mode
   p.y=0;p.vy=0;p.air=0;p.gvy=0;
  } else {
   const n=closest(route,p.x,p.z,{y:p.y,hint:p.progress,lap:p.lap}),edge=openEdge(route,n),side=n.offset>=0?1:-1,open=edge.side===2||edge.side===side;
-  if(!open&&n.distance>n.width*.70&&n.distance<Math.max(route.width,n.width)*2.5){
-   const nx=(p.x-n.x)/n.distance,nz=(p.z-n.z)/n.distance,penetration=n.distance-n.width*.70,velocity=vehicleVelocity(p),outward=velocity.x*nx+velocity.z*nz;
-   // A forgiving verge catches the tail instead of teleporting or killing all speed.
+  // The barrier's inner face sits at WALL.face of the width. The car's own extent toward the wall (its half width
+  // side-on, up to its half length nose-first) decides how close its centre can get: bodies never sink into walls.
+  const rel=angle(p.yaw-n.yaw),reach=dynamics.halfWidth*Math.abs(Math.cos(rel))+dynamics.halfLength*Math.abs(Math.sin(rel))*.85;
+  const limit=n.width*WALL.face-WALL.inset-reach,soft=limit-WALL.soft;
+  // Where a lane forks off or merges, being inside the other road means there is no wall between them.
+  const fork=n.distance>soft&&insideOtherRoad(route,p,n,reach);
+  if(!open&&!fork&&n.distance>soft&&n.distance<Math.max(route.width,n.width)*2.5){
+   const nx=(p.x-n.x)/n.distance,nz=(p.z-n.z)/n.distance,penetration=n.distance-soft,velocity=vehicleVelocity(p),outward=velocity.x*nx+velocity.z*nz;
+   // A forgiving cushion catches the tail before the wall instead of teleporting or killing all speed.
    const response=(penetration*7+Math.max(0,outward)*3)*dt;
    p.pushX-=nx*response;p.pushZ-=nz*response;
    const correction=Math.min(.3,penetration*.08);p.x-=nx*correction;p.z-=nz*correction;
@@ -175,6 +193,14 @@ export function stepPlayer(p:PlayerState,input:PlayerInput,route:Route,mode:Mode
    // Scraping the wall turns the car along it, like every arcade racer: a car that lands or spins facing the verge can no
    // longer sit there pushing against it at full throttle. It swings toward the direction of the road.
    if(outward>1.5&&penetration>.05)p.yaw+=clamp(angle(n.yaw-p.yaw),-1,1)*clamp(.5+penetration/3,.5,1)*4.2*dt;
+   // Solid wall: past the limit the car is put back against it and keeps only the speed along it.
+   const over=n.distance-correction-limit;
+   if(over>0){
+    p.x-=nx*over;p.z-=nz*over;
+    const pushOut=p.pushX*nx+p.pushZ*nz;if(pushOut>0){p.pushX-=nx*pushOut*1.3;p.pushZ-=nz*pushOut*1.3;}
+    const rx=Math.cos(p.yaw),rz=-Math.sin(p.yaw),latOut=p.lateralSpeed*(rx*nx+rz*nz);if(latOut>0)p.lateralSpeed*=.25;
+    const into=(Math.sin(p.yaw)*nx+Math.cos(p.yaw)*nz)*Math.sign(p.speed);if(into>0)p.speed*=Math.exp(-into*2.5*dt);
+   }
    // Scraping the barrier while sliding cancels the drift charge.
    if(outward>4&&p.driftDir){p.driftCharge=Math.min(p.driftCharge,DRIVE.driftTier1*.5);}
    if(outward>2){const intensity=clamp(outward/22,.12,.65);p.impact=Math.max(p.impact,intensity);curb={x:p.x,y:p.y,z:p.z,intensity};}
@@ -241,6 +267,8 @@ export class Simulation {
  state:GameState; route:Route; inputs=new Map<string,PlayerInput>(); private shotId=0;private castId=0;private eventId=0;private firstFinish=-1;private curbEvents=new Map<string,number>();private stuck=new Map<string,{low:number;ref:number;t:number}>();private launchHeld=new Map<string,boolean>();private bumpTimes=new Map<string,number>();
  /** No new Bong can be rolled or thrown before this race time. */
  bongReadyAt=0;
+ /** Race time since which the current leader has been escaped (lead ≥ BONG.lead); -1 when not. */
+ escapedSince=-1;
  constructor(mode:Mode='race',trackId='la-salle') {
   this.route=routeFor(trackId);this.state={version:1,phase:'lobby',mode,trackId,cup:mode==='championship'?cupFor(trackId).join(','):'',time:0,tick:0,round:1,countdown:3,players:[],shots:[],pickups:[],events:[],hostId:''};this.setupPickups();
  }
@@ -259,9 +287,11 @@ export class Simulation {
   const out:GameState['pickups']=[],c=this.route.course;let id=0;
   const row=(lane:string,at:number,kind:number)=>{const l=lane?this.route.lanes.find(v=>v.id===lane):undefined,t=l?sampleLane(l,at):sample(this.route,at),spread=Math.min(4.6,(l?l.width:this.route.width)*.5-1.4);for(const o of [-spread,0,spread])out.push({id:id++,x:t.x+Math.cos(t.yaw)*o,y:t.y,z:t.z-Math.sin(t.yaw)*o,availableAt:0,kind});};
   for(const r of c.charges)row(r.lane,r.at,0);for(const r of c.items)row(r.lane,r.at,1);
+  // Treats (kind 2) land one after another: the thrower drops a new one a few seconds after each is taken.
+  for(const t of c.treats){const l=t.lane?this.route.lanes.find(v=>v.id===t.lane):undefined,q=l?sampleLane(l,t.at):sample(this.route,t.at);t.offsets.forEach((o,i)=>out.push({id:id++,x:q.x+Math.cos(q.yaw)*o,y:q.y,z:q.z-Math.sin(q.yaw)*o,availableAt:1.5+i*2.2,kind:2}));}
   this.state.pickups=out;
  }
- start(){this.state.phase='countdown';this.state.countdown=INTRO+3;this.launchHeld.clear();this.bumpTimes.clear();this.botMemory.clear();this.state.time=0;this.state.shots=[];this.firstFinish=-1;this.bongReadyAt=0;this.curbEvents.clear();this.stuck.clear();this.state.players.forEach((p,i)=>this.place(p,i));this.setupPickups();this.inputs.clear();}
+ start(){this.state.phase='countdown';this.state.countdown=INTRO+3;this.launchHeld.clear();this.bumpTimes.clear();this.botMemory.clear();this.state.time=0;this.state.shots=[];this.firstFinish=-1;this.bongReadyAt=0;this.escapedSince=-1;this.curbEvents.clear();this.stuck.clear();this.state.players.forEach((p,i)=>this.place(p,i));this.setupPickups();this.inputs.clear();}
  /** Each round of the cup moves to the next world; points carry over. */
  nextRound(){if(this.state.mode!=='championship'||this.state.round>=3)return;this.state.round++;const next=this.state.cup.split(',')[this.state.round-1];if(next)this.setTrack(next);this.start();}
  /** Back to round one of the same cup (rematch). */
@@ -320,7 +350,7 @@ export class Simulation {
    if(straight)lane=0;
    lane=clamp(lane,-(width*.5-2),width*.5-2);
    // Dodge visible pedestrians, carts, waves and vents.
-   for(const h of hazardsFor(s.trackId,s.time)){if(!h.active&&!h.warn)continue;const dx=h.x-p.x,dz=h.z-p.z,d=Math.hypot(dx,dz);if(d>28||d<1)continue;const along=dx*Math.sin(p.yaw)+dz*Math.cos(p.yaw),across=dx*Math.cos(p.yaw)-dz*Math.sin(p.yaw);if(along>0&&Math.abs(across)<h.radius+2.6&&!straight)lane=clamp(lane-Math.sign(across||1)*(h.radius+3),-(width*.5-1.5),width*.5-1.5);}
+   for(const h of hazardsFor(s.trackId,s.time)){if(!h.active&&!h.warn)continue;const dx=h.x-p.x,dz=h.z-p.z,d=Math.hypot(dx,dz);if(d>28||d<1)continue;const along=dx*Math.sin(p.yaw)+dz*Math.cos(p.yaw),across=dx*Math.cos(p.yaw)-dz*Math.sin(p.yaw);if(along>0&&Math.abs(across)<h.radius+h.len+2.6&&!straight)lane=clamp(lane-Math.sign(across||1)*(h.radius+h.len+3),-(width*.5-1.5),width*.5-1.5);}
    // Go for a box when low on charges, or for a surprise box with an empty slot.
    if(!straight&&(p.charges<3||!p.item)){const box=s.pickups.find(v=>v.availableAt<=s.time&&(v.kind===0?p.charges<3:!p.item)&&(()=>{const dx=v.x-p.x,dz=v.z-p.z,d=Math.hypot(dx,dz);return d<26&&d>4&&Math.abs(angle(Math.atan2(dx,dz)-p.yaw))<.35;})());if(box)return this.botItem(p,this.steerTo(p,box,0,false,mem),ahead,behind,0,seed);}
    target={x:aheadPt.x+Math.cos(aheadPt.yaw)*lane,z:aheadPt.z-Math.sin(aheadPt.yaw)*lane};
@@ -367,7 +397,12 @@ export class Simulation {
   const order=s.players.filter(v=>v.finishTime<0).sort((a,b)=>raceProgress(b,L)-raceProgress(a,L)),rank=Math.max(0,order.findIndex(v=>v.id===p.id));
   const info=leadInfo(s,L),fraction=order.length>1?rank/(order.length-1):0;
   const bongAllowed=racing&&order.length>1&&rank>0&&info.lead>=BONG.lead&&s.time>=this.bongReadyAt&&!s.shots.some(v=>v.object==='bong')&&!s.players.some(v=>v.item==='bong');
-  return rollItem(fraction,order.length,bongAllowed,hash01(s.tick,p.color,1),hash01(s.tick,p.color,2));
+  // A leader who stays escaped too long gets the Bong for sure from the next box behind.
+  if(racing&&info.lead>=BONG.lead){if(this.escapedSince<0)this.escapedSince=s.time;}else this.escapedSince=-1;
+  const force=this.escapedSince>=0&&s.time-Math.max(this.escapedSince,this.bongReadyAt)>=BONG.pity;
+  const item=rollItem(fraction,order.length,bongAllowed,hash01(s.tick,p.color,1),hash01(s.tick,p.color,2),force);
+  if(item==='bong')this.escapedSince=-1;
+  return item;
  }
  useItem(p:PlayerState){
   const s=this.state,item=p.item as ItemId|'';if(!item||p.roulette>0||p.stun>0||p.fall>0||p.finishTime>=0||p.cooldown>.2)return false;
@@ -432,7 +467,7 @@ export class Simulation {
  }
  /** Moving obstacles: each kind has its own, readable consequence. Nobody gets hurt: pedestrians jump aside. */
  private hazardHit(p:PlayerState,h:Hazard){
-  const d=Math.max(.01,Math.hypot(p.x-h.x,p.z-h.z)),nx=(p.x-h.x)/d,nz=(p.z-h.z)/d;
+  const {nx,nz}=hazardGap(h,p.x,p.z);
   if(p.shield>0){p.shield=0;p.immune=.8;this.emit('shield',p.id,{targetId:p.id,object:h.kind,x:p.x,y:p.y,z:p.z});return;}
   const shove=(k:number)=>{p.pushX+=nx*k;p.pushZ+=nz*k;};
   switch(h.kind){
@@ -453,7 +488,7 @@ export class Simulation {
   const s=this.state,L=this.route.length;let m=this.stuck.get(p.id);if(!m){m={low:0,ref:p.progress,t:s.time};this.stuck.set(p.id,m);}
   if(s.mode==='battle'||p.finishTime>=0||p.fall>0||p.respawn>0||p.stun>0||input.brake){m.low=0;m.ref=p.progress;m.t=s.time;return;}
   m.low=Math.abs(p.speed)<STUCK.speed?m.low+dt:0;
-  let lost=false;if(s.time-m.t>=STUCK.window){const g=(((p.progress-m.ref)%L)+L)%L,gain=g>L/2?g-L:g;lost=gain<STUCK.minGain;m.ref=p.progress;m.t=s.time;}
+  let lost=false;if(s.time-m.t>=STUCK.window){const g=(((p.progress-m.ref)%L)+L)%L,gain=g>L/2?g-L:g;lost=gain<STUCK.minGain&&gain>-150;m.ref=p.progress;m.t=s.time;}
   if(m.low>=STUCK.lowTime||lost){respawn(p,this.route);this.emit('respawn',p.id,{x:p.x,y:p.y,z:p.z});this.stuck.delete(p.id);}
  }
  tick(dt=FIXED_DT){
@@ -474,9 +509,13 @@ export class Simulation {
    else if(falling&&p.vy===0&&p.fall<=0)this.emit('land',p.id,{x:p.x,y:p.y,z:p.z,intensity:clamp(-vy/14,.2,1)});
    this.rescue(p,input,dt);
    if(input.attack>0&&(automatic||input.actionSeq>p.actionSeq)){if(!automatic)p.actionSeq=input.actionSeq;this.attack(p,input.attack);}
-   if(p.fall<=0)for(const h of hazards)if(h.active&&p.lap>=h.minLap&&p.immune<=0&&Math.abs(p.y-h.y)<2.6&&Math.hypot(p.x-h.x,p.z-h.z)<h.radius+1.1)this.hazardHit(p,h);
+   if(p.fall<=0)for(const h of hazards){if(!h.active||p.lap<h.minLap||Math.abs(p.y-h.y)>=2.6)continue;const g=hazardGap(h,p.x,p.z);
+    if(p.immune<=0&&g.d<h.radius+1.1)this.hazardHit(p,h);
+    // Solid bodies push the car out even while it is immune: nothing drives through a bus.
+    if(h.solid){const reach=vehicleDynamics(p.vehicleId).halfWidth+.15,over=h.radius+reach-g.d;if(over>0){p.x+=g.nx*over;p.z+=g.nz*over;const vin=p.pushX*g.nx+p.pushZ*g.nz;if(vin<0){p.pushX-=g.nx*vin;p.pushZ-=g.nz*vin;}const fx=Math.sin(p.yaw),fz=Math.cos(p.yaw),into=-(fx*g.nx+fz*g.nz)*Math.sign(p.speed);if(into>.15){p.speed*=Math.exp(-into*2.5*FIXED_DT);const side=(fx*-g.nz+fz*g.nx)>=0?1:-1,tx=-g.nz*side,tz=g.nx*side;p.yaw+=clamp(angle(Math.atan2(tx,tz)-p.yaw),-1,1)*4.5*FIXED_DT;}}}}
    for(const pick of s.pickups)if(pick.availableAt<=s.time&&Math.abs(p.y-pick.y)<3.2&&Math.hypot(p.x-pick.x,p.z-pick.z)<3.8&&p.fall<=0){
     if(pick.kind===1){if(p.item||p.roulette>0)continue;const item=this.rollFor(p);p.item=item;p.itemUses=item==='cafe3'?3:1;p.roulette=1.1;pick.availableAt=s.time+5;this.emit('item',p.id,{object:item,text:'roll'});}
+    else if(pick.kind===2){if(p.stun>0)continue;p.boost=Math.max(p.boost,TREAT.boost);p.boostLevel=Math.max(p.boostLevel,2);p.speed=Math.min(p.speed+TREAT.kick,DRIVE.topSpeed*DRIVE.boostFactor);pick.availableAt=s.time+TREAT.respawn;this.emit('boost',p.id,{intensity:2,text:'quesillo',object:'quesillo',x:pick.x,y:pick.y,z:pick.z});}
     else if(p.charges<6){p.charges=Math.min(6,p.charges+3);pick.availableAt=s.time+7;this.emit('pickup',p.id);}
    }
    if(s.mode!=='battle'&&p.gate>=25){p.finishTime=s.time;if(this.firstFinish<0)this.firstFinish=s.time;this.emit('finish',p.id);}

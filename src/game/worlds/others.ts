@@ -13,7 +13,7 @@ function beside(route:Route,d:number,offset:number){const p=sample(route,d);retu
 /** Faces the road from the given side. */
 const facing=(yaw:number,side:number)=>yaw+(side>0?-Math.PI/2:Math.PI/2);
 /** Main-road sections where roadside dressing would float or block the action. */
-function special(route:Route,d:number){const c=route.course,L=route.length,m=((d%L)+L)%L;return c.gaps.some(g=>g.lane===''&&m>g.from-12&&m<g.to+12)||c.bridges.some(([a,b])=>m>a-8&&m<b+8)||c.tunnels.some(([a,b])=>m>a-6&&m<b+6)||c.ramps.some(r=>r.lane===''&&m>r.at-8&&m<r.at+r.len+8);}
+function special(route:Route,d:number){const c=route.course,L=route.length,m=((d%L)+L)%L;return c.gaps.some(g=>g.lane===''&&m>g.from-12&&m<g.to+12)||c.bridges.some(([a,b])=>m>a-8&&m<b+8)||c.tunnels.some(([a,b])=>m>a-6&&m<b+6)||c.ramps.some(r=>r.lane===''&&m>r.at-8&&m<r.at+r.len+8)||c.covered.some(([a,b])=>m>a-6&&m<b+6)||c.crossings.some(x=>Math.abs(m-x)<16);}
 /** Something stretched across the road overhead (banner, rope with clothes, neon arch). */
 function across(k:Kit,route:Route,d:number,h:number,build:(g:TransformNode,span:number)=>void){const p=sample(route,d),g=new TransformNode('across',k.scene);g.parent=k.root;g.position.set(p.x,p.y,p.z);g.rotation.y=p.yaw;const span=route.width*1.5+2;for(const s of [-1,1])k.cyl('across-post',s*span/2,h/2,0,h,.3,'#5b4a3a',.3,g);build(g,span);return g;}
 /** Zebra crossing painted where pedestrians walk, with a sign on each side. */
@@ -29,7 +29,7 @@ export function dressOriental(k:Kit,route:Route){
    if(r()<.18)continue;const off=(route.width*.72+3.4+r()*1.6)*side,p=beside(route,d,off);if(k.onLane(p.x,p.z,3))continue;const g=new TransformNode('chinamo',k.scene);g.parent=k.root;g.position.set(p.x,p.y,p.z);g.rotation.y=facing(p.yaw,side);
    const t=tarps[Math.floor(r()*tarps.length)];k.box('stall-table',0,.9,.6,5.6,.25,2,'#8a6a45',0,g);for(let i=0;i<5;i++)k.box('stall-goods',-2.2+i*1.1,1.25,.6,.8,.45,1.4,goods[Math.floor(r()*goods.length)],0,g);
    for(const x of [-2.7,2.7])k.cyl('stall-pole',x,1.8,1.6,3.6,.14,'#6b5a45',.14,g);const tarp=k.box('stall-tarp',0,3.7,.2,6.2,.12,4.2,t,0,g);tarp.rotation.x=-.18;
-   if(r()<.35)k.crowd(0,-1.6,0,2,0,1.3);
+   if(r()<.35){const Y=facing(p.yaw,side);k.crowd(p.x-Math.sin(Y)*1.6,p.z-Math.cos(Y)*1.6,Y,2,p.y,1.3);}
   }
  }
  // The alley: stalls pressed against both sides, crates and a tarp roof you drive under.
@@ -40,8 +40,18 @@ export function dressOriental(k:Kit,route:Route){
  const cloth=['#ff6f91','#ffd33d','#4cc8ff','#7dffa0','#ffffff','#c86bfa'];
  for(let d=40;d<route.length;d+=110){if(special(route,d))continue;across(k,route,d,7,(g,span)=>{k.box('rope',0,6.6,0,span,.06,.06,'#3d2f22',0,g);for(let i=0;i<9;i++)k.box('hanging-cloth',-span/2+2+i*(span-4)/8,5.9,0,1.3,1.3,.05,cloth[(i+d)%cloth.length],0,g);});}
  // Painted crossings where shoppers walk (same spots as shared/hazards.ts).
- for(const f of [.12,.26,.47,.66,.935])crossing(k,route,f*route.length);
+ for(const f of [.12,.26,.47,.66,.90])crossing(k,route,f*route.length);
  for(const [d,text] of [[150,'TODO A C$10'],[420,'SE VENDE HIELO'],[700,'ZAPATOS · ROPA · CELULARES'],[980,'NO HAY FIADO']] as [number,string][]){if(special(route,d))continue;const p=beside(route,d,route.width*.72+1.4);k.sign(text,p.x,p.z,facing(p.yaw,1),7,1.3,2.6,'#fff5d8','#b5332a');}
+ // Las 4 esquinas: four corner buildings, the banner over the street, vendors and the buses waiting on the cross street.
+ const x4=route.course.crossings[0];if(x4!==undefined){const c=sample(route,x4),rx=Math.cos(c.yaw),rz=-Math.sin(c.yaw),fx=Math.sin(c.yaw),fz=Math.cos(c.yaw);
+  const names=[['FERRETERÍA EL CLAVO','#c8432f'],['PULPERÍA LAS 4 ESQUINAS','#2f8fd0'],['FARMACIA SAN JUDAS','#2e8b57'],['TIENDA LA BENDICIÓN','#e2763a']];
+  [[-1,-1],[1,-1],[-1,1],[1,1]].forEach(([a,b],i)=>{const ox=route.width*.72+11,oz=6.5+10,x=c.x+rx*a*ox+fx*b*oz,z=c.z+rz*a*ox+fz*b*oz,g=new TransformNode('esquina',k.scene);g.parent=k.root;g.position.set(x,c.y,z);g.rotation.y=facing(c.yaw,a);
+   k.box('esquina-body',0,4.2,0,16,8.4,10,['#e9c58f','#9fc4c8','#e8a98c','#d9d0a6'][i],0,g);k.box('esquina-roof',0,8.6,0,16.6,.4,10.6,'#8a5a3e',0,g);
+   k.box('esquina-awning',0,3.2,5.6,15,.18,2.6,names[i][1],0,g);k.label(names[i][0],0,4.7,5.06,11,1,0,'#ffffff',names[i][1],g);
+   for(let w=0;w<3;w++)k.box('esquina-window',-5+w*5,6.6,5.03,2,1.6,.06,'#2f5d6e',0,g);
+   const Y=facing(c.yaw,a);k.crowd(x+Math.sin(Y)*7.4,z+Math.cos(Y)*7.4,Y,4,c.y,1.2);});
+  across(k,route,x4-14,8,(g,span)=>{k.box('banner',0,7,0,span,1.6,.15,'#ffd33d',0,g);k.label('LAS 4 ESQUINAS · OJO CON LOS BUSES',0,7,-.1,span-1,1.3,Math.PI,'#13234d','#ffd33d',g);});
+  for(const s of [-1,1]){const p=beside(route,x4-45,s*(route.width*.72+2));k.sign('SEMÁFORO · LAS 4 ESQUINAS',p.x,p.z,p.yaw+Math.PI,8,1.3,p.y+2.8,'#13234d','#ffd33d');}}
  const cauce=beside(route,route.length*.585,route.width*.72+3);k.sign('CAUCE · ¡SALTA!',cauce.x,cauce.z,facing(cauce.yaw,1),6,1.2,cauce.y+2.6,'#13234d','#ffd33d');
 }
 
@@ -68,9 +78,9 @@ export function managuaLandmarks(k:Kit,route:Route,battle:boolean){
  k.cyl('cat-clock',9,23,-9.1,.2,2.6,'#f4efe2',2.6,cat).rotation.x=Math.PI/2;k.cyl('cat-dome',0,18,14,6,12,stone,9,cat);k.ball('cat-dome-cap',0,21,14,10,dark,new Vector3(1,.6,1),cat);
  k.label('ANTIGUA CATEDRAL',0,2.6,-10.2,9,1.1,0,'#fff3d0','#5a4b3a',cat);
  // Palacio Nacional de la Cultura across the plaza: columns and a long cornice.
- const pal=new TransformNode('palacio',k.scene);pal.parent=k.root;pal.position.set(-130,0,-112);pal.rotation.y=Math.PI*.9;
+ const pal=new TransformNode('palacio',k.scene);pal.parent=k.root;pal.position.set(-108,0,-94);pal.rotation.y=Math.PI*.9;
  k.box('pal-body',0,6,0,40,12,18,'#ead9b4',0,pal);k.box('pal-cornice',0,12.4,0,42,1,19,'#d9c49a',0,pal);for(let i=0;i<10;i++)k.cyl('pal-column',-16+i*3.55,5,-9.6,10,1,'#f5ecd6',.9,pal);k.label('PALACIO DE LA CULTURA',0,11,-9.8,14,1.2,0,'#5a4b3a','#f5ecd6',pal);
- const plaza=k.box('plaza',-100,.01,-110,70,.06,40,'#cfc6b0');plaza.material=surfaceTexture(k.scene,'tile','#cfc6b0');
+ const plaza=k.box('plaza',-92,.01,-104,60,.06,34,'#cfc6b0');plaza.material=surfaceTexture(k.scene,'tile','#cfc6b0');
  // Loma de Tiscapa: crater lagoon right below the mirador lane, its rim and the silhouette on the hill.
  const lagoon=MeshBuilder.CreateDisc('tiscapa-lagoon',{radius:32,tessellation:40},k.scene);lagoon.parent=k.root;lagoon.rotation.x=Math.PI/2;lagoon.position.set(141,.6,40);lagoon.material=waterMat(k.scene,'#3b8f86');
  const rim=MeshBuilder.CreateCylinder('tiscapa-rim',{height:6.6,diameterTop:78,diameterBottom:118,tessellation:40},k.scene);rim.parent=k.root;rim.position.set(141,3,40);rim.material=surfaceTexture(k.scene,'grass','#7f9a5c');rim.isPickable=false;
@@ -79,10 +89,46 @@ export function managuaLandmarks(k:Kit,route:Route,battle:boolean){
  const sil=new TransformNode('tiscapa-silueta',k.scene);sil.parent=k.root;sil.position.set(118,6.4,76);sil.rotation.y=-.6;
  const black='#121418';k.box('sil-legs',0,4,0,1.6,8,.4,black,0,sil);k.box('sil-body',0,10,0,3.2,5.5,.4,black,0,sil);k.box('sil-arm',1.9,10.4,0,.8,4.6,.4,black,0,sil);k.ball('sil-head',0,14,0,2,black,new Vector3(1,1,.25),sil);k.box('sil-hat-brim',0,14.9,0,4.2,.35,.42,black,0,sil);k.box('sil-hat',0,15.6,0,2,1.2,.42,black,0,sil);k.box('sil-base',0,-.2,0,5,1,3,'#5d5a52',0,sil);
  for(const [x,z] of [[96,58],[170,92],[118,10]] as const)k.sign('LOMA DE TISCAPA',x,z,Math.atan2(141-x,40-z)+Math.PI,6.5,1.2,9.6,'#fff3d0','#2f6b4f');
- // Rotonda with a fountain inside the north-west lobe.
- k.cyl('rotonda-curb',-120,.3,40,.6,30,'#e9e2cf');k.cyl('rotonda-grass',-120,.62,40,.1,28.5,'#6aa84f');k.cyl('fountain',-120,1.2,40,1.2,9,'#d9d2bd');const water=k.cyl('fountain-water',-120,1.85,40,.1,8,'#7fd0e6');water.material=material(k.scene,'#7fd0e6',true,.8);
- const jet=new TransformNode('fountain-jet',k.scene);jet.parent=k.root;jet.position.set(-120,2,40);jet.metadata={animate:true};const spray=k.cyl('jet',0,2,0,4,.6,'#dff6ff',.1,jet);spray.material=material(k.scene,'#dff6ff',true,.6);k.anims.push({node:jet,update:t=>{jet.scaling.y=.8+Math.sin(t*4)*.2;}});
- for(let i=0;i<6;i++)k.tree(-120+Math.cos(i)*11,40+Math.sin(i)*11,'palm',0,.8);
+ rotondaGalerias(k,route);
+}
+/** Rotonda Jean Paul Genie (the race goes half way round it, counter-clockwise like the traffic) and, right after,
+ * the road runs through Galerías Santo Domingo: shop fronts, a glass roof and shoppers behind the rails. */
+function rotondaGalerias(k:Kit,route:Route){
+ const cx=-172,cz=-45,R=19;
+ const ring=MeshBuilder.CreateDisc('rotonda-ring',{radius:R+13,tessellation:48},k.scene);ring.parent=k.root;ring.rotation.x=Math.PI/2;ring.position.set(cx,.012,cz);ring.material=surfaceTexture(k.scene,'asphalt','#555b66');ring.isPickable=false;
+ k.cyl('rotonda-curb',cx,.35,cz,.7,R*2,'#f1ead4',R*2,k.root,40);const lawn=k.cyl('rotonda-lawn',cx,.72,cz,.08,R*2-1.2,'#5fb04a',R*2-1.2,k.root,40);lawn.material=surfaceTexture(k.scene,'grass','#5fb04a');
+ for(let i=0;i<24;i++){const a=i/24*Math.PI*2;k.box('rotonda-curb-paint',cx+Math.cos(a)*R,.72,cz+Math.sin(a)*R,1.2,.06,2.4,i%2?'#ffd33d':'#1b1b1b',-a);}
+ // Fountain with jets in the middle.
+ k.cyl('fountain-basin',cx,1.1,cz,.9,14,'#d9d2bd',14,k.root,32);const water=k.cyl('fountain-water',cx,1.6,cz,.1,12.6,'#7fd0e6',12.6,k.root,32);water.material=material(k.scene,'#7fd0e6',true,.8);
+ k.cyl('fountain-column',cx,3,cz,3.6,1.6,'#e9e3d0',1.2);k.cyl('fountain-bowl',cx,4.9,cz,.5,5,'#e9e3d0',3.6);
+ const jets=new TransformNode('fountain-jets',k.scene);jets.parent=k.root;jets.position.set(cx,1.6,cz);jets.metadata={animate:true};const parts:ReturnType<Kit['cyl']>[]=[];
+ for(let i=0;i<8;i++){const a=i/8*Math.PI*2;const j=k.cyl('jet',Math.cos(a)*4.4,1.6,Math.sin(a)*4.4,3.2,.35,'#dff6ff',.12,jets);j.material=material(k.scene,'#dff6ff',true,.6);parts.push(j);}
+ const top=k.cyl('jet-top',0,5.8,0,4.4,.7,'#dff6ff',.1,jets);top.material=material(k.scene,'#dff6ff',true,.6);parts.push(top);
+ k.anims.push({node:jets,update:t=>{parts.forEach((p,i)=>{p.scaling.y=.75+Math.sin(t*3+i)*.25;});}});
+ // Árboles de la Vida around the fountain, palms, flags and the name on both approaches.
+ const tones=['#f4c430','#ff6fae','#4fc3f7','#8ee36a','#f4c430','#b77bff'];for(let i=0;i<6;i++){const a=i/6*Math.PI*2+.3;lifeTree(k,cx+Math.cos(a)*12.5,.7,cz+Math.sin(a)*12.5,tones[i],i*1.7);}
+ for(let i=0;i<5;i++){const a=i/5*Math.PI*2;k.tree(cx+Math.cos(a)*16.5,cz+Math.sin(a)*16.5,'palm',.7,.9);}
+ for(const [a,cols] of [[2.2,['#1f5fae','#ffffff','#1f5fae']],[4.1,['#1f5fae','#ffffff','#1f5fae']]] as const)k.flag(cx+Math.cos(a)*8,cz+Math.sin(a)*8,[...cols],12);
+ const name=new TransformNode('rotonda-name',k.scene);name.parent=k.root;name.position.set(cx-9,.7,cz);name.rotation.y=-Math.PI/2;
+ k.box('rotonda-name-base',0,1.2,0,14,2.4,1.2,'#e9e3d0',0,name);k.label('ROTONDA JEAN PAUL GENIE',0,1.3,-.65,13,1.4,Math.PI,'#1f5fae','#f7f2e4',name);
+ for(const f of [.84,.925]){const p=beside(route,f*route.length,-(route.width*.72+3));k.sign(f<.9?'ROTONDA JEAN PAUL GENIE →':'GALERÍAS SANTO DOMINGO ↓',p.x,p.z,p.yaw+Math.PI,10,1.4,p.y+3.2,'#fff3d0','#1f5fae');}
+ // Galerías Santo Domingo.
+ const g=route.course.covered[0];if(!g)return;const [a,b]=g,w=route.width,half=w*.72+.6;
+ const shops=[['SIMAN','#d6402f'],['PIZZA HUT','#c8102e'],['CINEMAS','#11204a'],['LA COLONIA','#e8442c'],['TIP TOP','#f2b81f'],['CELULARES','#2f8fd0'],['ZAPATOS','#7a3d9b'],['HELADOS','#ff8fb3'],['FARMACIA','#2e8b57'],['ROPA AMERICANA','#3a6db5']];
+ const glass=material(k.scene,'#bfe9ff',false,.32);glass.backFaceCulling=false;
+ let n=0;for(let d=a;d<b;d+=8){const p=sample(route,d),q=sample(route,Math.min(b,d+8)),yaw=Math.atan2(q.x-p.x,q.z-p.z),mx=(p.x+q.x)/2,mz=(p.z+q.z)/2,len=Math.hypot(q.x-p.x,q.z-p.z)+.3,rx=Math.cos(yaw),rz=-Math.sin(yaw);
+  for(const s of [-1,1]){const ox=mx+rx*s*(half+3.4),oz=mz+rz*s*(half+3.4);
+   k.box('mall-floor',mx+rx*s*(half+1.6),.06,mz+rz*s*(half+1.6),3.4,.12,len,'#e9e3d6',yaw);
+   const [shop,color]=shops[n%shops.length];n++;
+   k.box('mall-shop',ox,3,oz,1.2,6,len,'#f4efe6',yaw);k.box('shop-window',ox-rx*s*.62,2,oz-rz*s*.62,.08,3,len-1.4,'#9fd4ec',yaw);
+   const band=k.box('shop-band',ox-rx*s*.64,4.6,oz-rz*s*.64,.1,1.2,len-.4,color,yaw);band.material=material(k.scene,color,true);
+   const lab=k.label(shop,ox-rx*s*.72,4.6,oz-rz*s*.72,Math.min(len-1,7),1,yaw+(s>0?-Math.PI/2:Math.PI/2),'#ffffff',color);void lab;
+   if(n%3===0)k.crowd(mx+rx*s*(half+1.8),mz+rz*s*(half+1.8),yaw+(s>0?-Math.PI/2:Math.PI/2),3,0,1.1);}
+  k.box('mall-roof-frame',mx,9.2,mz,2*half+8,.3,.4,'#d9dde2',yaw);const roof=k.box('mall-roof-glass',mx,9.4,mz,2*half+8,.1,len,'#bfe9ff',yaw);roof.material=glass;
+  k.glow('mall-light',mx,8.8,mz,6,.15,.6,'#fff6d8',yaw);
+ }
+ for(const d of [a,b]){const p=sample(route,d),rx=Math.cos(p.yaw),rz=-Math.sin(p.yaw);for(const s of [-1,1])k.box('mall-pillar',p.x+rx*s*(half+4.4),5,p.z+rz*s*(half+4.4),2.4,10,2.4,'#e9e3d6',p.yaw);
+  k.box('mall-arch',p.x,10.6,p.z,2*half+11,2.6,2,'#f4efe6',p.yaw);k.label('GALERÍAS SANTO DOMINGO',p.x-Math.sin(p.yaw)*1.05*(d===a?1:-1),10.6,p.z-Math.cos(p.yaw)*1.05*(d===a?1:-1),2*half+6,1.8,d===a?p.yaw+Math.PI:p.yaw,'#ffffff','#1b3f78');}
 }
 /** «Árbol de la Vida»: tall metal tree of coloured curling branches studded with lights. */
 function lifeTree(k:Kit,x:number,y:number,z:number,color:string,seed:number){
@@ -99,7 +145,7 @@ export function dressManagua(k:Kit,route:Route){
  for(let d=10;d<route.length;d+=16){
   if(special(route,d))continue;
   for(const side of [-1,1]){
-   if(r()<.3)continue;const p=beside(route,d,(route.width*.72+9+r()*8)*side);if(p.z<-168||k.blocked(p.x,p.z,6)||Math.hypot(p.x-141,p.z-40)<62||Math.hypot(p.x+72,p.z+108)<30||Math.hypot(p.x+130,p.z+112)<28||Math.hypot(p.x+120,p.z-40)<22)continue;
+   if(r()<.3)continue;const p=beside(route,d,(route.width*.72+9+r()*8)*side);if(p.z<-168||k.blocked(p.x,p.z,6)||Math.hypot(p.x-141,p.z-40)<62||Math.hypot(p.x+72,p.z+108)<30||Math.hypot(p.x+108,p.z+94)<28||Math.hypot(p.x+172,p.z+45)<34)continue;
    const h=6+Math.floor(r()*3)*3.5,w=8+r()*6,g=new TransformNode('casa',k.scene);g.parent=k.root;g.position.set(p.x,p.y,p.z);g.rotation.y=facing(p.yaw,side);
    k.box('house',0,h/2,0,w,h,8,walls[Math.floor(r()*walls.length)],0,g);k.box('house-roof',0,h+.25,0,w+.6,.5,8.6,r()<.5?'#a85a3e':'#6f7a82',0,g);
    for(let f=0;f<h/3.5-.5;f++)for(let i=0;i<Math.floor(w/3);i++)k.box('house-window',-w/2+1.6+i*3,2+f*3.4,4.05,1.3,1.4,.06,'#2f5d6e',0,g);
@@ -118,33 +164,32 @@ export function dressManagua(k:Kit,route:Route){
  for(let i=0;i<8;i++)k.flag(-150+i*42,-196,['#1f5fae','#ffffff','#1f5fae'],8);
 }
 
-/* Hipa Hipa — discoteca: arcos de neón que laten, haces de luz, cabina del DJ y gente bailando. */
-export function dressHipa(k:Kit,route:Route){
- const neon=['#ff5fb0','#45e0ff','#ffd33d','#8bff6a'],mats=neon.map(c=>{const m=new StandardMaterial('neon-'+c,k.scene);m.emissiveColor=Color3.FromHexString(c);m.diffuseColor=Color3.Black();m.disableLighting=true;return m;});
- const arches:TransformNode[]=[];
- for(let d=30;d<route.length;d+=70){if(special(route,d))continue;const g=across(k,route,d,8,(g,span)=>{const bar=MeshBuilder.CreateBox('neon-arch',{width:span,height:.35,depth:.35},k.scene);bar.parent=g;bar.position.y=8;bar.material=mats[arches.length%4];for(const s of [-1,1]){const side=MeshBuilder.CreateBox('neon-side',{width:.3,height:8,depth:.3},k.scene);side.parent=g;side.position.set(s*span/2,4,0);side.material=mats[(arches.length+1)%4];}});arches.push(g);}
- // Pulsing to a 128 bpm beat; one shared animation for all arches.
- const pulse=new TransformNode('beat',k.scene);pulse.parent=k.root;pulse.metadata={animate:true};
- k.anims.push({node:pulse,update:t=>{const beat=Math.pow(Math.max(0,Math.cos(t*Math.PI*128/60)),6);mats.forEach((m,i)=>{const base=Color3.FromHexString(neon[i]);m.emissiveColor=base.scale(.45+beat*.75);});}});
- // Light beams sweeping from towers outside the walls.
- for(let i=0;i<8;i++){const d=i*route.length/8+20;if(special(route,d))continue;const p=beside(route,d,(i%2?1:-1)*(route.width*.72+6));if(k.onLane(p.x,p.z,2))continue;const tower=new TransformNode('beam',k.scene);tower.parent=k.root;tower.position.set(p.x,p.y,p.z);k.cyl('beam-tower',p.x,p.y+3,p.z,6,.8,'#2b3550');
-  const beam=MeshBuilder.CreateCylinder('light-beam',{height:40,diameterTop:9,diameterBottom:.6,tessellation:12},k.scene);beam.parent=tower;beam.position.y=6;beam.setPivotPoint(new Vector3(0,-20,0));beam.position.y=26;const bm=material(k.scene,neon[i%4],true,.16);bm.disableDepthWrite=true;bm.backFaceCulling=false;beam.material=bm;tower.metadata={animate:true};
-  k.anims.push({node:tower,update:t=>{tower.rotation.z=Math.sin(t*.9+i)*.5;tower.rotation.x=Math.cos(t*.7+i*1.3)*.4;}});}
- // DJ booth by the start, speakers bouncing on the beat and a dancing crowd.
- const start=beside(route,40,-(route.width*.72+9)),dj=new TransformNode('dj',k.scene);dj.parent=k.root;dj.position.set(start.x,start.y,start.z);dj.rotation.y=facing(start.yaw,-1);
- k.box('dj-stage',0,.8,0,14,1.6,7,'#2b3550',0,dj);k.box('dj-table',0,2.2,.5,6,1.2,1.6,'#11182b',0,dj);k.label('DJ',0,2.4,1.35,2,.8,0,'#45e0ff','#11182b',dj);
- const speakers:TransformNode[]=[];for(const x of [-5.5,5.5]){const s=new TransformNode('speaker',k.scene);s.parent=dj;s.position.set(x,1.6,0);s.metadata={animate:true};k.box('speaker-box',0,2.5,0,2.6,5,2.4,'#1b2233',0,s);for(const y of [1.4,3.4]){const w=k.cyl('woofer',0,y,1.25,.2,1.6,'#46546d',1.6,s);w.rotation.x=Math.PI/2;}speakers.push(s);}
- k.anims.push({node:speakers[0],update:t=>{const b=1+Math.pow(Math.max(0,Math.cos(t*Math.PI*128/60)),8)*.08;for(const s of speakers)s.scaling.setAll(b);}});
- for(let i=0;i<5;i++){const d=120+i*190;if(special(route,d))continue;const p=beside(route,d,(i%2?1:-1)*(route.width*.72+4));if(k.onLane(p.x,p.z,2))continue;k.crowd(p.x,p.z,facing(p.yaw,i%2?1:-1),8,p.y,1.2);}
- const sign=beside(route,90,route.width*.72+2);k.sign('HIPA HIPA · LADIES NIGHT',sign.x,sign.z,facing(sign.yaw,1),10,1.6,3.4,'#ff5fb0','#11182b');
- // VIP terrace lane: velvet rope posts, sofas and a glowing sign.
- const vip=route.lanes.find(l=>l.id==='baile');if(vip){for(let s=8;s<vip.length-6;s+=10){const p=sampleLane(vip,s);for(const side of [-1,1]){const x=p.x+Math.cos(p.yaw)*(vip.width*.72+1.6)*side,z=p.z-Math.sin(p.yaw)*(vip.width*.72+1.6)*side;if(k.blocked(x,z,-route.width*.4)&&!k.onLane(x,z,-.5))continue;k.cyl('vip-post',x,p.y+.6,z,1.2,.18,'#d4af37');if(s%20<10)k.box('vip-sofa',x+Math.cos(p.yaw)*side*2.2,p.y+.5,z-Math.sin(p.yaw)*side*2.2,1.4,1,3.4,'#8b1e5a',p.yaw);}}
-  const mid=sampleLane(vip,vip.length*.5);k.sign('TERRAZA VIP · NO PISAR A LOS QUE BAILAN',mid.x+Math.cos(mid.yaw)*(vip.width*.72+5),mid.z-Math.sin(mid.yaw)*(vip.width*.72+5),facing(mid.yaw,1),12,1.5,3.6,'#ffd33d','#11182b');}
- const pool=beside(route,route.length*.684,0);k.sign('PISCINA VIP · SALTA',pool.x+Math.cos(pool.yaw)*(route.width*.72+4),pool.z-Math.sin(pool.yaw)*(route.width*.72+4),facing(pool.yaw,1),7,1.3,pool.y+3,'#45e0ff','#11182b');
+/** The entrance of Parque Nacional Volcán Masaya as the start arch: volcanic stone pillars, a wooden beam with the
+ * name, the ticket booth with its tiled roof, the park's welcome board and the rangers. */
+function parkEntrance(k:Kit,route:Route){
+ const s0=sample(route,0),g=new TransformNode('park-gate',k.scene);g.parent=k.root;g.position.set(s0.x,s0.y,s0.z);g.rotation.y=s0.yaw;
+ const half=route.width/2+2.6,stone='#4b4440',stone2='#5d5550',wood='#7a4f2c';
+ for(const s of [-1,1]){
+  for(let i=0;i<5;i++)k.box('gate-stone',s*half+(i%2?.2:-.2),.8+i*1.5,0,2.6-(i%2)*.3,1.5,2.6-(i%2)*.3,i%2?stone:stone2,i*.4,g);
+  k.box('gate-cap',s*half,8.1,0,3.2,.5,3.2,wood,0,g);
+  // Low stone walls leaving the gate on both sides.
+  k.box('park-wall',s*(half+12),.8,.4,20,1.6,1.2,stone2,0,g);for(let i=0;i<5;i++)k.box('wall-cap-stone',s*(half+4+i*4),1.75,.4,3.2,.4,1.4,stone,0,g);
+ }
+ k.box('gate-beam',0,8.9,0,half*2+4.5,1.3,1.4,wood,0,g);k.box('gate-roof',0,10,0,half*2+6,.5,4,'#a8553a',0,g);k.box('gate-roof-ridge',0,10.45,0,half*2+6,.35,.6,'#8a3f2a',0,g);
+ k.label('PARQUE NACIONAL VOLCÁN MASAYA',0,8.9,-.75,half*2+2,1.05,Math.PI,'#fff3d0','#3d2a1a',g);k.label('BIENVENIDOS',0,8.9,.75,10,1,0,'#fff3d0','#3d2a1a',g);
+ // Ticket booth (boletería) on the right with its window and a ranger.
+ const b=new TransformNode('boleteria',k.scene);b.parent=g;b.position.set(half+9,0,-8);
+ k.box('booth-body',0,1.7,0,5,3.4,4,'#e7d8b8',0,b);k.box('booth-roof',0,3.7,0,6.2,.5,5.2,'#a8553a',0,b);k.box('booth-window',0,2,-2.03,2.6,1.2,.06,'#3e6f80',0,b);k.label('BOLETERÍA',0,3.1,-2.05,4,.6,Math.PI,'#fff3d0','#2f5a3a',b);
+ k.cyl('ranger-body',-1.6,.9,-3.2,1.4,.7,'#3d5a3a',.6,b);k.ball('ranger-head',-1.6,1.9,-3.2,.55,'#b77d58',undefined,b);k.cyl('ranger-hat',-1.6,2.2,-3.2,.15,1,'#7a6a40',1,b);
+ // Welcome board with the park's rules, the classic green-and-white style.
+ const board=new TransformNode('park-board',k.scene);board.parent=g;board.position.set(-(half+8),0,-12);board.rotation.y=.35;
+ for(const x of [-2.6,2.6])k.cyl('board-post',x,1.6,0,3.2,.25,wood,.25,board);k.box('board',0,3,0,6.4,2.6,.2,'#2f5a3a',0,board);
+ k.label('VOLCÁN MASAYA · PARQUE NACIONAL',0,3.6,-.12,6,.6,Math.PI,'#ffffff','#2f5a3a',board);k.label('NO SE DETENGA · GASES · MÁX. 15 MIN',0,2.7,-.12,6,.5,Math.PI,'#ffd33d','#2f5a3a',board);
+ for(let i=0;i<3;i++)k.tree(-(half+16)-i*7,-4-i*5,'bush',0,1.2);
 }
-
 /* Volcán Masaya — roca volcánica, fumarolas, miradores y avisos de peligro. */
 export function dressMasaya(k:Kit,route:Route){
+ parkEntrance(k,route);
  const r=rng(1529),rocks=['#4f4a45','#5e5750','#3f3b38','#6b625a'];
  for(let d=4;d<route.length;d+=7){if(special(route,d))continue;for(const side of [-1,1]){if(r()<.45)continue;const p=beside(route,d,(route.width*.72+2.5+r()*9)*side),s=1+r()*2.6;if(k.onLane(p.x,p.z,3))continue;const rock=k.ball('lava-rock',p.x,p.y+s*.35,p.z,s*1.6,rocks[Math.floor(r()*4)],new Vector3(1+r()*.6,.55+r()*.4,1+r()*.6));rock.rotation.y=r()*3;}}
  // Fumaroles: puffs that rise and fade from the crater and from cracks near the road.
@@ -154,7 +199,7 @@ export function dressMasaya(k:Kit,route:Route){
  for(const [d,text] of [[90,'PRECAUCIÓN: GASES'],[380,'NO SE ACERQUE AL CRÁTER'],[640,'TÚNEL DE MAGMA →'],[1010,'PARQUE NACIONAL VOLCÁN MASAYA']] as [number,string][]){if(special(route,d))continue;const p=beside(route,d,route.width*.72+1.6);k.sign(text,p.x,p.z,facing(p.yaw,1),8,1.3,p.y+2.6,'#2b2b2b','#ffd33d');}
  // Mirador: wooden deck with railing looking at the crater.
  const m=beside(route,560,-(route.width*.72+6)),deck=new TransformNode('mirador',k.scene);deck.parent=k.root;deck.position.set(m.x,m.y,m.z);deck.rotation.y=facing(m.yaw,-1);
- k.box('deck',0,.4,0,12,.3,6,'#8a6a45',0,deck);for(let i=0;i<=6;i++)k.cyl('deck-post',-6+i*2,1,-3,1.2,.15,'#6b5236',.15,deck);k.box('deck-rail',0,1.55,-3,12,.12,.12,'#6b5236',0,deck);k.crowd(0,0,Math.PI,6,.5,1.4);
+ k.box('deck',0,.4,0,12,.3,6,'#8a6a45',0,deck);for(let i=0;i<=6;i++)k.cyl('deck-post',-6+i*2,1,-3,1.2,.15,'#6b5236',.15,deck);k.box('deck-rail',0,1.55,-3,12,.12,.12,'#6b5236',0,deck);k.crowd(m.x,m.z,facing(m.yaw,-1)+Math.PI,6,m.y+.5,1.4);
  const glow=MeshBuilder.CreateDisc('lava-glow',{radius:52,tessellation:32},k.scene);glow.parent=k.root;glow.rotation.x=Math.PI/2;glow.position.set(0,30.2,0);const gm=material(k.scene,'#ff7a2e',true,.75);glow.material=gm;
  const lava=new TransformNode('lava',k.scene);lava.parent=k.root;lava.metadata={animate:true};k.anims.push({node:lava,update:t=>{gm.emissiveColor=Color3.FromHexString('#ff7a2e').scale(.6+Math.sin(t*1.3)*.25);const lm=k.scene.getMaterialByName('course-lava') as StandardMaterial|null;if(lm){lm.emissiveColor=Color3.FromHexString('#ff5a14').scale(.85+Math.sin(t*2.1)*.2);const tex=lm.diffuseTexture as {uOffset:number}|null;if(tex)tex.uOffset=t*.02;}}});
  // Lava flows outside the tunnel windows and around the exit jump: you see where not to fall.
@@ -180,9 +225,19 @@ export function dressSanJuan(k:Kit,route:Route){
  // Beach life: umbrellas, surfboards and a lifeguard tower next to the shore lane.
  const shore=route.lanes.find(l=>l.id==='playa');
  if(shore){for(let s=8;s<shore.length;s+=13){const p=sampleLane(shore,s);for(const side of [-1,1]){const x=p.x+Math.cos(p.yaw)*(shore.width*.72+3+r()*4)*side,z=p.z-Math.sin(p.yaw)*(shore.width*.72+3+r()*4)*side;if(k.blocked(x,z,1)||side>0)continue;k.cyl('umbrella-pole',x,1.4,z,2.8,.1,'#ddd');k.cyl('beach-umbrella',x,2.8,z,.5,3.6,['#ff6f6f','#ffd33d','#4fc3f7'][Math.floor(s)%3],.2);if(r()<.4){const b=k.box('surfboard',x+1.5,1.1,z,.5,2.2,.12,['#ff8a3a','#5ff1ff','#ffd33d'][Math.floor(r()*3)]);b.rotation.z=.2;}}}
-  for(let s=4;s<shore.length;s+=4){const p=sampleLane(shore,s);for(const side of [-1,1]){const x=p.x+Math.cos(p.yaw)*(shore.width/2+.2)*side,z=p.z-Math.sin(p.yaw)*(shore.width/2+.2)*side;k.cyl('boardwalk-post',x,p.y/2-.2,z,p.y+.4,.3,'#7d5a36');}}
+  // Palms leaning over the sand lane.
+  for(let s=6;s<shore.length-4;s+=9){const p=sampleLane(shore,s);for(const side of [-1,1]){const o=(shore.width*.72+1.8+r()*2)*side,x=p.x+Math.cos(p.yaw)*o,z=p.z-Math.sin(p.yaw)*o;if(k.blocked(x,z,-shore.width*.2)&&!k.onLane(x,z,2.5))continue;k.tree(x,z,'palm',p.y,.85+r()*.3);}}
   const mid=sampleLane(shore,shore.length*.4),tower=new TransformNode('lifeguard',k.scene);tower.parent=k.root;tower.position.set(mid.x-Math.cos(mid.yaw)*(shore.width*.72+6),0,mid.z+Math.sin(mid.yaw)*(shore.width*.72+6));
   for(const [x,z] of [[-1,-1],[1,-1],[-1,1],[1,1]])k.cyl('tower-leg',x,2,z,4,.18,'#f4f0e4',.18,tower);k.box('tower-cabin',0,4.6,0,2.8,1.8,2.8,'#e8442c',0,tower);k.box('tower-roof',0,5.7,0,3.4,.3,3.4,'#f4f0e4',0,tower);}
+ // The beach along the main road: palms on the sand, umbrellas, a volleyball net and surfboards stuck in the sand.
+ const L=route.length;for(const [a,b] of [[.87*L,L],[0,.11*L]] as const)for(let d=a+4;d<b;d+=11){if(special(route,d))continue;for(const side of [-1,1]){const o=(route.width*.72+2.2+r()*5)*side,p=beside(route,d,o);if(k.blocked(p.x,p.z,.8))continue;
+  if(r()<.55)k.tree(p.x,p.z,'palm',p.y,.9+r()*.35);else if(side<0||r()<.5){k.cyl('umbrella-pole',p.x,1.4,p.z,2.8,.1,'#ddd');k.cyl('beach-umbrella',p.x,2.8,p.z,.5,3.8,['#ff6f6f','#ffd33d','#4fc3f7','#7dffa0'][Math.floor(r()*4)],.2);k.box('beach-towel',p.x+1.4,.08,p.z,1.2,.04,2.2,['#ff8fb3','#45e0ff','#ffd33d'][Math.floor(r()*3)],p.yaw);}
+  else{const b2=k.box('surfboard',p.x,1.1,p.z,.6,2.4,.14,['#ff8a3a','#5ff1ff','#ffd33d'][Math.floor(r()*3)]);b2.rotation.z=.15;}}}
+ {const v=beside(route,.035*L,-(route.width*.72+12));if(!k.blocked(v.x,v.z,3)){for(const s of [-1,1])k.cyl('volley-pole',v.x+Math.sin(v.yaw)*s*4.5,1.3,v.z+Math.cos(v.yaw)*s*4.5,2.6,.15,'#f4f0e4');const net=k.box('volley-net',v.x,2.1,v.z,.05,1,9,'#ffffff',v.yaw);net.material=material(k.scene,'#ffffff',false,.5);k.crowd(v.x+Math.cos(v.yaw)*3,v.z-Math.sin(v.yaw)*3,v.yaw,2,0,1.6);}}
+ // The bay: green headlands closing the horseshoe on both sides, with the sea between them.
+ for(const s of [-1,1]){for(let i=0;i<4;i++)k.ball('bay-headland',s*(250+i*45),6+i*3,-240-i*55,90-i*8,i%2?'#5f9a4a':'#6fae55',new Vector3(1,.42,.8));k.ball('headland-rock',s*(225+20),2,-330,22,'#7d6a58',new Vector3(1,.6,.8));}
+ for(let i=0;i<3;i++){const g=new TransformNode('sailboat',k.scene);g.parent=k.root;g.position.set(-90+i*90,-.05,-360-i*30);g.metadata={animate:true};k.box('sail-hull',0,.6,0,2.4,1.1,7,'#f4f0e4',0,g);k.cyl('sail-mast',0,5,0,9,.18,'#ddd',.18,g);const sail=k.box('sail-cloth',0,5.4,.9,.06,7,3.6,['#ff6f6f','#ffd33d','#4fc3f7'][i],0,g);sail.rotation.x=.08;
+  k.anims.push({node:g,update:t=>{g.position.x=-90+i*90+Math.sin(t*.05+i)*30;g.position.y=-.05+Math.sin(t*1.2+i)*.2;g.rotation.z=Math.sin(t*.9+i)*.05;}});}
  const welcome=beside(route,30,route.width*.72+1.8);k.sign('BIENVENIDOS A SAN JUAN DEL SUR',welcome.x,welcome.z,facing(welcome.yaw,1),11,1.5,3.2,'#fff3d0','#2f6b8f');
  const climb=beside(route,700,route.width*.72+1.8);if(!special(route,700))k.sign('↑ AL CRISTO DE LA MISERICORDIA',climb.x,climb.z,facing(climb.yaw,1),10,1.4,climb.y+3,'#fff3d0','#2f6b8f');
  for(let i=0;i<4;i++){const d=200+i*260;if(special(route,d))continue;const p=beside(route,d,-(route.width*.72+3));if(k.blocked(p.x,p.z,.5))continue;k.crowd(p.x,p.z,facing(p.yaw,-1),6,p.y,1.3);}
