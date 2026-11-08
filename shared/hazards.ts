@@ -45,8 +45,8 @@ export function hazardsFor(trackId:string,time:number):Hazard[]{
   bus(.122,11,0,0);bus(.0683,13,5,1);
  }else if(trackId==='hipa-hipa'){
   // People crossing from the bars to the dance floor; flying slippers on the straights.
-  [.83,.885,.905].forEach((f,i)=>walker('dancer','',f,6.4,5+i*.6,i*1.7,1,i));
-  for(const [k,f] of [[0,.1],[1,.25],[2,.98]] as const)add('slipper','',f,Math.sin(time*.8+k*2)*4.5,1.2);
+  [.885,.905,.92].forEach((f,i)=>walker('dancer','',f,6.4,5+i*.6,i*1.7,1,i));
+  for(const [k,f] of [[0,.08],[1,.2],[2,.985]] as const)add('slipper','',f,Math.sin(time*.8+k*2)*4.5,1.2);
  }else if(trackId==='masaya'){
   // Volcanic vents erupt on a rhythm (glow first); in the tunnel rocks fall where their shadow grows.
   [[.30,0,0],[.40,2.5,0],[.52,4,0],[.46,1.2,2]].forEach(([f,shift,minLap],i)=>{const c=cycle(6.4,shift,1.5,1.25);add('geyser','',f,(i%2?-1:1)*3.2,2.6,{active:c.active,warn:c.warn,phase:c.phase,minLap});});

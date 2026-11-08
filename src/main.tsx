@@ -7,6 +7,7 @@ import './arcade.css';
 import './overhaul.css';
 import './hud.css';
 import './menus.css';
+import './fiesta.css';
 createRoot(document.getElementById('root')!).render(<App/>);
 startGamepadNav();
 armSpeechUnlock();

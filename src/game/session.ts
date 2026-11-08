@@ -8,7 +8,7 @@ export interface Selection {nickname:string;characterId:string;vehicleId:string;
 export interface Session { id:string; state:GameState; online:boolean; connected:boolean; rtt:number; update(input:PlayerInput):void; next():void; leave():void; ready?():void; start?():void; }
 export class LocalSession implements Session {
  id='you';online=false;connected=true;rtt=0;sim:Simulation;get state(){return this.sim.state;}
- constructor(selection:Selection,mode:Mode,trackId:string,bots:number,difficulty=1){this.sim=new Simulation(mode,trackId);this.sim.difficulty=difficulty;this.sim.addPlayer(makePlayer(this.id,selection.nickname,selection.characterId,selection.vehicleId,0));for(let i=0;i<bots;i++)this.sim.addPlayer(makePlayer('bot-'+i,CHARACTERS[(i+1)%9].name,CHARACTERS[(i+1)%9].id,VEHICLES[(i+1)%6].id,i+1,true));this.sim.start();}
+ constructor(selection:Selection,mode:Mode,trackId:string,bots:number,difficulty=1){this.sim=new Simulation(mode,trackId);this.sim.difficulty=difficulty;this.sim.addPlayer(makePlayer(this.id,selection.nickname,selection.characterId,selection.vehicleId,0));for(let i=0;i<bots;i++)this.sim.addPlayer(makePlayer('bot-'+i,CHARACTERS[(i+1)%CHARACTERS.length].name,CHARACTERS[(i+1)%CHARACTERS.length].id,VEHICLES[(i+1)%6].id,i+1,true));this.sim.start();}
  update(input:PlayerInput){this.sim.inputs.set(this.id,input);this.sim.tick();}
  next(){if(this.state.mode==='championship'&&this.state.phase==='results'&&this.state.round<3)this.sim.nextRound();else if(this.state.mode==='championship')this.sim.restartCup();else this.sim.start();}
  leave(){}

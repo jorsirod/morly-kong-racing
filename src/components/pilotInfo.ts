@@ -11,6 +11,7 @@ export const TAGLINES:Record<string,string>={
  enanonitas:'Cebollas para todos y una invocación especial.',
  jorsi:'El artista: pintura, lápiz y borrador.',
  raulin:'Pepinos de sobra y un balde de leche.',
+ roman:'Barba, camisa roja y tenedor de nacatamal listo.',
 };
 /** What each special does, in a sentence, for the cards and the special banner. */
 export const SPECIAL_INFO:Record<string,string>={
@@ -23,6 +24,7 @@ export const SPECIAL_INFO:Record<string,string>={
  enanonitas:'Una aparición que deja aturdidos a los de adelante.',
  jorsi:'Le pinta un corazón sonriente en la mochila y lo aturde.',
  raulin:'Riega leche: quien pasa resbala y se queda inmóvil.',
+ roman:'Romie se baila el moonwalk: a todos los de alrededor los pone a ir de reversa.',
 };
 export const EFFECT_LABEL:Record<AttackDefinition['effect'],string>={spin:'hace girar',stun:'aturde',paint:'pinta la pantalla',slow:'frena',smoke:'humo',slip:'resbala'};
 export const DELIVERY_LABEL:Record<AttackDefinition['delivery'],string>={projectile:'al frente',rear:'hacia atrás',area:'en área',boomerang:'va y vuelve',bounce:'rebota',homing:'te persigue'};

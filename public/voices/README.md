@@ -1,6 +1,6 @@
 # Voces de Morly Kong Racing
 
-Estado: **0 de 99 líneas tienen grabación real.** Las que faltan suenan con una voz sintética
+Estado: **0 de 110 líneas tienen grabación real.** Las que faltan suenan con una voz sintética
 del sistema (genérica, no imita a nadie) y el subtítulo las marca como **VOZ PROVISIONAL**. Esa voz no es la versión final.
 
 ## Cómo grabar
@@ -149,6 +149,22 @@ Graba solo **tu propia voz** o la de alguien que te haya dado permiso. Las frase
 | Recibe | `jorsi/hurt-2.mp3` | «¡Borrón y cuenta nueva!» | FALTA |
 | Caída | `jorsi/fall-1.mp3` | «¡Se me cayó el lápiz!» | FALTA |
 | Gana | `jorsi/win-1.mp3` | «Firmado: Jorsi.» | FALTA |
+
+### Roman
+
+| Línea | Archivo | Texto | Estado |
+|---|---|---|---|
+| Especial | `roman/special.mp3` | **«Moonwalk de Michael Jackson (Bailado por Romie)»** | FALTA |
+| Salto | `roman/jump-1.mp3` | «¡Ji-ji!» | FALTA |
+| Salto | `roman/jump-2.mp3` | «¡Volando de puntitas!» | FALTA |
+| Rebase | `roman/overtake-1.mp3` | «¡Te pasé de espaldas!» | FALTA |
+| Rebase | `roman/overtake-2.mp3` | «¡Ni me viste, chavalo!» | FALTA |
+| Pega | `roman/hit-1.mp3` | «¡Tenedorazo!» | FALTA |
+| Pega | `roman/hit-2.mp3` | «¡Se te explotó el control!» | FALTA |
+| Recibe | `roman/hurt-1.mp3` | «¡Me arruinaron el paso!» | FALTA |
+| Recibe | `roman/hurt-2.mp3` | «¡Ay, mi nacatamal!» | FALTA |
+| Caída | `roman/fall-1.mp3` | «¡Moonwalk directo al hoyo!» | FALTA |
+| Gana | `roman/win-1.mp3` | «¡Gané bailando, Romie!» | FALTA |
 
 ### Raulín
 

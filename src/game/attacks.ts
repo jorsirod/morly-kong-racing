@@ -19,9 +19,9 @@ import '@babylonjs/core/Meshes/Builders/sphereBuilder';
 import '@babylonjs/core/Meshes/Builders/tubeBuilder';
 
 /** Each object has a colour that its halo, trail and debris share, so you can read it at a glance. */
-export const OBJECT_COLORS:Record<string,string>={victoria:'#ffcf3d',tona:'#5fe07a',rum:'#d9f4ff',flor:'#ff9c3a',cigarettes:'#ff5964',ashtray:'#9fe6ff',sixpack:'#ffd33d',basketball:'#ff8a2a',leaf:'#7be05a',frog:'#8ef05c',onion:'#fff1d6',cucumber:'#6fdc5a',bill:'#7dffa8',coin:'#ffd84a',diamond:'#7ef3ff',console:'#b48cff',ice:'#a6ecff',slipper:'#5ff1ff',pizza:'#ffa63d',milk:'#ffffff',backpack:'#ff6f9f',brush:'#ff6f9f',pencil:'#ffd23d',eraser:'#ff8ab8',claudia:'#ff8fc8',talc:'#ffffff',smoke:'#c9f2b8',coco:'#c69a5b',chilero:'#ff3b1f',bong:'#9be35a'};
+export const OBJECT_COLORS:Record<string,string>={fork:'#e8eef2',gamepad:'#ff7a3d',calf:'#fff3e2',moonwalk:'#fff36b',victoria:'#ffcf3d',tona:'#5fe07a',rum:'#d9f4ff',flor:'#ff9c3a',cigarettes:'#ff5964',ashtray:'#9fe6ff',sixpack:'#ffd33d',basketball:'#ff8a2a',leaf:'#7be05a',frog:'#8ef05c',onion:'#fff1d6',cucumber:'#6fdc5a',bill:'#7dffa8',coin:'#ffd84a',diamond:'#7ef3ff',console:'#b48cff',ice:'#a6ecff',slipper:'#5ff1ff',pizza:'#ffa63d',milk:'#ffffff',backpack:'#ff6f9f',brush:'#ff6f9f',pencil:'#ffd23d',eraser:'#ff8ab8',claudia:'#ff8fc8',talc:'#ffffff',smoke:'#c9f2b8',coco:'#c69a5b',chilero:'#ff3b1f',bong:'#9be35a'};
 type Motion='tumble'|'bounce'|'hop'|'roll'|'spinY'|'flutter'|'spear'|'frisbee'|'lob'|'still';
-const MOTION:Record<string,Motion>={victoria:'tumble',tona:'tumble',rum:'tumble',flor:'tumble',cigarettes:'tumble',sixpack:'lob',console:'lob',basketball:'bounce',frog:'hop',onion:'roll',cucumber:'roll',coin:'spinY',diamond:'spinY',eraser:'spinY',slipper:'spinY',bill:'flutter',leaf:'flutter',pencil:'spear',brush:'tumble',pizza:'frisbee',backpack:'tumble',ice:'still',ashtray:'still',milk:'still',talc:'still',smoke:'still',coco:'roll',chilero:'still',bong:'spinY'};
+const MOTION:Record<string,Motion>={fork:'spear',gamepad:'tumble',calf:'hop',victoria:'tumble',tona:'tumble',rum:'tumble',flor:'tumble',cigarettes:'tumble',sixpack:'lob',console:'lob',basketball:'bounce',frog:'hop',onion:'roll',cucumber:'roll',coin:'spinY',diamond:'spinY',eraser:'spinY',slipper:'spinY',bill:'flutter',leaf:'flutter',pencil:'spear',brush:'tumble',pizza:'frisbee',backpack:'tumble',ice:'still',ashtray:'still',milk:'still',talc:'still',smoke:'still',coco:'roll',chilero:'still',bong:'spinY'};
 interface View { node:TransformNode; halo:Mesh; shadow:Mesh; extra?:TransformNode; motion:Motion; trail?:TrailMesh; trailWanted?:boolean; }
 interface Transient { node:TransformNode; born:number; life:number; update:(t:number)=>void; }
 
@@ -139,7 +139,7 @@ export class AttackView {
   if(event.type==='bong'&&caster&&caster.id!==this.me){this.callout('¡AHÍ VA EL BONG!','#9be35a',new Vector3(caster.x,caster.y+4,caster.z),1.1);}
   if(event.type==='hit'&&event.x!==undefined&&event.special){
    // Specials say what happened over the victim's head: who used what on whom.
-   const words:Record<string,string>={sixpack:'¡SALUD!',console:'GAME OVER',slipper:'¡VOLTIO!',talc:'FATALITY',smoke:'¡ÁRMATE 1!',pizza:'¡DE LA ROTONDA!',onion:'¡CLAUDIA!',backpack:'¡PINTADO!',milk:'¡RESBALÓN!',bong:'¡CACHINFLÍN!'};
+   const words:Record<string,string>={sixpack:'¡SALUD!',console:'GAME OVER',slipper:'¡VOLTIO!',talc:'FATALITY',smoke:'¡ÁRMATE 1!',pizza:'¡DE LA ROTONDA!',onion:'¡CLAUDIA!',backpack:'¡PINTADO!',milk:'¡RESBALÓN!',bong:'¡CACHINFLÍN!',moonwalk:'¡JI-JI! ¡DE REVERSA!'};
    const target=state.players.find(p=>p.id===event.targetId),color=caster?character(caster.characterId).color:'#ffd33d';
    if(event.targetId!==this.me)this.callout(words[event.object??'']??'¡ZAS!',color,new Vector3(event.x,(event.y??0)+4.2,event.z??0),1.3);
    if(target){const marker=this.plane('special-victim',3.2,this.mat('ring',color,1),false);marker.rotation.x=Math.PI/2;this.fx.push({node:marker,born:this.time,life:1.2,update:k=>{marker.position.set(target.x,target.y+.2,target.z);marker.scaling.setAll(1+Math.sin(k*Math.PI)*.6);marker.visibility=1-k;}});}
@@ -147,10 +147,11 @@ export class AttackView {
   if(event.type==='hit'&&event.x!==undefined){
    const at=new Vector3(event.x,(event.y??0)+1.2,event.z??0),color=OBJECT_COLORS[event.object??'']??'#ffffff';
    // Basic hits get a comic word too, smaller than the specials', by what the object does.
-   if(!event.special&&event.text!=='hazard'&&event.targetId!==this.me){const words:Record<string,string>={victoria:'¡PLAF!',tona:'¡PLAF!',rum:'¡CLINK!',flor:'¡CLINK!',cigarettes:'¡COF COF!',ashtray:'¡ZAS!',basketball:'¡TOING!',leaf:'¡FIUU!',frog:'¡CROAC!',onion:'¡LLORA!',cucumber:'¡PUM!',bill:'¡TOMA!',coin:'¡CLING!',diamond:'¡BLING!',brush:'¡SPLASH!',pencil:'¡PIC!',eraser:'¡BORRADO!',ice:'¡RESBALA!'};
+   if(!event.special&&event.text!=='hazard'&&event.targetId!==this.me){const words:Record<string,string>={victoria:'¡PLAF!',tona:'¡PLAF!',rum:'¡CLINK!',flor:'¡CLINK!',cigarettes:'¡COF COF!',ashtray:'¡ZAS!',basketball:'¡TOING!',leaf:'¡FIUU!',frog:'¡CROAC!',onion:'¡LLORA!',cucumber:'¡PUM!',bill:'¡TOMA!',coin:'¡CLING!',diamond:'¡BLING!',brush:'¡SPLASH!',pencil:'¡PIC!',eraser:'¡BORRADO!',ice:'¡RESBALA!',fork:'¡ÑACA!',gamepad:'¡BOOM!',calf:'¡MUUU!'};
     this.callout(words[event.object??'']??'¡PUM!',color,new Vector3(event.x,(event.y??0)+3.6,event.z??0),.9);}
    const ring=this.plane('hit-ring',2,this.mat('ring',color,1));ring.position.copyFrom(at);
    this.fx.push({node:ring,born:this.time,life:.35,update:t=>{ring.scaling.setAll(1+t*(event.special?5:3));ring.visibility=1-t;}});
+   if(event.object==='gamepad'){const boom=this.plane('gamepad-boom',3,this.mat('halo','#ff9a2e',1));boom.position.copyFrom(at);this.fx.push({node:boom,born:this.time,life:.45,update:t=>{boom.scaling.setAll(1+t*4);boom.visibility=1-t;}});}
    if(event.special&&(event.object==='sixpack'||event.object==='console')){const wave=this.plane('shockwave',2,this.mat('ring',color,1),false);wave.rotation.x=Math.PI/2;wave.position.set(event.x,(event.y??0)+.2,event.z??0);this.fx.push({node:wave,born:this.time,life:.5,update:t=>{wave.scaling.setAll(1+t*11);wave.visibility=1-t;}});}
    const from=this.lastHit.get(event.playerId);
    if(event.text==='chain'&&from){

@@ -1,0 +1,76 @@
+/*
+ * «Fiesta» theme for the menus: the navy-on-navy screens looked sad. A night-party gradient (violet → magenta → orange),
+ * sunburst rays, one accent colour per step (piloto rosado, carro naranja, pista turquesa, partida verde limón), cards
+ * tinted with each pilot's colour and a gold glow on whatever is selected. Loaded last, so it only overrides colours.
+ */
+.arcade-app{--accent:#ff4fa3;--accent2:#ffd33d;--card:#2a1660;--card-hi:#45208a;--card-line:#8b5bd6;--plate:rgba(26,10,60,.78);
+ background:radial-gradient(ellipse at 85% 110%,#ff8a3d 0,#ff8a3d00 45%),radial-gradient(ellipse at 10% -10%,#4fd8ff66 0,#4fd8ff00 40%),linear-gradient(160deg,#2a0f6b 0%,#5b1490 38%,#a01f7a 72%,#e2475f 100%)}
+.arcade-app{isolation:isolate}
+.arcade-app::before{content:'';position:absolute;inset:-30%;z-index:-1;pointer-events:none;opacity:.12;background:repeating-conic-gradient(from 0deg at 50% 60%,#fff 0deg 5deg,transparent 5deg 15deg);animation:fiesta-spin 120s linear infinite}
+.arcade-app>.arcade-scanlines{opacity:.05}
+@keyframes fiesta-spin{to{transform:rotate(360deg)}}
+@media (prefers-reduced-motion:reduce){.arcade-app::before{animation:none}}
+.selection-screen{background:transparent}
+.selection-screen.step-1{--accent:#ff4fa3}.selection-screen.step-2{--accent:#ff8a2e}.selection-screen.step-3{--accent:#2ee6d6}.selection-screen.step-4{--accent:#9bff4f}
+
+/* Title: warm tint instead of a dark curtain, a glowing sun behind the logo, colourful chips. */
+.title-vignette{background:linear-gradient(90deg,#2a0f6bd9 0,#7a1a86a0 38%,#e2475f22 70%,transparent 85%),linear-gradient(0deg,#2a0f6bcc 0,transparent 30%)}
+.title-content::before{content:'';position:absolute;left:-60px;top:-40px;width:520px;height:420px;z-index:-1;pointer-events:none;background:radial-gradient(circle at 40% 45%,#ffd33d88 0,#ff8a3d55 28%,#ff4fa322 52%,transparent 70%);filter:blur(4px)}
+.title-links>button{border:2px solid #ffffff55;border-radius:999px;padding:7px 12px;background:#ffffff14;color:#fff6dc;transition:transform .12s,background .12s}
+.title-links>button:nth-child(5n+1){background:#ff4fa340;border-color:#ff8fc4}
+.title-links>button:nth-child(5n+2){background:#2ee6d640;border-color:#8af5ec}
+.title-links>button:nth-child(5n+3){background:#ff8a2e40;border-color:#ffc08a}
+.title-links>button:nth-child(5n+4){background:#9bff4f33;border-color:#c9ff9e}
+.title-links>button:nth-child(5n+5){background:#b77bff40;border-color:#d7b6ff}
+.title-links>button:hover,.title-links>button:focus-visible{transform:translateY(-2px) rotate(-1deg);background:#ffffff2e}
+.press-start{box-shadow:0 5px 0 #a3561a,0 0 0 4px #ff4fa3,0 0 30px #ffd33d88;animation:fiesta-pulse 1.6s ease-in-out infinite}
+@keyframes fiesta-pulse{50%{transform:scale(1.04) skew(-3deg)}}
+@media (prefers-reduced-motion:reduce){.press-start{animation:none}}
+.title-bottom{color:#ffe6f3}
+
+/* Header and step tabs. */
+.mini-logo{text-shadow:2px 3px #5b1490,0 0 14px #ff4fa388}
+.selection-screen nav[aria-label] button{border-color:#ffffff55;background:#ffffff1a;color:#ffeefa}
+.selection-screen nav[aria-label] button i{background:#ffffff26;color:#fff}
+.selection-screen nav[aria-label] button.active,.active{background:var(--accent);border-color:#fff;color:#1d0b45;box-shadow:0 3px 0 #00000055,0 0 16px var(--accent)}
+.arcade-heading h1{color:#fff;text-shadow:3px 3px 0 #5b1490,0 0 22px #ff4fa366}
+.arcade-heading h1::after{content:'';display:block;width:120px;height:6px;margin-top:6px;border-radius:3px;background:linear-gradient(90deg,var(--accent),var(--accent2))}
+.arcade-heading p{color:#ffe0f1}
+.arcade-help{background:#ffffff1f;border-color:#ffffff66}
+
+/* Panels: deep violet glass with an accent rim. */
+.arcade-panel{background:linear-gradient(150deg,#3a1a7ae6,#1f0c4ae6);border:2px solid var(--accent);box-shadow:5px 6px 0 #14062f,0 0 24px #00000033}
+.panel-strip{background:linear-gradient(90deg,var(--accent),#b0246b 70%,#5b1490);color:#fff;border-bottom:0;text-shadow:1px 1px 0 #00000055}
+.arcade-preview{background:radial-gradient(ellipse at 50% 40%,#ffb36b 0,#ff4fa3 34%,#6a1a9a 66%,#2a0f6b 100%);border:2px solid var(--accent);box-shadow:5px 6px 0 #14062f}
+.preview-player-tag b{background:var(--accent)}
+
+/* Pilot cards tinted with each pilot's colour. */
+.pilot-card{background:linear-gradient(180deg,color-mix(in srgb,var(--pc) 62%,#3a1a7a),color-mix(in srgb,var(--pc) 30%,#1f0c4a));border-color:color-mix(in srgb,var(--pc) 55%,#ffffff22)}
+.pilot-card:hover,.pilot-card:focus-visible{transform:translateY(-2px);background:linear-gradient(180deg,color-mix(in srgb,var(--pc) 80%,#fff),color-mix(in srgb,var(--pc) 45%,#1f0c4a));box-shadow:0 0 0 2px var(--pc)}
+.pilot-card-text small{color:#fff0f8}
+.pilot-card.selected{background:linear-gradient(180deg,#ffe36b,#ffb02e);border-color:#fff;color:#2a0f3f;box-shadow:0 0 0 3px var(--pc),0 0 22px #ffd33d}
+.pilot-card.selected small{color:#5b1a3a}
+.pilot-sheet{background:#1a0a3fcc}
+
+/* Cars, worlds and modes: colourful cards, one hue per slot. */
+.arcade-car,.arcade-world-card,.arcade-mode{border-color:#ffffff38}
+.arcade-car:nth-child(6n+1),.arcade-world-card:nth-child(6n+1),.arcade-mode:nth-child(4n+1){background:linear-gradient(170deg,#ff4fa3,#7a1a86)}
+.arcade-car:nth-child(6n+2),.arcade-world-card:nth-child(6n+2),.arcade-mode:nth-child(4n+2){background:linear-gradient(170deg,#ff8a2e,#a8326a)}
+.arcade-car:nth-child(6n+3),.arcade-world-card:nth-child(6n+3),.arcade-mode:nth-child(4n+3){background:linear-gradient(170deg,#24c8d8,#3a2a9a)}
+.arcade-car:nth-child(6n+4),.arcade-world-card:nth-child(6n+4),.arcade-mode:nth-child(4n+4){background:linear-gradient(170deg,#7ad84f,#1f7a6a)}
+.arcade-car:nth-child(6n+5),.arcade-world-card:nth-child(6n+5){background:linear-gradient(170deg,#b77bff,#4a1f9a)}
+.arcade-car:nth-child(6n+6),.arcade-world-card:nth-child(6n+6){background:linear-gradient(170deg,#ffd33d,#c8432f)}
+.arcade-car.selected,.arcade-world-card.selected,.arcade-mode.selected{background:linear-gradient(180deg,#ffe36b,#ffa62e);border-color:#fff;color:#2a0f3f;box-shadow:0 0 0 3px var(--accent),0 0 24px #ffd33d}
+.arcade-car.selected small,.arcade-world-card.selected span,.arcade-mode.selected span,.arcade-mode.selected small{color:#5b1a3a}
+.arcade-car:hover,.arcade-world-card:hover,.arcade-mode:hover{transform:translateY(-2px)}
+.full{background:var(--accent2);border-color:#fff3b0}
+.pips i.full{background:var(--accent2)}
+
+/* Buttons and footer. */
+.next-button,.arcade-primary{background:linear-gradient(#ffe36b,#ff9f2e);border-color:#fff;box-shadow:0 4px 0 #a3561a,0 0 18px #ffd33d77}
+.arcade-secondary{background:linear-gradient(#ff4fa3,#b0246b);border-color:#ffb3d9;color:#fff}
+.arcade-footer{background:#2a0f6bf2;border-top:2px solid var(--accent)}
+.arcade-dialog{background:linear-gradient(160deg,#4a1a8a,#24104f);border-color:var(--accent,#ff4fa3)}
+.full-loading{background:radial-gradient(ellipse at 50% 30%,#a01f7a,#2a0f6b);color:#ffe170}
+
+.arcade-world-card>b,.arcade-world-card>span{text-shadow:1px 1px 0 #00000088}

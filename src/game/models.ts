@@ -92,6 +92,8 @@ const LOOKS:Record<string,Look>={
  enanonitas:{skin:'#c18b6e',hair:'#292326',head:[1.1,.98,.96],eyes:.18,brow:.08,browTilt:.02,haircut:'up',height:.84,width:1.04,neck:-.08,cheeks:.04,ears:.22,nose:.26,smile:'wide',moustache:'thin'},
  // Jorsi: the artist — quiff, pencil behind the ear, paint on the shirt.
  jorsi:{skin:'#c58f71',hair:'#302b2a',head:[.99,1.06,.98],eyes:.16,brow:.1,browTilt:.03,haircut:'quiff',height:1.04,width:.98,neck:.02,cheeks:.04,ears:.21,nose:.25,smile:'grin',beard:'goatee'},
+ // Roman (Romie): full dark beard and moustache, short curly hair, red polo (from his photo).
+ roman:{skin:'#d6a382',hair:'#1f1815',head:[1,1.08,.97],eyes:.16,brow:.07,browTilt:.05,haircut:'curly',height:1.05,width:1.02,neck:.02,cheeks:.04,ears:.21,nose:.3,smile:'smirk',beard:'full',moustache:'thick'},
  // Raulín: round face and buzz cut, easy laugh.
  raulin:{skin:'#c39479',hair:'#392d27',head:[1.14,1.04,.96],eyes:.18,brow:-.03,browTilt:0,haircut:'buzz',height:.98,width:1.08,neck:-.02,cheeks:.04,ears:.23,nose:.28,smile:'open'},
 };
@@ -143,6 +145,7 @@ export function buildCharacter(scene:Scene,id:string,parent:TransformNode){
  if(f.haircut==='spike')for(let i=0;i<5;i++){const tuft=cylinder(scene,head,'hair-tuft',(i-2)*.13*hx,1.78,-.06,.32,.2,f.hair,.015);tuft.rotation.z=(i-2)*-.14;}
  if(f.haircut==='up')for(let i=0;i<4;i++){const tuft=cylinder(scene,head,'hair-tuft',(i-1.5)*.13*hx,1.74,.08,.26,.22,f.hair,.05);tuft.rotation.x=-.35;}
  if(f.haircut==='crop')sphere(scene,head,'hair-fringe',0,1.6,.24,.5,f.hair,new Vector3(1.4*hx,.3,.5));
+ if(f.haircut==='curly')for(let i=0;i<16;i++){const a=i*2.399,r=.12+((i*.37)%1)*.26;sphere(scene,head,'hair-curl',Math.cos(a)*r*hx,1.66+Math.cos(r*4)*.05-(r>.3?.05:0),-.05+Math.sin(a)*r*.9+.04,.26,f.hair);}
  if(c.cap){sphere(scene,head,'cap-crown',0,1.64,-.035,.91,c.cap,new Vector3(1.03*hx,.47,.95));const brim=box(scene,head,'cap-brim',0,1.58,.4,.7,.055,.54,c.cap);brim.rotation.x=.1;box(scene,head,'cap-badge',0,1.68,.41,.18,.13,.025,c.id==='calin'?'#fff9e9':'#e8b52b');}
  if(c.id==='coconitas'){const band=torus(scene,head,'sweatband',0,1.46,0,.92*hx,.07,'#fff6e2');band.scaling.z=.98;}
  if(c.id==='jorsi'){const pencil=cylinder(scene,head,'ear-pencil',.46*hx,1.3,-.04,.62,.07,'#f3c12d');pencil.rotation.x=1.2;pencil.rotation.z=.3;}
@@ -183,6 +186,12 @@ export function buildCharacter(scene:Scene,id:string,parent:TransformNode){
   const by=backY+.22;box(scene,root,'backpack',0,by,backZ-.14,.56,.62,.28,'#f05a7e');box(scene,root,'backpack-pocket',0,by-.17,backZ-.29,.4,.22,.06,'#d9446a');for(const x of [-1,1])box(scene,root,'backpack-strap',x*.2,by+.3,backZ+.02,.07,.26,.06,'#7a2e45');
   sphere(scene,root,'heart-lobe',-.07,by+.12,backZ-.29,.16,'#ffd34d',new Vector3(1,1,.3));sphere(scene,root,'heart-lobe',.07,by+.12,backZ-.29,.16,'#ffd34d',new Vector3(1,1,.3));const tip=box(scene,root,'heart-tip',0,by+.04,backZ-.29,.15,.15,.04,'#ffd34d');tip.rotation.z=Math.PI/4;
   for(const x of [-1,1])sphere(scene,root,'heart-eye',x*.05,by+.12,backZ-.315,.035,'#1d2430');tube(scene,root,'heart-smile',[[-.05,by+.06,backZ-.315],[0,by+.04,backZ-.32],[.05,by+.06,backZ-.315]],.012,'#1d2430');
+ }
+ else if(c.id==='roman'){
+  // Red polo: collar, placket with buttons, and his name on the back.
+  for(const x of [-1,1])box(scene,root,'shirt-collar',x*.12,.64,.28,.2,.12,.05,'#b8343a').rotation.z=x*.35;
+  box(scene,root,'polo-placket',0,.52,.335,.08,.2,.02,'#b8343a');for(let i=0;i<2;i++)sphere(scene,root,'shirt-button',0,.58-i*.1,.35,.045,'#f2e8de');
+  textLabel(scene,root,'ROMIE',0,backY+.38,backZ-.02,.42,.12,'#fff3e6',c.shirt);
  }
  else if(c.id==='raulin'){
   // Cow spots: the milk-bucket man dresses for the part.
@@ -259,6 +268,41 @@ export function buildProjectile(scene:Scene,object:string,special=false){
  }
  else if(object==='console'){
   box(scene,root,'ps3-body',0,0,0,1.48,.37,1.08,'#17202b');sphere(scene,root,'ps3-curved-top',0,.15,0,1.15,'#273440',new Vector3(1.27,.29,.92));box(scene,root,'ps3-disc-slot',0,.07,.55,1.01,.034,.021,'#8694a8');box(scene,root,'ps3-status-led',.48,-.035,.564,.11,.025,.017,'#8adb59');textLabel(scene,root,'PLAYSTATION 3',0,.14,.571,1.14,.15,'#d9e2ee','#1c2a37');
+ }
+ else if(object==='fork'){
+  // A big fork with a nacatamal on the tines: banana leaf parcel tied with string.
+  const fork=new TransformNode('fork-body',scene);fork.parent=root;fork.rotation.x=Math.PI/2;
+  cylinder(scene,fork,'fork-handle',0,-.55,0,1.3,.13,'#dfe6ec');box(scene,fork,'fork-neck',0,.14,0,.36,.12,.08,'#dfe6ec');for(let i=0;i<4;i++)cylinder(scene,fork,'fork-tine',(i-1.5)*.1,.42,0,.5,.05,'#eef3f6',.025);
+  box(scene,root,'nacatamal-leaf',0,0,.68,.62,.42,.5,'#4e8f36');box(scene,root,'nacatamal-leaf-fold',0,.22,.68,.5,.05,.42,'#6bab4a');for(const x of [-.14,.14])box(scene,root,'nacatamal-string',x,0,.68,.03,.46,.54,'#e8d8a8');
+  sphere(scene,root,'nacatamal-masa',0,.05,.94,.3,'#f0c34e',new Vector3(1,.7,.4));
+ }
+ else if(object==='gamepad'){
+  // A PlayStation-style controller with a lit fuse: it blows up on contact.
+  box(scene,root,'gamepad-body',0,0,0,1.3,.3,.6,'#2b3442');for(const x of [-1,1]){sphere(scene,root,'gamepad-grip',x*.52,-.06,-.28,.5,'#2b3442',new Vector3(.8,.55,1.3));cylinder(scene,root,'gamepad-stick',x*.2,.2,-.08,.12,.2,'#56606e');}
+  for(const [x,z,c] of [[.42,.12,'#3fd17a'],[.52,.02,'#ff5a5a'],[.32,.02,'#4fa8ff'],[.42,-.08,'#f08ad8']] as [number,number,string][])cylinder(scene,root,'gamepad-button',x,.17,z,.06,.1,c);
+  box(scene,root,'gamepad-dpad',-.42,.17,.02,.24,.05,.08,'#14181f');box(scene,root,'gamepad-dpad',-.42,.17,.02,.08,.05,.24,'#14181f');
+  tube(scene,root,'gamepad-fuse',[[0,.15,.3],[.05,.4,.45],[-.05,.6,.55]],.035,'#3a2a1c');const spark=sphere(scene,root,'gamepad-spark',-.05,.66,.57,.22,'#ffb02e');spark.material=material(scene,'#ffb02e',true);
+ }
+ else if(object==='calf'){
+  // «La ternerita»: a little spotted calf that gallops along the road and bounces off the walls.
+  sphere(scene,root,'calf-body',0,.15,0,1,'#fff8ee',new Vector3(.78,.7,1.25));for(const [x,y,z,r] of [[.32,.32,.1,.32],[-.3,.2,-.3,.36],[.1,.42,-.45,.26]] as number[][])sphere(scene,root,'calf-spot',x,y,z,r,'#2b2b2b',new Vector3(.6,.6,.6));
+  sphere(scene,root,'calf-head',0,.5,.7,.56,'#fff8ee',new Vector3(.85,.85,1));sphere(scene,root,'calf-snout',0,.42,.98,.32,'#f3a7b4',new Vector3(1.1,.75,.6));for(const x of [-1,1]){sphere(scene,root,'calf-ear',x*.32,.66,.62,.22,'#2b2b2b',new Vector3(1.3,.5,.6));cylinder(scene,root,'calf-horn',x*.13,.82,.68,.12,.07,'#e8d6a8',.03);sphere(scene,root,'calf-eye',x*.15,.6,.95,.09,'#1b1b1b');}
+  for(const [x,z] of [[-.22,.32],[.22,.32],[-.22,-.32],[.22,-.32]])cylinder(scene,root,'calf-leg',x,-.3,z,.5,.14,'#fff8ee');tube(scene,root,'calf-tail',[[0,.3,-.6],[0,.15,-.8],[.05,-.05,-.85]],.04,'#2b2b2b');
+  const bell=sphere(scene,root,'calf-bell',0,.2,.86,.18,'#f2c13a');bell.material=material(scene,'#f2c13a',true);
+ }
+ else if(object==='moonwalk'){
+  // The dance floor's mirror ball that hangs over the moonwalk zone.
+  sphere(scene,root,'mirror-ball',0,0,0,1.4,'#d9e6ee');for(let i=0;i<26;i++){const a=i*2.399,b=Math.acos(1-2*(i+.5)/26),m=box(scene,root,'mirror-tile',Math.sin(b)*Math.cos(a)*.7,Math.cos(b)*.7,Math.sin(b)*Math.sin(a)*.7,.18,.18,.04,i%3?'#ffffff':'#bfe9ff');m.lookAt(new Vector3(0,0,0));m.material=material(scene,i%3?'#ffffff':'#bfe9ff',true);}
+  cylinder(scene,root,'mirror-ball-cord',0,1.2,0,1,.05,'#888');
+ }
+ else if(object==='romie'){
+  // Romie doing the moonwalk: black fedora over his curls, black jacket, white glove, white socks and loafers.
+  const skin='#d6a382',hair='#1f1815';
+  sphere(scene,root,'romie-torso',0,.25,0,.78,'#18181c',new Vector3(.72,1.35,.62));box(scene,root,'romie-shirt',0,.42,.24,.2,.5,.04,'#f4f2ec');
+  cylinder(scene,root,'romie-neck',0,.82,0,.18,.2,skin);sphere(scene,root,'romie-head',0,1.12,.04,.62,skin,new Vector3(.9,1.05,.95));sphere(scene,root,'romie-beard',0,.98,.12,.5,hair,new Vector3(.95,.65,.8));sphere(scene,root,'romie-curls',0,1.34,-.02,.6,hair,new Vector3(1,.5,.95));
+  cylinder(scene,root,'romie-hat-brim',0,1.48,0,.04,.95,'#111114');cylinder(scene,root,'romie-hat',0,1.62,0,.28,.56,'#111114',.5);box(scene,root,'romie-hat-band',0,1.53,0,.58,.06,.58,'#f4f2ec');
+  for(const x of [-1,1]){cylinder(scene,root,'romie-leg',x*.14,-.62,0,.95,.2,'#18181c');box(scene,root,'romie-sock',x*.14,-1.1,.02,.18,.12,.2,'#ffffff');sphere(scene,root,'romie-shoe',x*.14,-1.17,.1,.28,'#0b0b0d',new Vector3(.8,.4,1.5));
+   tube(scene,root,'romie-arm',[[x*.26,.55,0],[x*.42,.25,.06],[x*.4,-.05,.12]],.08,'#18181c');sphere(scene,root,'romie-hand',x*.4,-.1,.14,.16,x>0?'#ffffff':skin);}
  }
  else if(object==='milk'){
   cylinder(scene,root,'metal-bucket',0,-.07,0,1.34,1.04,'#87b3cf',1.43);cylinder(scene,root,'milk-surface',0,.62,0,.04,1.38,'#fff8e7');torus(scene,root,'bucket-rim',0,.63,0,1.39,.08,'#d1e6ef');const handle=torus(scene,root,'bucket-handle',0,.8,0,1.29,.064,'#e1edf0');handle.rotation.x=Math.PI/2;

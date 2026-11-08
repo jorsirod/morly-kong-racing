@@ -1,1 +1,37 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512"><rect width="512" height="512" rx="110" fill="#112c2b"/><path d="M87 176h338v180H87z" fill="#fbc34c"/><path d="M135 130h242l48 80H87z" fill="#fbc34c"/><path d="M151 143h94v67h-133zm116 0h94l36 67H267z" fill="#387b79"/><circle cx="149" cy="356" r="42" fill="#071c20"/><circle cx="363" cy="356" r="42" fill="#071c20"/><path d="M76 269h55v38H76zm305 0h55v38h-55z" fill="#fff2c9"/><path d="M194 278h124v18H194z" fill="#112c2b"/></svg>
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512">
+ <defs>
+  <radialGradient id="bg" cx="50%" cy="42%" r="70%"><stop offset="0" stop-color="#ffe36b"/><stop offset=".32" stop-color="#ff8a3d"/><stop offset=".62" stop-color="#e0337a"/><stop offset="1" stop-color="#4a128a"/></radialGradient>
+  <linearGradient id="body" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#e3ecef"/><stop offset="1" stop-color="#8fa3ab"/></linearGradient>
+  <linearGradient id="glass" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#9ff3ff"/><stop offset="1" stop-color="#2aa6d6"/></linearGradient>
+  <linearGradient id="ban" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ff5a4e"/><stop offset="1" stop-color="#c41f3c"/></linearGradient>
+  <clipPath id="r"><rect width="512" height="512" rx="112"/></clipPath>
+ </defs>
+ <g clip-path="url(#r)">
+  <rect width="512" height="512" fill="url(#bg)"/>
+  <g fill="#fff" opacity=".16" transform="translate(256 215)">
+   <path d="M0 0L-40-400H40Z"/><path d="M0 0L-40-400H40Z" transform="rotate(30)"/><path d="M0 0L-40-400H40Z" transform="rotate(60)"/><path d="M0 0L-40-400H40Z" transform="rotate(90)"/><path d="M0 0L-40-400H40Z" transform="rotate(120)"/><path d="M0 0L-40-400H40Z" transform="rotate(150)"/><path d="M0 0L-40-400H40Z" transform="rotate(180)"/><path d="M0 0L-40-400H40Z" transform="rotate(210)"/><path d="M0 0L-40-400H40Z" transform="rotate(240)"/><path d="M0 0L-40-400H40Z" transform="rotate(270)"/><path d="M0 0L-40-400H40Z" transform="rotate(300)"/><path d="M0 0L-40-400H40Z" transform="rotate(330)"/>
+  </g>
+  <!-- speed streaks -->
+  <g stroke="#fff" stroke-width="10" stroke-linecap="round" opacity=".7"><path d="M40 170h60M28 214h50M44 258h44M412 170h60M434 214h50M424 258h44"/></g>
+  <!-- Silver Surfer, front view, mid-jump -->
+  <g transform="rotate(-6 256 230)">
+   <ellipse cx="256" cy="352" rx="150" ry="20" fill="#2a0b4a" opacity=".35"/>
+   <path d="M150 116h212q14 0 20 14l26 72H104l26-72q6-14 20-14z" fill="url(#body)" stroke="#1d0b45" stroke-width="10" stroke-linejoin="round"/>
+   <path d="M166 136h180l18 58H148z" fill="url(#glass)" stroke="#1d0b45" stroke-width="8" stroke-linejoin="round"/>
+   <!-- driver: dark hair, big grin -->
+   <circle cx="256" cy="168" r="30" fill="#d39a76" stroke="#1d0b45" stroke-width="6"/><path d="M226 160q4-30 30-30t30 30q-14-10-30-8t-30 8z" fill="#2a1d1a"/><path d="M240 176q16 14 32 0" fill="none" stroke="#1d0b45" stroke-width="6" stroke-linecap="round"/><circle cx="245" cy="164" r="4" fill="#1d0b45"/><circle cx="267" cy="164" r="4" fill="#1d0b45"/>
+   <path d="M92 200h328q16 0 16 16v84q0 16-16 16H92q-16 0-16-16v-84q0-16 16-16z" fill="url(#body)" stroke="#1d0b45" stroke-width="10" stroke-linejoin="round"/>
+   <g fill="#1d0b45"><rect x="200" y="222" width="14" height="64" rx="5"/><rect x="226" y="222" width="14" height="64" rx="5"/><rect x="252" y="222" width="14" height="64" rx="5"/><rect x="278" y="222" width="14" height="64" rx="5"/><rect x="304" y="222" width="14" height="64" rx="5"/></g>
+   <circle cx="142" cy="254" r="34" fill="#fff6c2" stroke="#1d0b45" stroke-width="9"/><circle cx="370" cy="254" r="34" fill="#fff6c2" stroke="#1d0b45" stroke-width="9"/>
+   <circle cx="142" cy="254" r="16" fill="#ffd33d"/><circle cx="370" cy="254" r="16" fill="#ffd33d"/>
+   <rect x="70" y="300" width="372" height="30" rx="12" fill="#3b4652" stroke="#1d0b45" stroke-width="9"/>
+   <rect x="84" y="318" width="74" height="58" rx="18" fill="#1d1a24"/><rect x="354" y="318" width="74" height="58" rx="18" fill="#1d1a24"/>
+  </g>
+  <!-- banner -->
+  <g transform="rotate(-6 256 420)">
+   <path d="M56 380h400l-18 84H38z" fill="url(#ban)" stroke="#fff6d5" stroke-width="10" stroke-linejoin="round"/>
+   <text x="247" y="446" text-anchor="middle" font-family="'Arial Black',Impact,sans-serif" font-weight="900" font-size="56" fill="#ffe36b" stroke="#1d0b45" stroke-width="10" paint-order="stroke" letter-spacing="2">MORLY KONG</text>
+  </g>
+  <g transform="rotate(-6 256 480)" opacity=".95"><g fill="#fff"><rect x="60" y="474" width="24" height="12"/><rect x="108" y="474" width="24" height="12"/><rect x="156" y="474" width="24" height="12"/><rect x="204" y="474" width="24" height="12"/><rect x="252" y="474" width="24" height="12"/><rect x="300" y="474" width="24" height="12"/><rect x="348" y="474" width="24" height="12"/><rect x="396" y="474" width="24" height="12"/></g></g>
+ </g>
+</svg>

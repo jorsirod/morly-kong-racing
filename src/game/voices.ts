@@ -28,6 +28,7 @@ export const SPECIAL_PHRASES:Record<string,string>={
  enanonitas:'Yo te invoco, Claudia Salinas',
  jorsi:'Yo te pinto la mochila',
  raulin:'Balde de leche',
+ roman:'Moonwalk de Michael Jackson (Bailado por Romie)',
 };
 type Reactions=Record<Exclude<VoiceKind,'special'>,string[]>;
 export const REACTIONS:Record<string,Reactions>={
@@ -39,6 +40,7 @@ export const REACTIONS:Record<string,Reactions>={
  'sap-heinz':{jump:['¡Croac!','¡Salto de sapo!'],overtake:['¡Paso de sapito!','¡Adiós, renacuajo!'],hit:['¡Sapazo!','¡Te cayó el sapito!'],hurt:['¡Ay, mi pizza!','¡Me aplastaron!'],fall:['¡Al charco!'],win:['¡Pizza para todos! Gané.']},
  enanonitas:{jump:['¡Mirame volar!','¡Arriba, pues!'],overtake:['¡Chiquito pero rápido!','¡Cebolla y adiós!'],hit:['¡Cebollazo!','¡A llorar se ha dicho!'],hurt:['¡Me hicieron llorar!','¡Ideay!'],fall:['¡Me caí y ni me vieron!'],win:['¡El más pequeño, el primero!']},
  jorsi:{jump:['¡Pincelada en el aire!','¡Weee!'],overtake:['¡Te borré del mapa!','¡Te pinté la raya!'],hit:['¡Pintado!','¡Obra de arte!'],hurt:['¡Me rayaron el dibujo!','¡Borrón y cuenta nueva!'],fall:['¡Se me cayó el lápiz!'],win:['Firmado: Jorsi.']},
+ roman:{jump:['¡Ji-ji!','¡Volando de puntitas!'],overtake:['¡Te pasé de espaldas!','¡Ni me viste, chavalo!'],hit:['¡Tenedorazo!','¡Se te explotó el control!'],hurt:['¡Me arruinaron el paso!','¡Ay, mi nacatamal!'],fall:['¡Moonwalk directo al hoyo!'],win:['¡Gané bailando, Romie!']},
  raulin:{jump:['¡Pepino volador!','¡Arriba la leche!'],overtake:['¡Fresco como pepino!','¡Te pasé, lechero!'],hit:['¡Pepinazo!','¡Te lo dije, fresco!'],hurt:['¡Se me regó la leche!','¡Ay, ay, ay!'],fall:['¡Me resbalé en mi propia leche!'],win:['¡Gané, y de postre leche!']},
 };
 /** `file` is the line's key: '<pilot>/<line>' without extension (special, jump-1, hurt-2…). */
@@ -51,7 +53,7 @@ export function allLines():LineRef[]{
  return out;
 }
 /** Generic system-voice settings per pilot, only so that they sound different from each other. */
-const TTS_STYLE:Record<string,{pitch:number;rate:number}>={semilla:{pitch:.8,rate:1},morly:{pitch:.7,rate:1.05},chete:{pitch:1.1,rate:1.1},coconitas:{pitch:1,rate:1.15},calin:{pitch:.9,rate:.92},'sap-heinz':{pitch:1.3,rate:1.1},enanonitas:{pitch:1.45,rate:1.15},jorsi:{pitch:1.05,rate:1.05},raulin:{pitch:1.15,rate:1}};
+const TTS_STYLE:Record<string,{pitch:number;rate:number}>={semilla:{pitch:.8,rate:1},morly:{pitch:.7,rate:1.05},chete:{pitch:1.1,rate:1.1},coconitas:{pitch:1,rate:1.15},calin:{pitch:.9,rate:.92},'sap-heinz':{pitch:1.3,rate:1.1},enanonitas:{pitch:1.45,rate:1.15},jorsi:{pitch:1.05,rate:1.05},raulin:{pitch:1.15,rate:1},roman:{pitch:.85,rate:1}};
 const PRIORITY:Record<VoiceKind,number>={special:5,win:4,fall:3,hurt:2,hit:2,overtake:1,jump:1};
 const COOLDOWN:Record<VoiceKind,number>={special:0,win:0,fall:5,hurt:3.5,hit:3.5,overtake:7,jump:6};
 const CHANCE:Record<VoiceKind,number>={special:1,win:1,fall:1,hurt:.75,hit:.75,overtake:.55,jump:.6};

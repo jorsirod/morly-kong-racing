@@ -18,9 +18,9 @@ export const ITEMS:Record<ItemId,ItemDef>={
  * (laps and checkpoints included), never in straight-line distance.
  */
 export const BONG={
- /** Minimum lead of the leader over second place, in metres of progress (≈3 s). */ lead:56,
- /** Chance per surprise box for the last place; second place gets 55 % of it. */ chance:.72,
- /** Seconds a leader may stay escaped before the next box behind is guaranteed to be the Bong. */ pity:14,
+ /** Minimum lead of the leader over second place, in metres of progress (≈2 s). */ lead:42,
+ /** Chance per surprise box for the last place; second place gets 55 % of it. */ chance:.85,
+ /** Seconds a leader may stay escaped before the next box behind is guaranteed to be the Bong. */ pity:11,
  /** Flight speed along the road (faster than any boosted car); it flies faster while far away. */ speed:52,
  /** Seconds of spin, of reduced top speed, and the top-speed factor during the hangover. */ stun:1.05, slow:2.4, slowFactor:.72,
  /** Seconds after a launch during which nobody can get or throw another one. */ cooldown:21,

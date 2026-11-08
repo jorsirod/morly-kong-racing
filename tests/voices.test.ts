@@ -5,7 +5,7 @@ import { REACTIONS,SPECIAL_PHRASES,VOICE_KINDS,VoiceSystem,allLines } from '../s
 import type { GameAudio } from '../src/game/audio';
 
 // The nine phrases exactly as the gang asked for them.
-const EXACT:Record<string,string>={semilla:'Acompáñame a comprar bicha',chete:'Si yo me voy nadie juega play',morly:'Chinelazo Voltio Impact!!',coconitas:'Kokonit Fatality',calin:'Ármate 1','sap-heinz':'Pizza de la rotonda',enanonitas:'Yo te invoco, Claudia Salinas',jorsi:'Yo te pinto la mochila',raulin:'Balde de leche'};
+const EXACT:Record<string,string>={semilla:'Acompáñame a comprar bicha',chete:'Si yo me voy nadie juega play',morly:'Chinelazo Voltio Impact!!',coconitas:'Kokonit Fatality',calin:'Ármate 1','sap-heinz':'Pizza de la rotonda',enanonitas:'Yo te invoco, Claudia Salinas',jorsi:'Yo te pinto la mochila',roman:'Moonwalk de Michael Jackson (Bailado por Romie)',raulin:'Balde de leche'};
 const fakeAudio=()=>{const calls={duck:0};return{calls,audio:{context:null,duck(){calls.duck++;},playVoice(){return 1;}} as unknown as GameAudio};};
 
 describe('voces de la pandilla',()=>{

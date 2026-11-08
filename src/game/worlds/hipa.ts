@@ -39,22 +39,22 @@ function bar(k:Kit,x:number,y:number,z:number,yaw:number,name:string,color:strin
 function giantPalm(k:Kit,beat:(t:number)=>number){
  const {x,z}=PALM;
  // Round dance floor inside the spiral: glowing tiles that light up to the beat.
- const floor=MeshBuilder.CreateDisc('dance-floor',{radius:21.5,tessellation:48},k.scene);floor.parent=k.root;floor.rotation.x=Math.PI/2;floor.position.set(x,.04,z);floor.material=material(k.scene,'#1b1730');floor.isPickable=false;
+ const floor=MeshBuilder.CreateDisc('dance-floor',{radius:19,tessellation:48},k.scene);floor.parent=k.root;floor.rotation.x=Math.PI/2;floor.position.set(x,.04,z);floor.material=material(k.scene,'#1b1730');floor.isPickable=false;
  const tiles=new TransformNode('dance-tiles',k.scene);tiles.parent=k.root;tiles.metadata={animate:true};
  const tileMats=NEON.map(c=>{const m=new StandardMaterial('dance-tile-'+c,k.scene);m.emissiveColor=Color3.FromHexString(c).scale(.5);m.diffuseColor=Color3.Black();m.disableLighting=true;return m;});
- for(let i=-4;i<=4;i++)for(let j=-4;j<=4;j++){const tx=i*4.4,tz=j*4.4;if(Math.hypot(tx,tz)>19||Math.hypot(tx,tz)<4)continue;const t=MeshBuilder.CreateBox('dance-tile',{width:4,height:.05,depth:4},k.scene);t.parent=tiles;t.position.set(x+tx,.1,z+tz);t.material=tileMats[(i*3+j*7+40)%tileMats.length];t.isPickable=false;}
+ for(let i=-4;i<=4;i++)for(let j=-4;j<=4;j++){const tx=i*4.4,tz=j*4.4;if(Math.hypot(tx,tz)>16.5||Math.hypot(tx,tz)<4)continue;const t=MeshBuilder.CreateBox('dance-tile',{width:4,height:.05,depth:4},k.scene);t.parent=tiles;t.position.set(x+tx,.1,z+tz);t.material=tileMats[(i*3+j*7+40)%tileMats.length];t.isPickable=false;}
  k.anims.push({node:tiles,update:t=>{const b=beat(t),step=Math.floor(t*128/60)%5;tileMats.forEach((m,i)=>{m.emissiveColor=Color3.FromHexString(NEON[(i+step)%NEON.length]).scale(.28+b*.8);});}});
  // Trunk: stacked, slightly leaning segments with neon rings.
  const palm=new TransformNode('giant-palm',k.scene);palm.parent=k.root;palm.position.set(x,0,z);
- for(let i=0;i<8;i++){const seg=k.cyl('giant-palm-trunk',Math.sin(i*.3)*.25,1.6+i*3,0,3.2,3.4-i*.18,'#8a6a46',3.2-i*.18,palm);seg.rotation.z=.02;
-  if(i%2===0){const ring=MeshBuilder.CreateTorus('palm-ring',{diameter:3.6-i*.18,thickness:.22,tessellation:24},k.scene);ring.parent=palm;ring.position.set(Math.sin(i*.3)*.25,2.9+i*3,0);ring.material=neonMat(k,NEON[(i/2)%NEON.length]);ring.isPickable=false;}}
- const crown=new TransformNode('palm-crown',k.scene);crown.parent=palm;crown.position.set(.4,25,0);crown.metadata={animate:true};
- for(let i=0;i<11;i++){const a=i/11*Math.PI*2,leaf=k.ball('giant-frond',Math.sin(a)*6.5,-1.2,Math.cos(a)*6.5,10,i%2?'#3f9a4f':'#5cbf5a',new Vector3(.36,.1,1.55),crown);leaf.rotation.y=a;leaf.rotation.x=.42;
+ for(let i=0;i<11;i++){const seg=k.cyl('giant-palm-trunk',Math.sin(i*.3)*.25,1.6+i*3,0,3.2,3.8-i*.18,'#8a6a46',3.6-i*.18,palm);seg.rotation.z=.02;
+  if(i%2===0){const ring=MeshBuilder.CreateTorus('palm-ring',{diameter:4-i*.18,thickness:.22,tessellation:24},k.scene);ring.parent=palm;ring.position.set(Math.sin(i*.3)*.25,2.9+i*3,0);ring.material=neonMat(k,NEON[(i/2)%NEON.length]);ring.isPickable=false;}}
+ const crown=new TransformNode('palm-crown',k.scene);crown.parent=palm;crown.position.set(.4,34,0);crown.metadata={animate:true};
+ for(let i=0;i<11;i++){const a=i/11*Math.PI*2,leaf=k.ball('giant-frond',Math.sin(a)*6.5,-1.2,Math.cos(a)*6.5,11,i%2?'#3f9a4f':'#5cbf5a',new Vector3(.36,.1,1.55),crown);leaf.rotation.y=a;leaf.rotation.x=.42;
   const tip=k.ball('frond-tip',Math.sin(a)*11.5,-4.2,Math.cos(a)*11.5,3.6,i%2?'#3f9a4f':'#5cbf5a',new Vector3(.4,.12,1.2),crown);tip.rotation.y=a;tip.rotation.x=.9;}
  for(let i=0;i<6;i++){const a=i/6*Math.PI*2,c=k.ball('glow-coconut',Math.sin(a)*1.3,-1.6,Math.cos(a)*1.3,1.1,'#ffd33d',undefined,crown);c.material=neonMat(k,'#ffd33d');}
  k.anims.push({node:crown,update:t=>{crown.rotation.y=Math.sin(t*.35)*.08;crown.rotation.z=Math.sin(t*.5)*.03;}});
  // Dancers in rings around the palm and a sign facing the entry of the spiral.
- for(const [rad,count] of [[8,10],[13,14],[17.5,18]] as const)for(let i=0;i<count;i+=Math.ceil(count/5)){const a=i/count*Math.PI*2+rad;k.crowd(x+Math.sin(a)*rad,z+Math.cos(a)*rad,a+Math.PI/2,3,0,1.1);}
+ for(const [rad,count] of [[7,10],[11,14],[15,18]] as const)for(let i=0;i<count;i+=Math.ceil(count/5)){const a=i/count*Math.PI*2+rad;k.crowd(x+Math.sin(a)*rad,z+Math.cos(a)*rad,a+Math.PI/2,3,0,1.1);}
  k.label('LA PALMERA',0,8.5,1.8,7,1.4,0,'#ffd33d','#11182b',palm);
 }
 export function dressHipaClub(k:Kit,route:Route){
@@ -68,6 +68,12 @@ export function dressHipaClub(k:Kit,route:Route){
   for(const s of [-1,1]){const side=MeshBuilder.CreateBox('neon-side',{width:.3,height:8,depth:.3},k.scene);side.parent=g;side.position.set(s*span/2,4,0);side.material=mats[(i+1)%mats.length];side.isPickable=false;}}
  const pulse=new TransformNode('beat',k.scene);pulse.parent=k.root;pulse.metadata={animate:true};
  k.anims.push({node:pulse,update:t=>{const b=beat(t);mats.forEach((m,i)=>{m.emissiveColor=Color3.FromHexString(NEON[i]).scale(.45+b*.75);});}});
+ // The spiral hangs from the palm like a parking ramp: spokes from the trunk to each floor and neon columns outside.
+ {const R=Math.hypot(sample(route,(c.bridges[0][0]+c.bridges[0][1])/2).x-PALM.x,sample(route,(c.bridges[0][0]+c.bridges[0][1])/2).z-PALM.z);
+  for(let d=c.bridges[0][0];d<c.bridges[0][1];d+=14){const p=sample(route,d),dx=p.x-PALM.x,dz=p.z-PALM.z,r=Math.hypot(dx,dz);if(r>R+4||p.y<2)continue;const ux=dx/r,uz=dz/r,inner=2,outer=r-route.width/2,len=outer-inner;
+   const beam=k.box('spiral-spoke',PALM.x+ux*(inner+len/2),p.y-.7,PALM.z+uz*(inner+len/2),len,.5,.6,'#3a3456',Math.atan2(uz,-ux)*-1+Math.PI/2);beam.rotation.y=Math.atan2(-uz,ux);}
+  for(let i=0;i<12;i++){const a=i/12*Math.PI*2,x=PALM.x+Math.cos(a)*(R+12.5),z=PALM.z+Math.sin(a)*(R+12.5);if(k.blocked(x,z,.8))continue;
+   const h=30;k.cyl('spiral-column',x,h/2,z,h,1.1,'#2b2548');const strip=k.box('spiral-column-neon',x,h/2,z,.3,h,.3,NEON[i%NEON.length]);strip.material=mats[i%mats.length];}}
  // Lights along both edges of the spiral deck so it reads as a glowing ramp from far away.
  for(let d=c.bridges[0]?.[0]??0;d<(c.bridges[0]?.[1]??0);d+=5){const p=sample(route,d);for(const s of [-1,1]){const q={x:p.x+Math.cos(p.yaw)*s*(route.width/2+.3),z:p.z-Math.sin(p.yaw)*s*(route.width/2+.3)};const m=k.box('spiral-light',q.x,p.y+.35,q.z,.35,.35,2.2,NEON[Math.floor(d/5)%NEON.length],p.yaw);m.material=mats[Math.floor(d/5)%mats.length];}}
  // Searchlights sweeping the sky from outside the walls.

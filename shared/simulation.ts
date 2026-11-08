@@ -224,7 +224,8 @@ export function stepPlayer(p:PlayerState,input:PlayerInput,route:Route,mode:Mode
   if(ground!==null&&wasGrounded&&!launched){
    const expected=p.y+p.gvy*dt-.5*AIR.gravity*dt*dt;
    if(p.gvy>1.2&&ground<expected-.05){p.vy=p.gvy;p.air=1e-3;} // a crest throws the car with its momentum
-   else{const rise=ground-p.y;p.gvy=Math.abs(rise)>Math.max(.35,Math.abs(p.speed)*dt*.6)?0:clamp(rise/dt,-30,30);p.y=ground;p.air=0;}
+   else{const rise=ground-p.y;// A step (lane joins, road seams) is not a slope: it must never throw the car into the sky.
+   p.gvy=Math.abs(rise)>Math.max(.12,Math.abs(p.speed)*dt*.6)?0:clamp(rise/dt,-14,14);p.y=ground;p.air=0;}
   }
   if(ground===null||p.vy!==0||p.air>0||p.y>(ground??-1e9)+.08){
    p.vy-=AIR.gravity*dt;p.y+=p.vy*dt;p.air+=dt;p.gvy=0;
@@ -324,7 +325,7 @@ export class Simulation {
   if(s.mode==='battle'){
    const rivals=s.players.filter(v=>v.id!==p.id).sort((a,b)=>Math.hypot(a.x-p.x,a.z-p.z)-Math.hypot(b.x-p.x,b.z-p.z));
    target=rivals[0]??{x:0,z:0};
-   if(p.charges===0||(p.charges<2&&level>0)){const pick=s.pickups.filter(v=>v.availableAt<=s.time).sort((a,b)=>Math.hypot(a.x-p.x,a.z-p.z)-Math.hypot(b.x-p.x,b.z-p.z))[0];if(pick)target=pick;}
+   if(p.charges===0||(p.charges<2&&level>0)){const pick=s.pickups.filter(v=>v.availableAt<=s.time&&v.kind===0).sort((a,b)=>Math.hypot(a.x-p.x,a.z-p.z)-Math.hypot(b.x-p.x,b.z-p.z))[0];if(pick)target=pick;}
    // Circle the rival instead of ramming head-on.
    if(rivals[0]&&target===rivals[0]&&Math.hypot(target.x-p.x,target.z-p.z)<14){const a=Math.atan2(target.x-p.x,target.z-p.z)+(seed%2?1.1:-1.1);target={x:p.x+Math.sin(a)*12,z:p.z+Math.cos(a)*12};}
   }else{
@@ -352,7 +353,7 @@ export class Simulation {
    // Dodge visible pedestrians, carts, waves and vents.
    for(const h of hazardsFor(s.trackId,s.time)){if(!h.active&&!h.warn)continue;const dx=h.x-p.x,dz=h.z-p.z,d=Math.hypot(dx,dz);if(d>28||d<1)continue;const along=dx*Math.sin(p.yaw)+dz*Math.cos(p.yaw),across=dx*Math.cos(p.yaw)-dz*Math.sin(p.yaw);if(along>0&&Math.abs(across)<h.radius+h.len+2.6&&!straight)lane=clamp(lane-Math.sign(across||1)*(h.radius+h.len+3),-(width*.5-1.5),width*.5-1.5);}
    // Go for a box when low on charges, or for a surprise box with an empty slot.
-   if(!straight&&(p.charges<3||!p.item)){const box=s.pickups.find(v=>v.availableAt<=s.time&&(v.kind===0?p.charges<3:!p.item)&&(()=>{const dx=v.x-p.x,dz=v.z-p.z,d=Math.hypot(dx,dz);return d<26&&d>4&&Math.abs(angle(Math.atan2(dx,dz)-p.yaw))<.35;})());if(box)return this.botItem(p,this.steerTo(p,box,0,false,mem),ahead,behind,0,seed);}
+   if(!straight&&(p.charges<3||!p.item)){const box=s.pickups.find(v=>v.availableAt<=s.time&&v.kind!==2&&(v.kind===0?p.charges<3:!p.item)&&(()=>{const dx=v.x-p.x,dz=v.z-p.z,d=Math.hypot(dx,dz);return d<26&&d>4&&Math.abs(angle(Math.atan2(dx,dz)-p.yaw))<.35;})());if(box)return this.botItem(p,this.steerTo(p,box,0,false,mem),ahead,behind,0,seed);}
    target={x:aheadPt.x+Math.cos(aheadPt.yaw)*lane,z:aheadPt.z-Math.sin(aheadPt.yaw)*lane};
    drift=level>0&&!straight&&Math.abs(bend)>.32&&p.speed>15&&(p.driftDir!==0||Math.abs(angle(Math.atan2(target.x-p.x,target.z-p.z)-p.yaw))>.1);
    if(p.driftDir!==0&&p.driftCharge>=(level===2?DRIVE.driftTier2:DRIVE.driftTier1)&&Math.abs(bend)<.5)drift=false;
@@ -457,6 +458,7 @@ export class Simulation {
    else if(s.effect==='paint'){p.paint=1.8;p.speed*=.82;}
    else if(s.effect==='slip'){p.sliding=1.4;p.pushX=Math.cos(p.yaw)*5*resist;p.pushZ=-Math.sin(p.yaw)*5*resist;}
    else if(s.effect==='slow'){p.speed*=.68;p.sliding=.7;}
+   else if(s.object==='moonwalk'){p.stun=1.3;p.speed=0;p.sliding=Math.max(p.sliding,.5);p.pushX=-Math.sin(p.yaw)*11*resist;p.pushZ=-Math.cos(p.yaw)*11*resist;p.driftDir=0;p.driftCharge=0;} // Romie's moonwalk: you glide backwards
    else if(s.object==='coco'){p.stun=.8;p.speed*=.4;p.pushX=s.vx*.15*resist;p.pushZ=s.vz*.15*resist;}
    else{p.stun=s.special?1.5:.45;p.speed*=.28;p.pushX=s.vx*.2*resist;p.pushZ=s.vz*.2*resist;}
    if(s.object==='milk')p.sliding=2.7;
@@ -565,6 +567,8 @@ export class Simulation {
       for(const same of s.shots)if(same.cast===shot.cast)same.hit.push(p.id);
       // Electric slipper jumps once to a rival nearby; the six-pack and the PS3 splash around the target.
       if(shot.object==='slipper'){const next=s.players.find(v=>v.id!==p.id&&v.id!==shot.owner&&v.finishTime<0&&!shot.hit.includes(v.id)&&Math.hypot(v.x-p.x,v.z-p.z)<9);if(next&&this.applyHit(shot,next,{x:p.x,y:p.y,z:p.z})){for(const same of s.shots)if(same.cast===shot.cast)same.hit.push(next.id);}}
+      // The PlayStation controller explodes: everyone close to the one it hit gets caught too.
+      if(shot.object==='gamepad')for(const v of s.players){if(v.id===shot.owner||v.finishTime>=0||shot.hit.includes(v.id)||Math.hypot(v.x-p.x,v.z-p.z)>5)continue;if(this.applyHit(shot,v)){for(const same of s.shots)if(same.cast===shot.cast)same.hit.push(v.id);}}
       if(shot.special&&(shot.object==='sixpack'||shot.object==='console'))for(const v of s.players){if(v.id===shot.owner||v.finishTime>=0||shot.hit.includes(v.id)||Math.hypot(v.x-p.x,v.z-p.z)>5.5)continue;if(this.applyHit(shot,v)){for(const same of s.shots)if(same.cast===shot.cast)same.hit.push(v.id);}}
       // Thrown objects and dropped traps are used up on contact; clouds and boomerangs keep going.
       if(shot.delivery==='projectile'||shot.delivery==='rear'||shot.delivery==='bounce')shot.life=Math.min(shot.life,0);
