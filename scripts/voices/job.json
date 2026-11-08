@@ -1,0 +1,757 @@
+{
+ "accent": "Acento nicaragüense de Managua bien marcado: seseo, aspira la s al final de sílaba («ehto», «chavaloh»), voseo, entonación cantadita y pícara de Nicaragua. Español centroamericano, nada neutro ni mexicano. Personaje ficticio de videojuego arcade de carreras, gritando de emoción; no imitar a ninguna persona real.",
+ "voices": {
+  "semilla": "Hombre de unos 30 años, muy alto, voz grave y relajada, algo ronca, habla con calma y buen humor, como quien va por la tercera cerveza.",
+  "morly": "Hombre de unos 30 años, voz grave, potente y fiestera, muy energético y bromista, carcajada fácil.",
+  "chete": "Hombre de unos 30 años, voz media, habla rápido y presumido, pícaro y vacilón, como el que siempre paga y lo restriega.",
+  "coconitas": "Hombre joven atlético, voz clara y enérgica, competitivo, grita como en una cancha de básquet.",
+  "calin": "Hombre joven muy tranquilo, voz pausada y algo nasal, arrastra las palabras, relajadísimo y medio volado.",
+  "sap-heinz": "Hombre joven muy flaco, voz aguda y nasal, nervioso y chistoso.",
+  "enanonitas": "Hombre bajito, voz aguda, rápida y chillona, muy expresiva y fiestera.",
+  "jorsi": "Hombre joven artista, voz media y cálida, alegre, burlón y expresivo.",
+  "roman": "Hombre barbudo de unos 30 años, voz grave y carismática, bailador, divertido y seguro de sí mismo.",
+  "cucukis": "Hombre joven muy flaco, voz algo aguda y pícara, habla rápido, con chispa de marinerito bromista.",
+  "raulin": "Hombre de cara redonda, voz media y alegre, campechano, se ríe mucho."
+ },
+ "ref": {
+  "semilla": "¡Ideay, chavalos! Aquí vengo yo, agárrense, que esta carrera la gano de vicio. ¡Va pues, dale!",
+  "morly": "¡Ideay, chavalos! Aquí vengo yo, agárrense, que esta carrera la gano de vicio. ¡Va pues, dale!",
+  "chete": "¡Ideay, chavalos! Aquí vengo yo, agárrense, que esta carrera la gano de vicio. ¡Va pues, dale!",
+  "coconitas": "¡Ideay, chavalos! Aquí vengo yo, agárrense, que esta carrera la gano de vicio. ¡Va pues, dale!",
+  "calin": "¡Ideay, chavalos! Aquí vengo yo, agárrense, que esta carrera la gano de vicio. ¡Va pues, dale!",
+  "sap-heinz": "¡Ideay, chavalos! Aquí vengo yo, agárrense, que esta carrera la gano de vicio. ¡Va pues, dale!",
+  "enanonitas": "¡Ideay, chavalos! Aquí vengo yo, agárrense, que esta carrera la gano de vicio. ¡Va pues, dale!",
+  "jorsi": "¡Ideay, chavalos! Aquí vengo yo, agárrense, que esta carrera la gano de vicio. ¡Va pues, dale!",
+  "roman": "¡Ideay, chavalos! Aquí vengo yo, agárrense, que esta carrera la gano de vicio. ¡Va pues, dale!",
+  "cucukis": "¡Ideay, chavalos! Aquí vengo yo, agárrense, que esta carrera la gano de vicio. ¡Va pues, dale!",
+  "raulin": "¡Ideay, chavalos! Aquí vengo yo, agárrense, que esta carrera la gano de vicio. ¡Va pues, dale!"
+ },
+ "lines": [
+  {
+   "id": "semilla",
+   "file": "semilla/special",
+   "text": "Acompáñame a comprar bicha",
+   "kind": "special"
+  },
+  {
+   "id": "semilla",
+   "file": "semilla/jump-1",
+   "text": "¡Agarrame la Victoria, chavalo!",
+   "kind": "jump"
+  },
+  {
+   "id": "semilla",
+   "file": "semilla/jump-2",
+   "text": "¡Va pues, allá voy!",
+   "kind": "jump"
+  },
+  {
+   "id": "semilla",
+   "file": "semilla/overtake-1",
+   "text": "¡Con permiso, que voy por otra helada!",
+   "kind": "overtake"
+  },
+  {
+   "id": "semilla",
+   "file": "semilla/overtake-2",
+   "text": "¡Adiós, chele, ahí te ves!",
+   "kind": "overtake"
+  },
+  {
+   "id": "semilla",
+   "file": "semilla/hit-1",
+   "text": "¡Salud, maje!",
+   "kind": "hit"
+  },
+  {
+   "id": "semilla",
+   "file": "semilla/hit-2",
+   "text": "¡Esa va por cuenta de la casa!",
+   "kind": "hit"
+  },
+  {
+   "id": "semilla",
+   "file": "semilla/hurt-1",
+   "text": "¡Ideay! ¿Y a mí por qué?",
+   "kind": "hurt"
+  },
+  {
+   "id": "semilla",
+   "file": "semilla/hurt-2",
+   "text": "¡No jodás, se me regó la birria!",
+   "kind": "hurt"
+  },
+  {
+   "id": "semilla",
+   "file": "semilla/fall-1",
+   "text": "¡Púchica, se me fue la bicha!",
+   "kind": "fall"
+  },
+  {
+   "id": "semilla",
+   "file": "semilla/win-1",
+   "text": "¡Gané! La otra ronda la pago yo, pues.",
+   "kind": "win"
+  },
+  {
+   "id": "chete",
+   "file": "chete/special",
+   "text": "Si yo me voy nadie juega play",
+   "kind": "special"
+  },
+  {
+   "id": "chete",
+   "file": "chete/jump-1",
+   "text": "¡Este brinco lo pago yo!",
+   "kind": "jump"
+  },
+  {
+   "id": "chete",
+   "file": "chete/jump-2",
+   "text": "¡Volando en primera, chele!",
+   "kind": "jump"
+  },
+  {
+   "id": "chete",
+   "file": "chete/overtake-1",
+   "text": "¡Te pasé, quedate con el vuelto!",
+   "kind": "overtake"
+  },
+  {
+   "id": "chete",
+   "file": "chete/overtake-2",
+   "text": "¡Así se maneja con plata, maje!",
+   "kind": "overtake"
+  },
+  {
+   "id": "chete",
+   "file": "chete/hit-1",
+   "text": "¡Ahí está tu vuelto!",
+   "kind": "hit"
+  },
+  {
+   "id": "chete",
+   "file": "chete/hit-2",
+   "text": "¡Cobrado, chavalo!",
+   "kind": "hit"
+  },
+  {
+   "id": "chete",
+   "file": "chete/hurt-1",
+   "text": "¡Me desfalcaron, ideay!",
+   "kind": "hurt"
+  },
+  {
+   "id": "chete",
+   "file": "chete/hurt-2",
+   "text": "¡Eso me lo pagás, oíste!",
+   "kind": "hurt"
+  },
+  {
+   "id": "chete",
+   "file": "chete/fall-1",
+   "text": "¡Se me cayó la cartera, no jodás!",
+   "kind": "fall"
+  },
+  {
+   "id": "chete",
+   "file": "chete/win-1",
+   "text": "¡Gané! La plata siempre gana, chavalos.",
+   "kind": "win"
+  },
+  {
+   "id": "morly",
+   "file": "morly/special",
+   "text": "Chinelazo Voltio Impact!!",
+   "kind": "special"
+  },
+  {
+   "id": "morly",
+   "file": "morly/jump-1",
+   "text": "¡Clavada de los Lakers, chocho!",
+   "kind": "jump"
+  },
+  {
+   "id": "morly",
+   "file": "morly/jump-2",
+   "text": "¡Voltio, papá!",
+   "kind": "jump"
+  },
+  {
+   "id": "morly",
+   "file": "morly/overtake-1",
+   "text": "¡Quitate, que voy pintando!",
+   "kind": "overtake"
+  },
+  {
+   "id": "morly",
+   "file": "morly/overtake-2",
+   "text": "¡Pasando, chavalo, pasando!",
+   "kind": "overtake"
+  },
+  {
+   "id": "morly",
+   "file": "morly/hit-1",
+   "text": "¡Chinelazo, maje!",
+   "kind": "hit"
+  },
+  {
+   "id": "morly",
+   "file": "morly/hit-2",
+   "text": "¡Tomá tu voltio!",
+   "kind": "hit"
+  },
+  {
+   "id": "morly",
+   "file": "morly/hurt-1",
+   "text": "¡Púchica!",
+   "kind": "hurt"
+  },
+  {
+   "id": "morly",
+   "file": "morly/hurt-2",
+   "text": "¡Eso fue falta, ideay!",
+   "kind": "hurt"
+  },
+  {
+   "id": "morly",
+   "file": "morly/fall-1",
+   "text": "¡Me fui al charco, jodido!",
+   "kind": "fall"
+  },
+  {
+   "id": "morly",
+   "file": "morly/win-1",
+   "text": "¡Campeón, como los Lakers, chavalos!",
+   "kind": "win"
+  },
+  {
+   "id": "coconitas",
+   "file": "coconitas/special",
+   "text": "Kokonit Fatality",
+   "kind": "special"
+  },
+  {
+   "id": "coconitas",
+   "file": "coconitas/jump-1",
+   "text": "¡Alley-oop, maje!",
+   "kind": "jump"
+  },
+  {
+   "id": "coconitas",
+   "file": "coconitas/jump-2",
+   "text": "¡Volando al aro!",
+   "kind": "jump"
+  },
+  {
+   "id": "coconitas",
+   "file": "coconitas/overtake-1",
+   "text": "¡Te hice el crossover, chele!",
+   "kind": "overtake"
+  },
+  {
+   "id": "coconitas",
+   "file": "coconitas/overtake-2",
+   "text": "¡Te amagué, chavalo!",
+   "kind": "overtake"
+  },
+  {
+   "id": "coconitas",
+   "file": "coconitas/hit-1",
+   "text": "¡Triple, papá!",
+   "kind": "hit"
+  },
+  {
+   "id": "coconitas",
+   "file": "coconitas/hit-2",
+   "text": "¡Tapón, jodido!",
+   "kind": "hit"
+  },
+  {
+   "id": "coconitas",
+   "file": "coconitas/hurt-1",
+   "text": "¡Falta, árbitro, ideay!",
+   "kind": "hurt"
+  },
+  {
+   "id": "coconitas",
+   "file": "coconitas/hurt-2",
+   "text": "¡Ay, mi tobillo, no jodás!",
+   "kind": "hurt"
+  },
+  {
+   "id": "coconitas",
+   "file": "coconitas/fall-1",
+   "text": "¡Fuera de la cancha, púchica!",
+   "kind": "fall"
+  },
+  {
+   "id": "coconitas",
+   "file": "coconitas/win-1",
+   "text": "¡Encestado! Gané, chavalos.",
+   "kind": "win"
+  },
+  {
+   "id": "calin",
+   "file": "calin/special",
+   "text": "Ármate 1",
+   "kind": "special"
+  },
+  {
+   "id": "calin",
+   "file": "calin/jump-1",
+   "text": "¡Tranquilo, tranquilo, chavalo!",
+   "kind": "jump"
+  },
+  {
+   "id": "calin",
+   "file": "calin/jump-2",
+   "text": "¡Uy, qué viaje, maje!",
+   "kind": "jump"
+  },
+  {
+   "id": "calin",
+   "file": "calin/overtake-1",
+   "text": "¡Suave, suave… ya te pasé!",
+   "kind": "overtake"
+  },
+  {
+   "id": "calin",
+   "file": "calin/overtake-2",
+   "text": "¡Despacito, que llevo prisa!",
+   "kind": "overtake"
+  },
+  {
+   "id": "calin",
+   "file": "calin/hit-1",
+   "text": "¡Hojazo, maje!",
+   "kind": "hit"
+  },
+  {
+   "id": "calin",
+   "file": "calin/hit-2",
+   "text": "¡Armate esa, chele!",
+   "kind": "hit"
+  },
+  {
+   "id": "calin",
+   "file": "calin/hurt-1",
+   "text": "¡Ay, mi gorra, ideay!",
+   "kind": "hurt"
+  },
+  {
+   "id": "calin",
+   "file": "calin/hurt-2",
+   "text": "¡Qué onda, vos!",
+   "kind": "hurt"
+  },
+  {
+   "id": "calin",
+   "file": "calin/fall-1",
+   "text": "¡Me fui volando, jodido!",
+   "kind": "fall"
+  },
+  {
+   "id": "calin",
+   "file": "calin/win-1",
+   "text": "Tranquilo, chavalos… gané.",
+   "kind": "win"
+  },
+  {
+   "id": "sap-heinz",
+   "file": "sap-heinz/special",
+   "text": "Pizza de la rotonda",
+   "kind": "special"
+  },
+  {
+   "id": "sap-heinz",
+   "file": "sap-heinz/jump-1",
+   "text": "¡Croac, chavalo!",
+   "kind": "jump"
+  },
+  {
+   "id": "sap-heinz",
+   "file": "sap-heinz/jump-2",
+   "text": "¡Salto de sapo, maje!",
+   "kind": "jump"
+  },
+  {
+   "id": "sap-heinz",
+   "file": "sap-heinz/overtake-1",
+   "text": "¡Paso de sapito!",
+   "kind": "overtake"
+  },
+  {
+   "id": "sap-heinz",
+   "file": "sap-heinz/overtake-2",
+   "text": "¡Adiós, renacuajo!",
+   "kind": "overtake"
+  },
+  {
+   "id": "sap-heinz",
+   "file": "sap-heinz/hit-1",
+   "text": "¡Sapazo, chele!",
+   "kind": "hit"
+  },
+  {
+   "id": "sap-heinz",
+   "file": "sap-heinz/hit-2",
+   "text": "¡Te cayó el sapito, ideay!",
+   "kind": "hit"
+  },
+  {
+   "id": "sap-heinz",
+   "file": "sap-heinz/hurt-1",
+   "text": "¡Ay, mi pizza, no jodás!",
+   "kind": "hurt"
+  },
+  {
+   "id": "sap-heinz",
+   "file": "sap-heinz/hurt-2",
+   "text": "¡Me aplastaron, púchica!",
+   "kind": "hurt"
+  },
+  {
+   "id": "sap-heinz",
+   "file": "sap-heinz/fall-1",
+   "text": "¡Al charco, jodido!",
+   "kind": "fall"
+  },
+  {
+   "id": "sap-heinz",
+   "file": "sap-heinz/win-1",
+   "text": "¡Pizza de la rotonda para todos! Gané.",
+   "kind": "win"
+  },
+  {
+   "id": "enanonitas",
+   "file": "enanonitas/special",
+   "text": "Yo te invoco, Claudia Salinas",
+   "kind": "special"
+  },
+  {
+   "id": "enanonitas",
+   "file": "enanonitas/jump-1",
+   "text": "¡Mirame volar, chavalo!",
+   "kind": "jump"
+  },
+  {
+   "id": "enanonitas",
+   "file": "enanonitas/jump-2",
+   "text": "¡Arriba, pues!",
+   "kind": "jump"
+  },
+  {
+   "id": "enanonitas",
+   "file": "enanonitas/overtake-1",
+   "text": "¡Chiquito pero jodido!",
+   "kind": "overtake"
+  },
+  {
+   "id": "enanonitas",
+   "file": "enanonitas/overtake-2",
+   "text": "¡Cebolla y adiós, maje!",
+   "kind": "overtake"
+  },
+  {
+   "id": "enanonitas",
+   "file": "enanonitas/hit-1",
+   "text": "¡Cebollazo!",
+   "kind": "hit"
+  },
+  {
+   "id": "enanonitas",
+   "file": "enanonitas/hit-2",
+   "text": "¡A llorar se ha dicho, chele!",
+   "kind": "hit"
+  },
+  {
+   "id": "enanonitas",
+   "file": "enanonitas/hurt-1",
+   "text": "¡Me hicieron llorar, ideay!",
+   "kind": "hurt"
+  },
+  {
+   "id": "enanonitas",
+   "file": "enanonitas/hurt-2",
+   "text": "¡No jodás, hombre!",
+   "kind": "hurt"
+  },
+  {
+   "id": "enanonitas",
+   "file": "enanonitas/fall-1",
+   "text": "¡Me caí y ni me vieron, púchica!",
+   "kind": "fall"
+  },
+  {
+   "id": "enanonitas",
+   "file": "enanonitas/win-1",
+   "text": "¡El más chiquito, el primero, chavalos!",
+   "kind": "win"
+  },
+  {
+   "id": "jorsi",
+   "file": "jorsi/special",
+   "text": "Yo te pinto la mochila",
+   "kind": "special"
+  },
+  {
+   "id": "jorsi",
+   "file": "jorsi/jump-1",
+   "text": "¡Pincelada en el aire, maje!",
+   "kind": "jump"
+  },
+  {
+   "id": "jorsi",
+   "file": "jorsi/jump-2",
+   "text": "¡Weee, qué tuani!",
+   "kind": "jump"
+  },
+  {
+   "id": "jorsi",
+   "file": "jorsi/overtake-1",
+   "text": "¡Te borré del mapa, chele!",
+   "kind": "overtake"
+  },
+  {
+   "id": "jorsi",
+   "file": "jorsi/overtake-2",
+   "text": "¡Te pinté la raya, chavalo!",
+   "kind": "overtake"
+  },
+  {
+   "id": "jorsi",
+   "file": "jorsi/hit-1",
+   "text": "¡Pintado, maje!",
+   "kind": "hit"
+  },
+  {
+   "id": "jorsi",
+   "file": "jorsi/hit-2",
+   "text": "¡Obra de arte, ideay!",
+   "kind": "hit"
+  },
+  {
+   "id": "jorsi",
+   "file": "jorsi/hurt-1",
+   "text": "¡Me rayaron el dibujo, no jodás!",
+   "kind": "hurt"
+  },
+  {
+   "id": "jorsi",
+   "file": "jorsi/hurt-2",
+   "text": "¡Borrón y cuenta nueva!",
+   "kind": "hurt"
+  },
+  {
+   "id": "jorsi",
+   "file": "jorsi/fall-1",
+   "text": "¡Se me cayó el lápiz, púchica!",
+   "kind": "fall"
+  },
+  {
+   "id": "jorsi",
+   "file": "jorsi/win-1",
+   "text": "Firmado: Jorsi. ¡Qué tuani!",
+   "kind": "win"
+  },
+  {
+   "id": "raulin",
+   "file": "raulin/special",
+   "text": "Balde de leche",
+   "kind": "special"
+  },
+  {
+   "id": "raulin",
+   "file": "raulin/jump-1",
+   "text": "¡Pepino volador, chavalo!",
+   "kind": "jump"
+  },
+  {
+   "id": "raulin",
+   "file": "raulin/jump-2",
+   "text": "¡Arriba la leche, maje!",
+   "kind": "jump"
+  },
+  {
+   "id": "raulin",
+   "file": "raulin/overtake-1",
+   "text": "¡Fresco como pepino!",
+   "kind": "overtake"
+  },
+  {
+   "id": "raulin",
+   "file": "raulin/overtake-2",
+   "text": "¡Te pasé, lechero!",
+   "kind": "overtake"
+  },
+  {
+   "id": "raulin",
+   "file": "raulin/hit-1",
+   "text": "¡Pepinazo, chele!",
+   "kind": "hit"
+  },
+  {
+   "id": "raulin",
+   "file": "raulin/hit-2",
+   "text": "¡Te lo dije, fresco!",
+   "kind": "hit"
+  },
+  {
+   "id": "raulin",
+   "file": "raulin/hurt-1",
+   "text": "¡Se me regó la leche, ideay!",
+   "kind": "hurt"
+  },
+  {
+   "id": "raulin",
+   "file": "raulin/hurt-2",
+   "text": "¡Ay, ay, ay, no jodás!",
+   "kind": "hurt"
+  },
+  {
+   "id": "raulin",
+   "file": "raulin/fall-1",
+   "text": "¡Me resbalé en mi propia leche, púchica!",
+   "kind": "fall"
+  },
+  {
+   "id": "raulin",
+   "file": "raulin/win-1",
+   "text": "¡Gané, y de postre leche, chavalos!",
+   "kind": "win"
+  },
+  {
+   "id": "roman",
+   "file": "roman/special",
+   "text": "Moonwalk de Michael Jackson (Bailado por Romie)",
+   "kind": "special"
+  },
+  {
+   "id": "roman",
+   "file": "roman/jump-1",
+   "text": "¡Ji-ji! ¡De puntitas, chavalo!",
+   "kind": "jump"
+  },
+  {
+   "id": "roman",
+   "file": "roman/jump-2",
+   "text": "¡Volando, maje!",
+   "kind": "jump"
+  },
+  {
+   "id": "roman",
+   "file": "roman/overtake-1",
+   "text": "¡Te pasé de espaldas, ideay!",
+   "kind": "overtake"
+  },
+  {
+   "id": "roman",
+   "file": "roman/overtake-2",
+   "text": "¡Ni me viste, chavalo!",
+   "kind": "overtake"
+  },
+  {
+   "id": "roman",
+   "file": "roman/hit-1",
+   "text": "¡Tenedorazo, maje!",
+   "kind": "hit"
+  },
+  {
+   "id": "roman",
+   "file": "roman/hit-2",
+   "text": "¡Se te explotó el control, chele!",
+   "kind": "hit"
+  },
+  {
+   "id": "roman",
+   "file": "roman/hurt-1",
+   "text": "¡Me arruinaron el paso, no jodás!",
+   "kind": "hurt"
+  },
+  {
+   "id": "roman",
+   "file": "roman/hurt-2",
+   "text": "¡Ay, mi nacatamal!",
+   "kind": "hurt"
+  },
+  {
+   "id": "roman",
+   "file": "roman/fall-1",
+   "text": "¡Moonwalk directo al hoyo, púchica!",
+   "kind": "fall"
+  },
+  {
+   "id": "roman",
+   "file": "roman/win-1",
+   "text": "¡Gané bailando! Romie no falla.",
+   "kind": "win"
+  },
+  {
+   "id": "cucukis",
+   "file": "cucukis/special",
+   "text": "Invocación de Peeerrrrisss",
+   "kind": "special"
+  },
+  {
+   "id": "cucukis",
+   "file": "cucukis/jump-1",
+   "text": "¡Ahoy, chavalo!",
+   "kind": "jump"
+  },
+  {
+   "id": "cucukis",
+   "file": "cucukis/jump-2",
+   "text": "¡Al agua, patos!",
+   "kind": "jump"
+  },
+  {
+   "id": "cucukis",
+   "file": "cucukis/overtake-1",
+   "text": "¡Midamos mesas, maje!",
+   "kind": "overtake"
+  },
+  {
+   "id": "cucukis",
+   "file": "cucukis/overtake-2",
+   "text": "¡Te pasé, grumete!",
+   "kind": "overtake"
+  },
+  {
+   "id": "cucukis",
+   "file": "cucukis/hit-1",
+   "text": "¡Bombazo, chele!",
+   "kind": "hit"
+  },
+  {
+   "id": "cucukis",
+   "file": "cucukis/hit-2",
+   "text": "¡Megabombazo, ideay!",
+   "kind": "hit"
+  },
+  {
+   "id": "cucukis",
+   "file": "cucukis/hurt-1",
+   "text": "¡Se me cayó la Victoria, no jodás!",
+   "kind": "hurt"
+  },
+  {
+   "id": "cucukis",
+   "file": "cucukis/hurt-2",
+   "text": "¡Hombre al agua!",
+   "kind": "hurt"
+  },
+  {
+   "id": "cucukis",
+   "file": "cucukis/fall-1",
+   "text": "¡Naufragué, púchica!",
+   "kind": "fall"
+  },
+  {
+   "id": "cucukis",
+   "file": "cucukis/win-1",
+   "text": "¡Mesa para todos, chavalos, gané yo!",
+   "kind": "win"
+  }
+ ]
+}

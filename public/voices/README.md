@@ -1,6 +1,6 @@
 # Voces de Morly Kong Racing
 
-Estado: **0 de 121 líneas tienen grabación real.** Las que faltan suenan con una voz sintética
+Estado: **121 de 121 líneas tienen grabación real.** Las que faltan suenan con una voz sintética
 del sistema (genérica, no imita a nadie) y el subtítulo las marca como **VOZ PROVISIONAL**. Esa voz no es la versión final.
 
 ## Cómo grabar
@@ -26,174 +26,174 @@ Graba solo **tu propia voz** o la de alguien que te haya dado permiso. Las frase
 
 | Línea | Archivo | Texto | Estado |
 |---|---|---|---|
-| Especial | `semilla/special.mp3` | **«Acompáñame a comprar bicha»** | FALTA |
-| Salto | `semilla/jump-1.mp3` | «¡Agárrenme la Victoria!» | FALTA |
-| Salto | `semilla/jump-2.mp3` | «¡Allá voy, pues!» | FALTA |
-| Rebase | `semilla/overtake-1.mp3` | «¡Con permiso, voy por otra!» | FALTA |
-| Rebase | `semilla/overtake-2.mp3` | «¡Adiós, chele!» | FALTA |
-| Pega | `semilla/hit-1.mp3` | «¡Salud!» | FALTA |
-| Pega | `semilla/hit-2.mp3` | «¡Esa va por la casa!» | FALTA |
-| Recibe | `semilla/hurt-1.mp3` | «¡Ideay! ¿Y a mí por qué?» | FALTA |
-| Recibe | `semilla/hurt-2.mp3` | «¡Se me riega la cerveza!» | FALTA |
-| Caída | `semilla/fall-1.mp3` | «¡Nooo, la bicha!» | FALTA |
-| Gana | `semilla/win-1.mp3` | «¡La próxima ronda la pago yo!» | FALTA |
+| Especial | `semilla/special.mp3` | **«Acompáñame a comprar bicha»** | Grabada |
+| Salto | `semilla/jump-1.mp3` | «¡Agarrame la Victoria, chavalo!» | Grabada |
+| Salto | `semilla/jump-2.mp3` | «¡Va pues, allá voy!» | Grabada |
+| Rebase | `semilla/overtake-1.mp3` | «¡Con permiso, que voy por otra helada!» | Grabada |
+| Rebase | `semilla/overtake-2.mp3` | «¡Adiós, chele, ahí te ves!» | Grabada |
+| Pega | `semilla/hit-1.mp3` | «¡Salud, maje!» | Grabada |
+| Pega | `semilla/hit-2.mp3` | «¡Esa va por cuenta de la casa!» | Grabada |
+| Recibe | `semilla/hurt-1.mp3` | «¡Ideay! ¿Y a mí por qué?» | Grabada |
+| Recibe | `semilla/hurt-2.mp3` | «¡No jodás, se me regó la birria!» | Grabada |
+| Caída | `semilla/fall-1.mp3` | «¡Púchica, se me fue la bicha!» | Grabada |
+| Gana | `semilla/win-1.mp3` | «¡Gané! La otra ronda la pago yo, pues.» | Grabada |
 
 ### Morly
 
 | Línea | Archivo | Texto | Estado |
 |---|---|---|---|
-| Especial | `morly/special.mp3` | **«Chinelazo Voltio Impact!!»** | FALTA |
-| Salto | `morly/jump-1.mp3` | «¡Clavada de los Lakers!» | FALTA |
-| Salto | `morly/jump-2.mp3` | «¡Voltio!» | FALTA |
-| Rebase | `morly/overtake-1.mp3` | «¡Pasando por la pintura!» | FALTA |
-| Rebase | `morly/overtake-2.mp3` | «¡Quítate, que llevo prisa!» | FALTA |
-| Pega | `morly/hit-1.mp3` | «¡Chinelazo!» | FALTA |
-| Pega | `morly/hit-2.mp3` | «¡Toma tu voltio!» | FALTA |
-| Recibe | `morly/hurt-1.mp3` | «¡Púchica!» | FALTA |
-| Recibe | `morly/hurt-2.mp3` | «¡Eso fue falta!» | FALTA |
-| Caída | `morly/fall-1.mp3` | «¡Me fui al agua!» | FALTA |
-| Gana | `morly/win-1.mp3` | «¡Campeón, como los Lakers!» | FALTA |
+| Especial | `morly/special.mp3` | **«Chinelazo Voltio Impact!!»** | Grabada |
+| Salto | `morly/jump-1.mp3` | «¡Clavada de los Lakers, chocho!» | Grabada |
+| Salto | `morly/jump-2.mp3` | «¡Voltio, papá!» | Grabada |
+| Rebase | `morly/overtake-1.mp3` | «¡Quitate, que voy pintando!» | Grabada |
+| Rebase | `morly/overtake-2.mp3` | «¡Pasando, chavalo, pasando!» | Grabada |
+| Pega | `morly/hit-1.mp3` | «¡Chinelazo, maje!» | Grabada |
+| Pega | `morly/hit-2.mp3` | «¡Tomá tu voltio!» | Grabada |
+| Recibe | `morly/hurt-1.mp3` | «¡Púchica!» | Grabada |
+| Recibe | `morly/hurt-2.mp3` | «¡Eso fue falta, ideay!» | Grabada |
+| Caída | `morly/fall-1.mp3` | «¡Me fui al charco, jodido!» | Grabada |
+| Gana | `morly/win-1.mp3` | «¡Campeón, como los Lakers, chavalos!» | Grabada |
 
 ### Chete
 
 | Línea | Archivo | Texto | Estado |
 |---|---|---|---|
-| Especial | `chete/special.mp3` | **«Si yo me voy nadie juega play»** | FALTA |
-| Salto | `chete/jump-1.mp3` | «¡Este salto lo pago yo!» | FALTA |
-| Salto | `chete/jump-2.mp3` | «¡Volando en primera clase!» | FALTA |
-| Rebase | `chete/overtake-1.mp3` | «¡Te pasé, quedate con el vuelto!» | FALTA |
-| Rebase | `chete/overtake-2.mp3` | «¡Así se maneja con plata!» | FALTA |
-| Pega | `chete/hit-1.mp3` | «¡Ahí está tu vuelto!» | FALTA |
-| Pega | `chete/hit-2.mp3` | «¡Cobrado!» | FALTA |
-| Recibe | `chete/hurt-1.mp3` | «¡Me desfalcaron!» | FALTA |
-| Recibe | `chete/hurt-2.mp3` | «¡Eso me lo pagás!» | FALTA |
-| Caída | `chete/fall-1.mp3` | «¡Se me cayó la billetera!» | FALTA |
-| Gana | `chete/win-1.mp3` | «¡Gané! La plata siempre gana.» | FALTA |
+| Especial | `chete/special.mp3` | **«Si yo me voy nadie juega play»** | Grabada |
+| Salto | `chete/jump-1.mp3` | «¡Este brinco lo pago yo!» | Grabada |
+| Salto | `chete/jump-2.mp3` | «¡Volando en primera, chele!» | Grabada |
+| Rebase | `chete/overtake-1.mp3` | «¡Te pasé, quedate con el vuelto!» | Grabada |
+| Rebase | `chete/overtake-2.mp3` | «¡Así se maneja con plata, maje!» | Grabada |
+| Pega | `chete/hit-1.mp3` | «¡Ahí está tu vuelto!» | Grabada |
+| Pega | `chete/hit-2.mp3` | «¡Cobrado, chavalo!» | Grabada |
+| Recibe | `chete/hurt-1.mp3` | «¡Me desfalcaron, ideay!» | Grabada |
+| Recibe | `chete/hurt-2.mp3` | «¡Eso me lo pagás, oíste!» | Grabada |
+| Caída | `chete/fall-1.mp3` | «¡Se me cayó la cartera, no jodás!» | Grabada |
+| Gana | `chete/win-1.mp3` | «¡Gané! La plata siempre gana, chavalos.» | Grabada |
 
 ### Coconitas
 
 | Línea | Archivo | Texto | Estado |
 |---|---|---|---|
-| Especial | `coconitas/special.mp3` | **«Kokonit Fatality»** | FALTA |
-| Salto | `coconitas/jump-1.mp3` | «¡Alley-oop!» | FALTA |
-| Salto | `coconitas/jump-2.mp3` | «¡Volando al aro!» | FALTA |
-| Rebase | `coconitas/overtake-1.mp3` | «¡Crossover!» | FALTA |
-| Rebase | `coconitas/overtake-2.mp3` | «¡Te hice un amague!» | FALTA |
-| Pega | `coconitas/hit-1.mp3` | «¡Triple!» | FALTA |
-| Pega | `coconitas/hit-2.mp3` | «¡Bloqueo!» | FALTA |
-| Recibe | `coconitas/hurt-1.mp3` | «¡Falta, árbitro!» | FALTA |
-| Recibe | `coconitas/hurt-2.mp3` | «¡Ay, mi tobillo!» | FALTA |
-| Caída | `coconitas/fall-1.mp3` | «¡Fuera de la cancha!» | FALTA |
-| Gana | `coconitas/win-1.mp3` | «¡Encestado! Gané.» | FALTA |
+| Especial | `coconitas/special.mp3` | **«Kokonit Fatality»** | Grabada |
+| Salto | `coconitas/jump-1.mp3` | «¡Alley-oop, maje!» | Grabada |
+| Salto | `coconitas/jump-2.mp3` | «¡Volando al aro!» | Grabada |
+| Rebase | `coconitas/overtake-1.mp3` | «¡Te hice el crossover, chele!» | Grabada |
+| Rebase | `coconitas/overtake-2.mp3` | «¡Te amagué, chavalo!» | Grabada |
+| Pega | `coconitas/hit-1.mp3` | «¡Triple, papá!» | Grabada |
+| Pega | `coconitas/hit-2.mp3` | «¡Tapón, jodido!» | Grabada |
+| Recibe | `coconitas/hurt-1.mp3` | «¡Falta, árbitro, ideay!» | Grabada |
+| Recibe | `coconitas/hurt-2.mp3` | «¡Ay, mi tobillo, no jodás!» | Grabada |
+| Caída | `coconitas/fall-1.mp3` | «¡Fuera de la cancha, púchica!» | Grabada |
+| Gana | `coconitas/win-1.mp3` | «¡Encestado! Gané, chavalos.» | Grabada |
 
 ### Calín
 
 | Línea | Archivo | Texto | Estado |
 |---|---|---|---|
-| Especial | `calin/special.mp3` | **«Ármate 1»** | FALTA |
-| Salto | `calin/jump-1.mp3` | «¡Tranquilo, tranquilo!» | FALTA |
-| Salto | `calin/jump-2.mp3` | «¡Uy, qué viaje!» | FALTA |
-| Rebase | `calin/overtake-1.mp3` | «¡Suave, suave… ya te pasé!» | FALTA |
-| Rebase | `calin/overtake-2.mp3` | «¡Despacio, que llevo prisa!» | FALTA |
-| Pega | `calin/hit-1.mp3` | «¡Hojazo!» | FALTA |
-| Pega | `calin/hit-2.mp3` | «¡Ármate esa!» | FALTA |
-| Recibe | `calin/hurt-1.mp3` | «¡Ay, mi gorra!» | FALTA |
-| Recibe | `calin/hurt-2.mp3` | «¡Qué onda, vos!» | FALTA |
-| Caída | `calin/fall-1.mp3` | «¡Me fui volando!» | FALTA |
-| Gana | `calin/win-1.mp3` | «Tranquilo… gané.» | FALTA |
+| Especial | `calin/special.mp3` | **«Ármate 1»** | Grabada |
+| Salto | `calin/jump-1.mp3` | «¡Tranquilo, tranquilo, chavalo!» | Grabada |
+| Salto | `calin/jump-2.mp3` | «¡Uy, qué viaje, maje!» | Grabada |
+| Rebase | `calin/overtake-1.mp3` | «¡Suave, suave… ya te pasé!» | Grabada |
+| Rebase | `calin/overtake-2.mp3` | «¡Despacito, que llevo prisa!» | Grabada |
+| Pega | `calin/hit-1.mp3` | «¡Hojazo, maje!» | Grabada |
+| Pega | `calin/hit-2.mp3` | «¡Armate esa, chele!» | Grabada |
+| Recibe | `calin/hurt-1.mp3` | «¡Ay, mi gorra, ideay!» | Grabada |
+| Recibe | `calin/hurt-2.mp3` | «¡Qué onda, vos!» | Grabada |
+| Caída | `calin/fall-1.mp3` | «¡Me fui volando, jodido!» | Grabada |
+| Gana | `calin/win-1.mp3` | «Tranquilo, chavalos… gané.» | Grabada |
 
 ### Sap Heinz
 
 | Línea | Archivo | Texto | Estado |
 |---|---|---|---|
-| Especial | `sap-heinz/special.mp3` | **«Pizza de la rotonda»** | FALTA |
-| Salto | `sap-heinz/jump-1.mp3` | «¡Croac!» | FALTA |
-| Salto | `sap-heinz/jump-2.mp3` | «¡Salto de sapo!» | FALTA |
-| Rebase | `sap-heinz/overtake-1.mp3` | «¡Paso de sapito!» | FALTA |
-| Rebase | `sap-heinz/overtake-2.mp3` | «¡Adiós, renacuajo!» | FALTA |
-| Pega | `sap-heinz/hit-1.mp3` | «¡Sapazo!» | FALTA |
-| Pega | `sap-heinz/hit-2.mp3` | «¡Te cayó el sapito!» | FALTA |
-| Recibe | `sap-heinz/hurt-1.mp3` | «¡Ay, mi pizza!» | FALTA |
-| Recibe | `sap-heinz/hurt-2.mp3` | «¡Me aplastaron!» | FALTA |
-| Caída | `sap-heinz/fall-1.mp3` | «¡Al charco!» | FALTA |
-| Gana | `sap-heinz/win-1.mp3` | «¡Pizza para todos! Gané.» | FALTA |
+| Especial | `sap-heinz/special.mp3` | **«Pizza de la rotonda»** | Grabada |
+| Salto | `sap-heinz/jump-1.mp3` | «¡Croac, chavalo!» | Grabada |
+| Salto | `sap-heinz/jump-2.mp3` | «¡Salto de sapo, maje!» | Grabada |
+| Rebase | `sap-heinz/overtake-1.mp3` | «¡Paso de sapito!» | Grabada |
+| Rebase | `sap-heinz/overtake-2.mp3` | «¡Adiós, renacuajo!» | Grabada |
+| Pega | `sap-heinz/hit-1.mp3` | «¡Sapazo, chele!» | Grabada |
+| Pega | `sap-heinz/hit-2.mp3` | «¡Te cayó el sapito, ideay!» | Grabada |
+| Recibe | `sap-heinz/hurt-1.mp3` | «¡Ay, mi pizza, no jodás!» | Grabada |
+| Recibe | `sap-heinz/hurt-2.mp3` | «¡Me aplastaron, púchica!» | Grabada |
+| Caída | `sap-heinz/fall-1.mp3` | «¡Al charco, jodido!» | Grabada |
+| Gana | `sap-heinz/win-1.mp3` | «¡Pizza de la rotonda para todos! Gané.» | Grabada |
 
 ### Enanonitas
 
 | Línea | Archivo | Texto | Estado |
 |---|---|---|---|
-| Especial | `enanonitas/special.mp3` | **«Yo te invoco, Claudia Salinas»** | FALTA |
-| Salto | `enanonitas/jump-1.mp3` | «¡Mirame volar!» | FALTA |
-| Salto | `enanonitas/jump-2.mp3` | «¡Arriba, pues!» | FALTA |
-| Rebase | `enanonitas/overtake-1.mp3` | «¡Chiquito pero rápido!» | FALTA |
-| Rebase | `enanonitas/overtake-2.mp3` | «¡Cebolla y adiós!» | FALTA |
-| Pega | `enanonitas/hit-1.mp3` | «¡Cebollazo!» | FALTA |
-| Pega | `enanonitas/hit-2.mp3` | «¡A llorar se ha dicho!» | FALTA |
-| Recibe | `enanonitas/hurt-1.mp3` | «¡Me hicieron llorar!» | FALTA |
-| Recibe | `enanonitas/hurt-2.mp3` | «¡Ideay!» | FALTA |
-| Caída | `enanonitas/fall-1.mp3` | «¡Me caí y ni me vieron!» | FALTA |
-| Gana | `enanonitas/win-1.mp3` | «¡El más pequeño, el primero!» | FALTA |
+| Especial | `enanonitas/special.mp3` | **«Yo te invoco, Claudia Salinas»** | Grabada |
+| Salto | `enanonitas/jump-1.mp3` | «¡Mirame volar, chavalo!» | Grabada |
+| Salto | `enanonitas/jump-2.mp3` | «¡Arriba, pues!» | Grabada |
+| Rebase | `enanonitas/overtake-1.mp3` | «¡Chiquito pero jodido!» | Grabada |
+| Rebase | `enanonitas/overtake-2.mp3` | «¡Cebolla y adiós, maje!» | Grabada |
+| Pega | `enanonitas/hit-1.mp3` | «¡Cebollazo!» | Grabada |
+| Pega | `enanonitas/hit-2.mp3` | «¡A llorar se ha dicho, chele!» | Grabada |
+| Recibe | `enanonitas/hurt-1.mp3` | «¡Me hicieron llorar, ideay!» | Grabada |
+| Recibe | `enanonitas/hurt-2.mp3` | «¡No jodás, hombre!» | Grabada |
+| Caída | `enanonitas/fall-1.mp3` | «¡Me caí y ni me vieron, púchica!» | Grabada |
+| Gana | `enanonitas/win-1.mp3` | «¡El más chiquito, el primero, chavalos!» | Grabada |
 
 ### Jorsi
 
 | Línea | Archivo | Texto | Estado |
 |---|---|---|---|
-| Especial | `jorsi/special.mp3` | **«Yo te pinto la mochila»** | FALTA |
-| Salto | `jorsi/jump-1.mp3` | «¡Pincelada en el aire!» | FALTA |
-| Salto | `jorsi/jump-2.mp3` | «¡Weee!» | FALTA |
-| Rebase | `jorsi/overtake-1.mp3` | «¡Te borré del mapa!» | FALTA |
-| Rebase | `jorsi/overtake-2.mp3` | «¡Te pinté la raya!» | FALTA |
-| Pega | `jorsi/hit-1.mp3` | «¡Pintado!» | FALTA |
-| Pega | `jorsi/hit-2.mp3` | «¡Obra de arte!» | FALTA |
-| Recibe | `jorsi/hurt-1.mp3` | «¡Me rayaron el dibujo!» | FALTA |
-| Recibe | `jorsi/hurt-2.mp3` | «¡Borrón y cuenta nueva!» | FALTA |
-| Caída | `jorsi/fall-1.mp3` | «¡Se me cayó el lápiz!» | FALTA |
-| Gana | `jorsi/win-1.mp3` | «Firmado: Jorsi.» | FALTA |
+| Especial | `jorsi/special.mp3` | **«Yo te pinto la mochila»** | Grabada |
+| Salto | `jorsi/jump-1.mp3` | «¡Pincelada en el aire, maje!» | Grabada |
+| Salto | `jorsi/jump-2.mp3` | «¡Weee, qué tuani!» | Grabada |
+| Rebase | `jorsi/overtake-1.mp3` | «¡Te borré del mapa, chele!» | Grabada |
+| Rebase | `jorsi/overtake-2.mp3` | «¡Te pinté la raya, chavalo!» | Grabada |
+| Pega | `jorsi/hit-1.mp3` | «¡Pintado, maje!» | Grabada |
+| Pega | `jorsi/hit-2.mp3` | «¡Obra de arte, ideay!» | Grabada |
+| Recibe | `jorsi/hurt-1.mp3` | «¡Me rayaron el dibujo, no jodás!» | Grabada |
+| Recibe | `jorsi/hurt-2.mp3` | «¡Borrón y cuenta nueva!» | Grabada |
+| Caída | `jorsi/fall-1.mp3` | «¡Se me cayó el lápiz, púchica!» | Grabada |
+| Gana | `jorsi/win-1.mp3` | «Firmado: Jorsi. ¡Qué tuani!» | Grabada |
 
 ### Roman
 
 | Línea | Archivo | Texto | Estado |
 |---|---|---|---|
-| Especial | `roman/special.mp3` | **«Moonwalk de Michael Jackson (Bailado por Romie)»** | FALTA |
-| Salto | `roman/jump-1.mp3` | «¡Ji-ji!» | FALTA |
-| Salto | `roman/jump-2.mp3` | «¡Volando de puntitas!» | FALTA |
-| Rebase | `roman/overtake-1.mp3` | «¡Te pasé de espaldas!» | FALTA |
-| Rebase | `roman/overtake-2.mp3` | «¡Ni me viste, chavalo!» | FALTA |
-| Pega | `roman/hit-1.mp3` | «¡Tenedorazo!» | FALTA |
-| Pega | `roman/hit-2.mp3` | «¡Se te explotó el control!» | FALTA |
-| Recibe | `roman/hurt-1.mp3` | «¡Me arruinaron el paso!» | FALTA |
-| Recibe | `roman/hurt-2.mp3` | «¡Ay, mi nacatamal!» | FALTA |
-| Caída | `roman/fall-1.mp3` | «¡Moonwalk directo al hoyo!» | FALTA |
-| Gana | `roman/win-1.mp3` | «¡Gané bailando, Romie!» | FALTA |
+| Especial | `roman/special.mp3` | **«Moonwalk de Michael Jackson (Bailado por Romie)»** | Grabada |
+| Salto | `roman/jump-1.mp3` | «¡Ji-ji! ¡De puntitas, chavalo!» | Grabada |
+| Salto | `roman/jump-2.mp3` | «¡Volando, maje!» | Grabada |
+| Rebase | `roman/overtake-1.mp3` | «¡Te pasé de espaldas, ideay!» | Grabada |
+| Rebase | `roman/overtake-2.mp3` | «¡Ni me viste, chavalo!» | Grabada |
+| Pega | `roman/hit-1.mp3` | «¡Tenedorazo, maje!» | Grabada |
+| Pega | `roman/hit-2.mp3` | «¡Se te explotó el control, chele!» | Grabada |
+| Recibe | `roman/hurt-1.mp3` | «¡Me arruinaron el paso, no jodás!» | Grabada |
+| Recibe | `roman/hurt-2.mp3` | «¡Ay, mi nacatamal!» | Grabada |
+| Caída | `roman/fall-1.mp3` | «¡Moonwalk directo al hoyo, púchica!» | Grabada |
+| Gana | `roman/win-1.mp3` | «¡Gané bailando! Romie no falla.» | Grabada |
 
 ### Cucukis
 
 | Línea | Archivo | Texto | Estado |
 |---|---|---|---|
-| Especial | `cucukis/special.mp3` | **«Invocación de Peeerrrrisss»** | FALTA |
-| Salto | `cucukis/jump-1.mp3` | «¡Ahoy, marinero!» | FALTA |
-| Salto | `cucukis/jump-2.mp3` | «¡Al agua, patos!» | FALTA |
-| Rebase | `cucukis/overtake-1.mp3` | «¡Midamos mesas!» | FALTA |
-| Rebase | `cucukis/overtake-2.mp3` | «¡Te pasé, grumete!» | FALTA |
-| Pega | `cucukis/hit-1.mp3` | «¡Bombazo!» | FALTA |
-| Pega | `cucukis/hit-2.mp3` | «¡Megabombazo!» | FALTA |
-| Recibe | `cucukis/hurt-1.mp3` | «¡Se me cayó la Victoria!» | FALTA |
-| Recibe | `cucukis/hurt-2.mp3` | «¡Hombre al agua!» | FALTA |
-| Caída | `cucukis/fall-1.mp3` | «¡Naufragué!» | FALTA |
-| Gana | `cucukis/win-1.mp3` | «¡Mesa para todos, gané yo!» | FALTA |
+| Especial | `cucukis/special.mp3` | **«Invocación de Peeerrrrisss»** | Grabada |
+| Salto | `cucukis/jump-1.mp3` | «¡Ahoy, chavalo!» | Grabada |
+| Salto | `cucukis/jump-2.mp3` | «¡Al agua, patos!» | Grabada |
+| Rebase | `cucukis/overtake-1.mp3` | «¡Midamos mesas, maje!» | Grabada |
+| Rebase | `cucukis/overtake-2.mp3` | «¡Te pasé, grumete!» | Grabada |
+| Pega | `cucukis/hit-1.mp3` | «¡Bombazo, chele!» | Grabada |
+| Pega | `cucukis/hit-2.mp3` | «¡Megabombazo, ideay!» | Grabada |
+| Recibe | `cucukis/hurt-1.mp3` | «¡Se me cayó la Victoria, no jodás!» | Grabada |
+| Recibe | `cucukis/hurt-2.mp3` | «¡Hombre al agua!» | Grabada |
+| Caída | `cucukis/fall-1.mp3` | «¡Naufragué, púchica!» | Grabada |
+| Gana | `cucukis/win-1.mp3` | «¡Mesa para todos, chavalos, gané yo!» | Grabada |
 
 ### Raulín
 
 | Línea | Archivo | Texto | Estado |
 |---|---|---|---|
-| Especial | `raulin/special.mp3` | **«Balde de leche»** | FALTA |
-| Salto | `raulin/jump-1.mp3` | «¡Pepino volador!» | FALTA |
-| Salto | `raulin/jump-2.mp3` | «¡Arriba la leche!» | FALTA |
-| Rebase | `raulin/overtake-1.mp3` | «¡Fresco como pepino!» | FALTA |
-| Rebase | `raulin/overtake-2.mp3` | «¡Te pasé, lechero!» | FALTA |
-| Pega | `raulin/hit-1.mp3` | «¡Pepinazo!» | FALTA |
-| Pega | `raulin/hit-2.mp3` | «¡Te lo dije, fresco!» | FALTA |
-| Recibe | `raulin/hurt-1.mp3` | «¡Se me regó la leche!» | FALTA |
-| Recibe | `raulin/hurt-2.mp3` | «¡Ay, ay, ay!» | FALTA |
-| Caída | `raulin/fall-1.mp3` | «¡Me resbalé en mi propia leche!» | FALTA |
-| Gana | `raulin/win-1.mp3` | «¡Gané, y de postre leche!» | FALTA |
+| Especial | `raulin/special.mp3` | **«Balde de leche»** | Grabada |
+| Salto | `raulin/jump-1.mp3` | «¡Pepino volador, chavalo!» | Grabada |
+| Salto | `raulin/jump-2.mp3` | «¡Arriba la leche, maje!» | Grabada |
+| Rebase | `raulin/overtake-1.mp3` | «¡Fresco como pepino!» | Grabada |
+| Rebase | `raulin/overtake-2.mp3` | «¡Te pasé, lechero!» | Grabada |
+| Pega | `raulin/hit-1.mp3` | «¡Pepinazo, chele!» | Grabada |
+| Pega | `raulin/hit-2.mp3` | «¡Te lo dije, fresco!» | Grabada |
+| Recibe | `raulin/hurt-1.mp3` | «¡Se me regó la leche, ideay!» | Grabada |
+| Recibe | `raulin/hurt-2.mp3` | «¡Ay, ay, ay, no jodás!» | Grabada |
+| Caída | `raulin/fall-1.mp3` | «¡Me resbalé en mi propia leche, púchica!» | Grabada |
+| Gana | `raulin/win-1.mp3` | «¡Gané, y de postre leche, chavalos!» | Grabada |
