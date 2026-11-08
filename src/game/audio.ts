@@ -110,16 +110,20 @@ export class GameAudio {
   for(const d of out.drums)this.drum(d.drum,d.vol,d.pan,at);
  }
  /** Small synth voices for the score: each instrument is a recipe of oscillators, envelope and filter. */
- private synth(at:number,len:number,pan:number,vol:number,parts:{type:OscillatorType;ratio:number;gain:number;detune?:number}[],env:{a:number;d:number;s:number;r:number},freq:number,filter?:{type:BiquadFilterType;freq:number;q?:number;open?:number}){
+ private synth(at:number,len:number,pan:number,vol:number,parts:{type:OscillatorType;ratio:number;gain:number;detune?:number}[],env:{a:number;d:number;s:number;r:number},freq:number,filter?:{type:BiquadFilterType;freq:number;q?:number;open?:number},drive=0){
   if(!this.canPlay(true)||!this.musicBus)return;
   const c=this.context!,end=at+len+env.r,g=c.createGain(),p=c.createStereoPanner(),nodes:AudioNode[]=[g,p];p.pan.value=bounded(pan,-1,1,0);let head:AudioNode=g;
   if(filter){const f=c.createBiquadFilter();f.type=filter.type;f.Q.value=filter.q??.7;f.frequency.setValueAtTime(filter.open?filter.freq*.35:filter.freq,at);if(filter.open)f.frequency.exponentialRampToValueAtTime(filter.freq,at+filter.open);f.connect(g);head=f;nodes.push(f);}
+  // Overdrive (guitars): a soft-clipping waveshaper ahead of the filter.
+  if(drive>0){const w=c.createWaveShaper();w.curve=this.shaper(drive);w.oversample='2x';w.connect(head);head=w;nodes.push(w);}
   const peak=bounded(vol,.0005,.4,.05),hold=Math.min(Math.max(env.a+env.d,len),len+env.r*.5);
   g.gain.setValueAtTime(.0001,at);g.gain.linearRampToValueAtTime(peak,at+env.a);g.gain.linearRampToValueAtTime(Math.max(.0002,peak*env.s),at+env.a+env.d);g.gain.setValueAtTime(Math.max(.0002,peak*env.s),at+hold);g.gain.exponentialRampToValueAtTime(.0001,end);
   g.connect(p);p.connect(this.musicBus);
   const oscs=parts.map(part=>{const o=c.createOscillator(),pg=c.createGain();o.type=part.type;o.frequency.setValueAtTime(bounded(freq*part.ratio,20,12000,220),at);if(part.detune)o.detune.value=part.detune;pg.gain.value=part.gain;o.connect(pg);pg.connect(head);nodes.push(o,pg);o.start(at);o.stop(end+.02);return o;});
   this.track(oscs[0],nodes,true);
  }
+ private curves=new Map<number,Float32Array<ArrayBuffer>>();
+ private shaper(k:number){let curve=this.curves.get(k);if(!curve){curve=new Float32Array(1024);for(let i=0;i<1024;i++){const x=i/511.5-1;curve[i]=Math.tanh(k*x)/Math.tanh(k);}this.curves.set(k,curve);}return curve;}
  private instrument(inst:Inst,freq:number,len:number,vol:number,pan:number,at:number){
   switch(inst){
    case 'square':return this.synth(at,len,pan,vol,[{type:'square',ratio:1,gain:1}],{a:.01,d:.1,s:.7,r:.06},freq,{type:'lowpass',freq:2600});
@@ -130,6 +134,18 @@ export class GameAudio {
    case 'synth':return this.synth(at,len,pan,vol,[{type:'sawtooth',ratio:1,gain:.6,detune:-6},{type:'sawtooth',ratio:1,gain:.6,detune:6}],{a:.01,d:.15,s:.6,r:.1},freq,{type:'lowpass',freq:1800,q:4});
    case 'pad':return this.synth(at,len,pan,vol,[{type:'triangle',ratio:1,gain:1},{type:'sine',ratio:2,gain:.2}],{a:.12,d:.2,s:.7,r:.3},freq);
    case 'bass':return this.synth(at,len,pan,vol,[{type:'triangle',ratio:1,gain:1},{type:'square',ratio:1,gain:.22}],{a:.006,d:.1,s:.7,r:.05},freq,{type:'lowpass',freq:700});
+   // Bright upright piano: fundamental plus decaying partials and a tiny hammer click.
+   case 'piano':this.synth(at,Math.min(len,.9),pan,vol,[{type:'triangle',ratio:1,gain:1},{type:'sine',ratio:2,gain:.45},{type:'sine',ratio:3,gain:.18},{type:'sine',ratio:4.01,gain:.08}],{a:.003,d:.35,s:.25,r:.25},freq,{type:'lowpass',freq:3800,open:.004});return;
+   // Combo organ (sixties): drawbar-like stacked sines, fast attack, full sustain.
+   case 'organ':return this.synth(at,len,pan,vol*.8,[{type:'sine',ratio:1,gain:1},{type:'sine',ratio:2,gain:.6},{type:'sine',ratio:3,gain:.35},{type:'square',ratio:4,gain:.05}],{a:.01,d:.05,s:.9,r:.06},freq,{type:'lowpass',freq:3200});
+   // Distorted rhythm guitar: root + fifth (+ octave) power chord through a waveshaper, palm-muted by the low-pass.
+   case 'dist':return this.synth(at,Math.min(len,.6),pan,vol,[{type:'sawtooth',ratio:1,gain:.7,detune:-5},{type:'sawtooth',ratio:1.4983,gain:.55,detune:5},{type:'sawtooth',ratio:2,gain:.3}],{a:.004,d:.09,s:.65,r:.06},freq,{type:'lowpass',freq:len<.2?1300:2300,q:1.4},6);
+   // Clean chorus guitar (eighties new wave): two detuned voices, bright pick, gentle decay.
+   case 'clean':return this.synth(at,Math.min(len,.7),pan,vol,[{type:'sawtooth',ratio:1,gain:.45,detune:-11},{type:'triangle',ratio:1,gain:.7,detune:11},{type:'sine',ratio:2,gain:.2}],{a:.003,d:.2,s:.35,r:.18},freq,{type:'lowpass',freq:2600,q:1.1,open:.01});
+   // 808 sub: a long sine with a little grit.
+   case 'sub':return this.synth(at,len,pan,vol,[{type:'sine',ratio:1,gain:1},{type:'triangle',ratio:2,gain:.08}],{a:.005,d:.4,s:.55,r:.12},freq,{type:'lowpass',freq:420},1.4);
+   // 8-bit pulse: raw square, no filter.
+   case 'chip':return this.synth(at,len,pan,vol*.7,[{type:'square',ratio:1,gain:1}],{a:.002,d:.05,s:.75,r:.03},freq);
    case 'pluck':return this.synth(at,len,pan,vol,[{type:'square',ratio:1,gain:.8}],{a:.003,d:.08,s:.2,r:.05},freq,{type:'lowpass',freq:1800});
   }
  }
@@ -146,6 +162,11 @@ export class GameAudio {
    case 'rim':this.tone(1800,.025,'square',0,pan,vol*.5,undefined,true,at);this.noise(.02,'highpass',4000,pan,vol*.6,0,undefined,true,at);break;
    case 'shaker':this.noise(.045,'highpass',5200,pan+.25,vol,0,undefined,true,at);break;
    case 'cowbell':this.tone(560,.09,'square',0,pan,vol*.6,undefined,true,at);this.tone(840,.09,'square',0,pan,vol*.4,undefined,true,at);break;
+   // DJ scratch: a "wicka" — a band-passed noise sweep up and back down.
+   case 'scratch':this.noise(.07,'bandpass',700,pan,vol,0,3400,true,at);this.noise(.08,'bandpass',3000,pan,vol*.8,0,600,true,(at??0)+.075);break;
+   case 'crash':this.noise(.8,'highpass',4200,pan-.2,vol,0,undefined,true,at);break;
+   case 'tamb':this.noise(.07,'highpass',8200,pan+.3,vol,0,undefined,true,at);this.tone(5200,.04,'square',0,pan+.3,vol*.12,undefined,true,at);break;
+   case 'boom':this.tone(70,.55,'sine',0,pan,vol,34,true,at);break;
    case 'riser':this.noise(.8,'bandpass',400,pan,vol,0,6000,true,at);break;
   }
  }
@@ -161,7 +182,7 @@ export class GameAudio {
  setTension(value:number){this.tension=bounded(value,0,1,0);}
  setSpeed(ratio:number,boost=false){this.speedRatio=bounded(ratio,0,1.2,0);this.boosting=boost;}
  /** Voices on top: the band steps back for `seconds` and comes back smoothly. */
- duck(seconds:number){if(!this.context||!this.musicDuck)return;const t=this.context.currentTime,g=this.musicDuck.gain;g.cancelScheduledValues(t);g.setTargetAtTime(.3,t,.04);g.setTargetAtTime(1,t+bounded(seconds,.2,6,1),.25);}
+ duck(seconds:number){if(!this.context||!this.musicDuck)return;const t=this.context.currentTime,g=this.musicDuck.gain;g.cancelScheduledValues(t);g.setTargetAtTime(.22,t,.04);g.setTargetAtTime(1,t+bounded(seconds,.2,6,1),.25);}
  /** Plays a decoded recording on the voice bus. Returns its duration in seconds. */
  playVoice(buffer:AudioBuffer,pan=0){
   if(!this.context||!this.voiceBus||this.muted)return 0;const c=this.context,src=c.createBufferSource(),p=c.createStereoPanner();src.buffer=buffer;p.pan.value=bounded(pan,-1,1,0);src.connect(p);p.connect(this.voiceBus);this.track(src,[src,p]);src.start();return buffer.duration;

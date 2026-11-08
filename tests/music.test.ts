@@ -17,4 +17,13 @@ describe('música original por pista',()=>{
  it('ninguna pista reutiliza la melodía de otra',()=>{
   const melodies=Object.values(SCORES).map(s=>s.sections.A.melody);expect(new Set(melodies).size).toBe(melodies.length);
  });
+ it('cada mundo tiene su estilo propio, con riffs completos y sus instrumentos',()=>{
+  const grooves=new Set<string>(),insts=new Set<string>(),drums=new Set<string>();
+  for(const t of TRACKS){const s=SCORES[t.id];
+   for(const name of ['A','B'] as const){const sec=s.sections[name];grooves.add(sec.groove??s.groove);if(sec.riff)expect(barLengths(sec.riff),t.id+' riff '+name).toEqual(Array(8).fill(16));}
+   for(let b=0;b<16*8*s.form.length;b++){const out=musicStep(s,b,{level:1,tension:0,speed:.9,boost:false});out.notes.forEach(n=>insts.add(n.inst));out.drums.forEach(d=>drums.add(d.drum));}}
+  expect(grooves.size).toBeGreaterThanOrEqual(8);
+  for(const inst of ['piano','organ','dist','clean','sub','chip'])expect(insts.has(inst as never),inst).toBe(true);
+  for(const drum of ['scratch','crash','tamb','boom'])expect(drums.has(drum as never),drum).toBe(true);
+ });
 });
