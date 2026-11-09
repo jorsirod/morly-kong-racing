@@ -26,9 +26,10 @@ export function dressOriental(k:Kit,route:Route){
  for(let d=6;d<route.length;d+=9){
   if(special(route,d))continue;
   for(const side of [-1,1]){
-   if(r()<.18)continue;const off=(route.width*.72+3.4+r()*1.6)*side,p=beside(route,d,off);if(k.onLane(p.x,p.z,3))continue;const g=new TransformNode('chinamo',k.scene);g.parent=k.root;g.position.set(p.x,p.y,p.z);g.rotation.y=facing(p.yaw,side);
-   const t=tarps[Math.floor(r()*tarps.length)];k.box('stall-table',0,.9,.6,5.6,.25,2,'#8a6a45',0,g);for(let i=0;i<5;i++)k.box('stall-goods',-2.2+i*1.1,1.25,.6,.8,.45,1.4,goods[Math.floor(r()*goods.length)],0,g);
-   for(const x of [-2.7,2.7])k.cyl('stall-pole',x,1.8,1.6,3.6,.14,'#6b5a45',.14,g);const tarp=k.box('stall-tarp',0,3.7,.2,6.2,.12,4.2,t,0,g);tarp.rotation.x=-.18;
+   if(r()<.18)continue;const off=(route.width*.72+3.4+r()*1.6)*side,p=beside(route,d,off);if(k.onLane(p.x,p.z,3))continue;const Y=facing(p.yaw,side),t=tarps[Math.floor(r()*tarps.length)];
+   k.prop('chinamo',p.x,p.y,p.z,Y,1,g=>{k.box('stall-table',0,.9,.6,5.6,.25,2,'#8a6a45',0,g);for(let i=0;i<5;i++)k.box('stall-goods',-2.2+i*1.1,1.25,.6,.8,.45,1.4,goods[Math.floor(r()*goods.length)],0,g);for(const x of [-2.7,2.7])k.cyl('stall-pole',x,1.8,1.6,3.6,.14,'#6b5a45',.14,g);});
+   // The tarp is its own piece, modelled in white and tinted per stall.
+   k.prop('lona',p.x,p.y,p.z,Y,1,g=>{const tarp=k.box('stall-tarp',0,3.7,.2,6.2,.12,4.2,t,0,g);tarp.rotation.x=-.18;},t);
    if(r()<.35){const Y=facing(p.yaw,side);k.crowd(p.x-Math.sin(Y)*1.6,p.z-Math.cos(Y)*1.6,Y,2,p.y,1.3);}
   }
  }
@@ -60,30 +61,34 @@ export function dressOriental(k:Kit,route:Route){
 export function managuaLandmarks(k:Kit,route:Route,battle:boolean){
  const dz=battle?160:0;
  // Lago Xolotlán with the Momotombo across the water.
- const lake=k.box('lake',0,-.12,-470-dz*0,1400,.1,560,'#5aa6bd');lake.material=waterMat(k.scene,'#4f9fba');
+ const lake=k.box('lake',0,-.12,-470-dz*0,1400,.1,560,'#5aa6bd');lake.material=waterMat(k.scene,'#4f9fba',110,44);
  k.cyl('momotombo',-330,40,-640,90,320,'#7f8a7b',18);k.cyl('momotombo-cap',-330,86,-640,6,22,'#e9e4d8',14);k.ball('momotombo-smoke',-324,96,-640,22,'#efece4',new Vector3(1,.45,1));
  // Malecón: promenade, lamps, palms and the port sign on the lake side of the start straight.
  const promenade=k.box('malecon',-40,-.05,-178,420,.2,16,'#d8cfb8');promenade.material=surfaceTexture(k.scene,'tile','#d8cfb8');
  for(let i=0;i<14;i++){const x=-230+i*32;k.cyl('malecon-lamp',x,3,-184,6,.2,'#4c5a63');k.glow('malecon-lamp-head',x,6.1,-184,.9,.5,.9,'#fff2c2');if(i%2)k.tree(x+12,-188,'palm',0,.9);}
  k.sign('PUERTO SALVADOR ALLENDE',60,-190,0,10,1.4,3.4,'#fff3d0','#1f5fae');k.sign('MALECÓN DE MANAGUA',-150,-190,0,9,1.4,3.4,'#fff3d0','#1f5fae');
  // Concha Acústica: a white shell over a stage, facing the lake.
- const shell=new TransformNode('concha',k.scene);shell.parent=k.root;shell.position.set(-20,0,-205);shell.rotation.y=Math.PI;
- k.box('concha-stage',0,.6,0,16,1.2,8,'#e7e1d1',0,shell);for(let i=0;i<7;i++){const a=-Math.PI/2+i*Math.PI/6;const rib=k.box('concha-rib',Math.sin(a)*8,5,Math.cos(a)*3-1,.9,9,.7,'#fbf8ef',a,shell);rib.rotation.x=-.35;}k.label('CONCHA ACÚSTICA',0,1.4,4.05,7,.8,0,'#1f5fae','#fbf8ef',shell);
+ const shell=new TransformNode('concha',k.scene);shell.parent=k.root;shell.position.set(-20,0,-205); // opens toward the plaza, the lake behind
+ k.prop('concha',-20,0,-205,0,1,c=>{k.box('concha-stage',0,.6,0,16,1.2,8,'#e7e1d1',0,c);for(let i=0;i<7;i++){const a=-Math.PI/2+i*Math.PI/6;const rib=k.box('concha-rib',Math.sin(a)*8,5,Math.cos(a)*3-1,.9,9,.7,'#fbf8ef',a,c);rib.rotation.x=-.35;}});k.label('CONCHA ACÚSTICA',0,1.4,4.05,7,.8,0,'#1f5fae','#fbf8ef',shell);
  if(battle)return;
  // Antigua Catedral: neoclassical façade, two towers (clock on one), dome, weathered stone.
- const cat=new TransformNode('catedral',k.scene);cat.parent=k.root;cat.position.set(-72,0,-108);cat.rotation.y=Math.PI;
+ // The Blender model has its façade at the origin facing +z; the code version keeps its old layout (façade at z=-7.5, turned).
+ k.prop('catedral',-72,0,-100.5,0,1,p=>{const cat=new TransformNode('catedral-code',k.scene);cat.parent=p;cat.position.z=-7.5;cat.rotation.y=Math.PI;
+
  const stone='#d6ccb6',dark='#a39a86';k.box('cat-nave',0,8,8,22,16,30,stone,0,cat);k.box('cat-facade',0,10,-7.5,24,20,2,stone,0,cat);
  for(let i=0;i<6;i++)k.cyl('cat-column',-8.75+i*3.5,5,-9,10,1,'#e8e1cf',.9,cat);k.box('cat-pediment',0,15.5,-9,22,3,1.6,'#e8e1cf',0,cat);
  for(const x of [-9,9]){k.box('cat-tower',x,15,-6,6,30,6,stone,0,cat);k.box('cat-tower-top',x,31,-6,4.4,4,4.4,dark,0,cat);k.cyl('cat-tower-cap',x,34.2,-6,2.6,3.8,dark,.6,cat);for(let j=0;j<3;j++)k.box('cat-window',x,9+j*7,-9.05,1.4,3,.1,'#3c4a55',0,cat);}
  k.cyl('cat-clock',9,23,-9.1,.2,2.6,'#f4efe2',2.6,cat).rotation.x=Math.PI/2;k.cyl('cat-dome',0,18,14,6,12,stone,9,cat);k.ball('cat-dome-cap',0,21,14,10,dark,new Vector3(1,.6,1),cat);
- k.label('ANTIGUA CATEDRAL',0,2.6,-10.2,9,1.1,0,'#fff3d0','#5a4b3a',cat);
+ });
+ k.label('ANTIGUA CATEDRAL',-72,2.6,-97.8,9,1.1,0,'#fff3d0','#5a4b3a');
  // Palacio Nacional de la Cultura across the plaza: columns and a long cornice.
  const pal=new TransformNode('palacio',k.scene);pal.parent=k.root;pal.position.set(-108,0,-94);pal.rotation.y=Math.PI*.9;
- k.box('pal-body',0,6,0,40,12,18,'#ead9b4',0,pal);k.box('pal-cornice',0,12.4,0,42,1,19,'#d9c49a',0,pal);for(let i=0;i<10;i++)k.cyl('pal-column',-16+i*3.55,5,-9.6,10,1,'#f5ecd6',.9,pal);k.label('PALACIO DE LA CULTURA',0,11,-9.8,14,1.2,0,'#5a4b3a','#f5ecd6',pal);
+ k.prop('palacio',-108,0,-94,Math.PI*.9,1,c=>{k.box('pal-body',0,6,0,40,12,18,'#ead9b4',0,c);k.box('pal-cornice',0,12.4,0,42,1,19,'#d9c49a',0,c);for(let i=0;i<10;i++)k.cyl('pal-column',-16+i*3.55,5,-9.6,10,1,'#f5ecd6',.9,c);});
+ k.label('PALACIO DE LA CULTURA',0,13,-13.2,12,.9,0,'#5a4b3a','#f5ecd6',pal);
  const plaza=k.box('plaza',-92,.01,-104,60,.06,34,'#cfc6b0');plaza.material=surfaceTexture(k.scene,'tile','#cfc6b0');
  // Loma de Tiscapa: crater lagoon right below the mirador lane, its rim and the silhouette on the hill.
- const lagoon=MeshBuilder.CreateDisc('tiscapa-lagoon',{radius:32,tessellation:40},k.scene);lagoon.parent=k.root;lagoon.rotation.x=Math.PI/2;lagoon.position.set(141,.6,40);lagoon.material=waterMat(k.scene,'#3b8f86');
- const rim=MeshBuilder.CreateCylinder('tiscapa-rim',{height:6.6,diameterTop:78,diameterBottom:118,tessellation:40},k.scene);rim.parent=k.root;rim.position.set(141,3,40);rim.material=surfaceTexture(k.scene,'grass','#7f9a5c');rim.isPickable=false;
+ const lagoon=MeshBuilder.CreateDisc('tiscapa-lagoon',{radius:32,tessellation:40},k.scene);lagoon.parent=k.root;lagoon.rotation.x=Math.PI/2;lagoon.position.set(141,.6,40);lagoon.material=waterMat(k.scene,'#3b8f86',6);
+ const rim=MeshBuilder.CreateCylinder('tiscapa-rim',{height:6.6,diameterTop:78,diameterBottom:118,tessellation:40},k.scene);rim.parent=k.root;rim.position.set(141,3,40);rim.material=surfaceTexture(k.scene,'grass','#7f9a5c',10,1);rim.isPickable=false;
  const pit=MeshBuilder.CreateCylinder('tiscapa-crater',{height:6.4,diameterTop:72,diameterBottom:64,tessellation:40,sideOrientation:2},k.scene);pit.parent=k.root;pit.position.set(141,3.4,40);pit.material=material(k.scene,'#5d6b45');pit.isPickable=false;
  // The famous black silhouette of a hatted figure stands on the crest above the lagoon.
  const sil=new TransformNode('tiscapa-silueta',k.scene);sil.parent=k.root;sil.position.set(118,6.4,76);sil.rotation.y=-.6;
@@ -132,12 +137,14 @@ function rotondaGalerias(k:Kit,route:Route){
 }
 /** «Árbol de la Vida»: tall metal tree of coloured curling branches studded with lights. */
 function lifeTree(k:Kit,x:number,y:number,z:number,color:string,seed:number){
- const g=new TransformNode('arbol-vida',k.scene);g.parent=k.root;g.position.set(x,y,z);g.rotation.y=seed;
+ // Modelled in white in Blender; each tree gets its colour as the instance tint (props.ts).
+ k.prop('arbol-vida',x,y,z,seed,1,g=>{
  k.cyl('arbol-trunk',0,5,0,10,.55,color,.35,g);
  for(let i=0;i<7;i++){const a=i/7*Math.PI*2,h=6+(i%3)*2.4;const path:Vector3[]=[];for(let t=0;t<=10;t++){const u=t/10,r=1+u*3.4;path.push(new Vector3(Math.cos(a+u*2.6)*r*.9,h+u*4.5-u*u*2.6,Math.sin(a+u*2.6)*r*.9));}
   const tube=MeshBuilder.CreateTube('arbol-branch',{path,radius:.13,tessellation:6},k.scene);tube.parent=g;tube.material=material(k.scene,color);tube.isPickable=false;
   for(let t=2;t<=10;t+=3){const p=path[t];k.glow('arbol-light',p.x,p.y,p.z,.32,.32,.32,'#fff6c2',0,g);}}
  const crown=MeshBuilder.CreateTorus('arbol-crown',{diameter:4.2,thickness:.16,tessellation:20},k.scene);crown.parent=g;crown.position.y=12.6;crown.material=material(k.scene,color);crown.isPickable=false;
+ },color);
 }
 /* Managua — barrios a los lados, postes, Árboles de la Vida y el paso a desnivel. */
 export function dressManagua(k:Kit,route:Route){
@@ -146,9 +153,12 @@ export function dressManagua(k:Kit,route:Route){
   if(special(route,d))continue;
   for(const side of [-1,1]){
    if(r()<.3)continue;const p=beside(route,d,(route.width*.72+9+r()*8)*side);if(p.z<-168||k.blocked(p.x,p.z,6)||Math.hypot(p.x-141,p.z-40)<62||Math.hypot(p.x+72,p.z+108)<30||Math.hypot(p.x+108,p.z+94)<28||Math.hypot(p.x+172,p.z+45)<34)continue;
-   const h=6+Math.floor(r()*3)*3.5,w=8+r()*6,g=new TransformNode('casa',k.scene);g.parent=k.root;g.position.set(p.x,p.y,p.z);g.rotation.y=facing(p.yaw,side);
-   k.box('house',0,h/2,0,w,h,8,walls[Math.floor(r()*walls.length)],0,g);k.box('house-roof',0,h+.25,0,w+.6,.5,8.6,r()<.5?'#a85a3e':'#6f7a82',0,g);
-   for(let f=0;f<h/3.5-.5;f++)for(let i=0;i<Math.floor(w/3);i++)k.box('house-window',-w/2+1.6+i*3,2+f*3.4,4.05,1.3,1.4,.06,'#2f5d6e',0,g);
+   const h=6+Math.floor(r()*3)*3.5,w=8+r()*6,Y=facing(p.yaw,side),g=new TransformNode('casa',k.scene);g.parent=k.root;g.position.set(p.x,p.y,p.z);g.rotation.y=Y;
+   const wall=walls[Math.floor(r()*walls.length)],roof=r()<.5?'#a85a3e':'#6f7a82',sx=w/10;
+   // Blender models «casa-m1/2/3» (by height) and «casa-techo», 10 m wide: stretched to the house and tinted with its colours.
+   k.prop('casa-m'+(Math.round((h-6)/3.5)+1),p.x,p.y,p.z,Y,[sx,1,1],c=>{const f=new TransformNode('casa-code',k.scene);f.parent=c;f.scaling.x=1/sx;
+    k.box('house',0,h/2,0,w,h,8,wall,0,f);for(let fl=0;fl<h/3.5-.5;fl++)for(let i=0;i<Math.floor(w/3);i++)k.box('house-window',-w/2+1.6+i*3,2+fl*3.4,4.05,1.3,1.4,.06,'#2f5d6e',0,f);},wall);
+   k.prop('casa-techo',p.x,p.y+h,p.z,Y,[sx,1,1],c=>{const f=new TransformNode('casa-code',k.scene);f.parent=c;f.scaling.x=1/sx;k.box('house-roof',0,.25,0,w+.6,.5,8.6,roof,0,f);},roof);
    if(r()<.25){k.box('pulperia-awning',0,3,5,w,.15,2.5,'#c8432f',0,g);k.label('PULPERÍA',0,4.6,4.1,4,.7,0,'#fff3d0','#c8432f',g);}
   }
  }
@@ -187,11 +197,16 @@ function parkEntrance(k:Kit,route:Route){
  k.label('VOLCÁN MASAYA · PARQUE NACIONAL',0,3.6,-.12,6,.6,Math.PI,'#ffffff','#2f5a3a',board);k.label('NO SE DETENGA · GASES · MÁX. 15 MIN',0,2.7,-.12,6,.5,Math.PI,'#ffd33d','#2f5a3a',board);
  for(let i=0;i<3;i++)k.tree(-(half+16)-i*7,-4-i*5,'bush',0,1.2);
 }
+/** A volcanic rock (Blender model «rock», modelled in white, stretched by `shape` and tinted with `color`). */
+export function lavaRock(k:Kit,x:number,y:number,z:number,size:number,shape:Vector3,yaw:number,color:string){
+ const sx=size*.8*shape.x,sy=size*shape.y,sz=size*.8*shape.z;
+ k.prop('rock',x,y,z,yaw,[sx,sy,sz],g=>{const f=new TransformNode('rock-code',k.scene);f.parent=g;f.scaling.set(1/sx,1/sy,1/sz);k.ball('lava-rock',0,size*.35,0,size*1.6,color,shape,f);},Color3.FromHexString(color).scale(1.45).toHexString());
+}
 /* Volcán Masaya — roca volcánica, fumarolas, miradores y avisos de peligro. */
 export function dressMasaya(k:Kit,route:Route){
  parkEntrance(k,route);
  const r=rng(1529),rocks=['#4f4a45','#5e5750','#3f3b38','#6b625a'];
- for(let d=4;d<route.length;d+=7){if(special(route,d))continue;for(const side of [-1,1]){if(r()<.45)continue;const p=beside(route,d,(route.width*.72+2.5+r()*9)*side),s=1+r()*2.6;if(k.onLane(p.x,p.z,3))continue;const rock=k.ball('lava-rock',p.x,p.y+s*.35,p.z,s*1.6,rocks[Math.floor(r()*4)],new Vector3(1+r()*.6,.55+r()*.4,1+r()*.6));rock.rotation.y=r()*3;}}
+ for(let d=4;d<route.length;d+=7){if(special(route,d))continue;for(const side of [-1,1]){if(r()<.45)continue;const p=beside(route,d,(route.width*.72+2.5+r()*9)*side),s=1+r()*2.6;if(k.onLane(p.x,p.z,3))continue;const col=rocks[Math.floor(r()*4)],sc=new Vector3(1+r()*.6,.55+r()*.4,1+r()*.6),yaw=r()*3;lavaRock(k,p.x,p.y,p.z,s,sc,yaw,col);}}
  // Fumaroles: puffs that rise and fade from the crater and from cracks near the road.
  const vents=[{x:0,y:30,z:0,big:true},...[200,520,860,1100].filter(d=>!special(route,d)).map(d=>{const p=beside(route,d,route.width*.72+8);return{x:p.x,y:p.y,z:p.z,big:false};})];
  for(const v of vents){const g=new TransformNode('fumarole',k.scene);g.parent=k.root;g.position.set(v.x,v.y,v.z);g.metadata={animate:true};const puffs=[0,1,2,3].map(i=>{const m=MeshBuilder.CreateSphere('smoke-puff',{diameter:v.big?26:5,segments:6},k.scene);m.parent=g;const mm=material(k.scene,'#d9d3c9',false,.35);mm.disableDepthWrite=true;m.material=mm;m.metadata=i;return m;});
@@ -212,15 +227,17 @@ export function dressSanJuan(k:Kit,route:Route){
  const r=rng(1898),colors=['#f2b8a0','#9fd5d1','#f6dc8c','#c7b3e6','#f4f0e4','#a8d08d'];
  for(let d=8;d<route.length;d+=15){if(special(route,d))continue;for(const side of [-1,1]){if(r()<.4)continue;const raw=route.width*.72+5+r()*8,elevated=sample(route,d).y>1,p=beside(route,d,(elevated?Math.min(raw,route.width/2+12):raw)*side);if(k.blocked(p.x,p.z,4)||p.z<-176&&p.y<1)continue; // on raised road, stay on the 14 m shelf (no floating trees)
   if(p.y>12){k.tree(p.x,p.z,r()<.6?'palm':'bush',p.y,.9);continue;}
-  const g=new TransformNode('casa-playa',k.scene);g.parent=k.root;g.position.set(p.x,p.y,p.z);g.rotation.y=facing(p.yaw,side);const h=4.5+Math.floor(r()*2)*3.4;
-  k.box('beach-house',0,h/2,0,8,h,7,colors[Math.floor(r()*colors.length)],0,g);k.box('beach-roof',0,h+.4,0,9,.5,8,'#a8553a',0,g);k.box('balcony',0,h-1.8,3.9,7.6,.15,1.4,'#8a5a3a',0,g);for(let i=0;i<5;i++)k.box('baluster',-3.6+i*1.8,h-1.3,4.55,.12,.9,.12,'#f4f0e4',0,g);
+  const Y=facing(p.yaw,side),g=new TransformNode('casa-playa',k.scene);g.parent=k.root;g.position.set(p.x,p.y,p.z);g.rotation.y=Y;const h=4.5+Math.floor(r()*2)*3.4,wall=colors[Math.floor(r()*colors.length)];
+  // Blender: walls «casa-playa-1/2» tinted pastel, and the tiled roof with its balcony «teja-playa» at the house's height.
+  k.prop(h>5?'casa-playa-2':'casa-playa-1',p.x,p.y,p.z,Y,1,c=>k.box('beach-house',0,h/2,0,8,h,7,wall,0,c),wall);
+  k.prop('teja-playa',p.x,p.y+h,p.z,Y,1,c=>{k.box('beach-roof',0,.4,0,9,.5,8,'#a8553a',0,c);k.box('balcony',0,-1.8,3.9,7.6,.15,1.4,'#8a5a3a',0,c);for(let i=0;i<5;i++)k.box('baluster',-3.6+i*1.8,-1.3,4.55,.12,.9,.12,'#f4f0e4',0,c);});
   if(r()<.3)k.label(['RANCHO EL TIBURÓN','SURF · TABLAS','MARISCOS DOÑA LUPE','HOSPEDAJE'][Math.floor(r()*4)],0,h-.6,3.55,5,.7,0,'#fff3d0','#2f6b8f',g);
  }}
  // Boats bobbing in the bay.
  for(let i=0;i<9;i++){const g=new TransformNode('boat',k.scene);g.parent=k.root;g.position.set(-180+i*45+r()*10,-.1,-270-r()*60);g.rotation.y=r()*3;g.metadata={animate:true};k.box('hull',0,.5,0,2.2,1,6,['#f4f0e4','#2f8fd0','#d9473b'][i%3],0,g);k.box('hull-stripe',0,.85,0,2.25,.2,6.05,'#11204a',0,g);if(i%3===0){k.cyl('mast',0,4,0,7,.15,'#ddd',.15,g);k.box('sail',0,4.5,.6,.05,5,3,'#fff8ea',0,g);}
   k.anims.push({node:g,update:t=>{g.position.y=-.1+Math.sin(t*1.3+i)*.18;g.rotation.z=Math.sin(t*1.1+i*2)*.06;}});}
  // The river under the bridge and its sandy banks down to the sea.
- const river=k.box('river',-230,-.12,-52,220,.08,14,'#4aa7c0');river.material=waterMat(k.scene,'#4aa7c0');for(const dz of [-8.5,8.5])k.box('river-bank',-230,-.14,-52+dz,220,.06,3,'#d8c08a');
+ const river=k.box('river',-230,-.12,-52,220,.08,14,'#4aa7c0');river.material=waterMat(k.scene,'#4aa7c0',30,2);for(const dz of [-8.5,8.5])k.box('river-bank',-230,-.14,-52+dz,220,.06,3,'#d8c08a');
  const bridge=beside(route,route.length*.79,route.width*.72+3);k.sign('PUENTE DEL RÍO',bridge.x,bridge.z,bridge.yaw+Math.PI,6,1.2,bridge.y+3,'#fff3d0','#2f6b8f');
  // Beach life: umbrellas, surfboards and a lifeguard tower next to the shore lane.
  const shore=route.lanes.find(l=>l.id==='playa');
