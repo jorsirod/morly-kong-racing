@@ -160,12 +160,12 @@ function footballPitch(k:Kit,lane:Lane){
 function cafeteria(k:Kit,route:Route,at:number,side:number){
  const p=sample(route,at),off=side*(route.width*.72+7.5),x=p.x+Math.cos(p.yaw)*off,z=p.z-Math.sin(p.yaw)*off,yaw=p.yaw+(side>0?-Math.PI/2:Math.PI/2);
  const g=new TransformNode('cafeteria',k.scene);g.parent=k.root;g.position.set(x,p.y,z);g.rotation.y=yaw;
- k.box('cafe-body',0,2,-2,16,4,6,'#f3e2b0',0,g);k.box('cafe-roof',0,4.25,-1,17.5,.5,8.5,ROOF,0,g);k.box('cafe-counter',0,.6,1.4,14,1.2,1.2,'#b9773f',0,g);k.box('cafe-counter-top',0,1.25,1.4,14.4,.12,1.5,'#e8d2a6',0,g);
- for(let i=0;i<9;i++)k.box('cafe-awning',-7.2+i*1.8,3.75,2.6,1.8,.2,3,i%2?'#f6efe1':'#2f7a4e',0,g);
- k.label('CAFETERÍA',0,5.3,3.1,9,1.5,0,'#fff3d0','#2f7a4e',g);k.box('cafe-sign-back',0,5.3,3,9.4,1.9,.15,'#f6efe1',0,g);
- k.label('QUESILLOS · VIGORÓN · ENCHILADAS · GASEOSA',0,3.1,1.02,12,.6,0,'#2b3a2c','#fff3d0',g);
- for(let i=0;i<4;i++)k.box('cafe-jar',-5+i*1.4,1.6,1.4,.8,.6,.8,['#f2c14e','#d23b3b','#fff4e0','#7cc36b'][i],0,g);
- for(let i=0;i<3;i++){const tx=-5+i*5;k.cyl('cafe-table',tx,.75,-7.5,.12,2,'#c49a62',2,g);k.cyl('cafe-table-leg',tx,.4,-7.5,.8,.15,'#555',.15,g);}
+ // Building, counter, awning, jars and tables: Blender model «cafeteria». The signs and the señora stay here.
+ k.prop('cafeteria',x,p.y,z,yaw,1,c=>{k.box('cafe-body',0,2,-2,16,4,6,'#f3e2b0',0,c);k.box('cafe-roof',0,4.25,-1,17.5,.5,8.5,ROOF,0,c);k.box('cafe-counter',0,.6,1.4,14,1.2,1.2,'#b9773f',0,c);k.box('cafe-counter-top',0,1.25,1.4,14.4,.12,1.5,'#e8d2a6',0,c);
+  for(let i=0;i<9;i++)k.box('cafe-awning',-7.2+i*1.8,3.75,2.6,1.8,.2,3,i%2?'#f6efe1':'#2f7a4e',0,c);k.box('cafe-sign-back',0,5.3,3,9.4,1.9,.15,'#f6efe1',0,c);
+  for(let i=0;i<4;i++)k.box('cafe-jar',-5+i*1.4,1.6,1.4,.8,.6,.8,['#f2c14e','#d23b3b','#fff4e0','#7cc36b'][i],0,c);
+  for(let i=0;i<3;i++){const tx=-5+i*5;k.cyl('cafe-table',tx,.75,-7.5,.12,2,'#c49a62',2,c);k.cyl('cafe-table-leg',tx,.4,-7.5,.8,.15,'#555',.15,c);}});
+ k.label('CAFETERÍA',0,5.3,3.1,9,1.5,0,'#fff3d0','#2f7a4e',g);k.label('QUESILLOS · VIGORÓN · ENCHILADAS · GASEOSA',0,3.1,1.02,12,.6,0,'#2b3a2c','#fff3d0',g);
  // La señora: apron, hairnet, and the throwing arm the renderer swings with every quesillo.
  const lady=new TransformNode('senora',k.scene);lady.parent=g;lady.position.set(2.5,0,.2);
  k.cyl('senora-skirt',0,.65,0,1.3,1.1,'#5a6fb0',.8,lady);k.cyl('senora-body',0,1.55,0,.9,.8,'#e85a6a',.7,lady);k.box('senora-apron',0,1.2,.38,.75,1.2,.06,'#ffffff',0,lady);
@@ -177,12 +177,12 @@ function cafeteria(k:Kit,route:Route,at:number,side:number){
 }
 function barKiosk(k:Kit,x:number,z:number,yaw:number){
  const g=new TransformNode('el-bar',k.scene);g.parent=k.root;g.position.set(x,0,z);g.rotation.y=yaw;
- k.box('bar-body',0,1.8,0,22,3.6,7,'#f0c95a',0,g);k.box('bar-counter',0,1.15,-3.9,22,1,1.2,'#a8673d',0,g);k.box('bar-awning',0,3.9,-4.6,24,.25,4,'#c8432f',0,g);
- for(let i=0;i<8;i++)k.box('awning-stripe',-10.5+i*3,3.94,-4.6,1.4,.27,4.05,'#f6efe1',0,g);
- k.box('bar-roof',0,3.85,0,23,.4,8,ROOF,0,g);k.label('EL BAR',0,5.1,-3.6,8,1.6,Math.PI,'#fff3d0','#c8432f',g);k.box('bar-sign-back',0,5.1,-3.5,8.4,2,.2,'#f6efe1',0,g);
- k.label('RASPADOS · ENCHILADAS · GASEOSA C$5 · VIGORÓN',0,2.9,-3.48,18,.7,Math.PI,'#2b3a2c','#fff3d0',g);
- for(let i=0;i<5;i++){const tx=-9+i*4.5;k.cyl('bar-table',tx,.75,-9,1.5,1.6,'#b28d54',1.6,g).scaling.y=.08;k.cyl('table-leg',tx,.4,-9,.8,.15,'#555',.15,g);k.cyl('umbrella-pole',tx,1.6,-9,3.2,.1,'#ddd',.1,g);k.cyl('umbrella',tx,3.1,-9,.5,3.6,i%2?'#2f7a4e':'#c8432f',.2,g);for(const s of [-1,1])k.box('bar-stool',tx+s*1.2,.5,-9,.6,.15,.6,'#d6724a',0,g);}
- for(let i=0;i<6;i++)k.box('bar-shelf-item',-8+i*3.2,1.95,-4.1,.5,.8,.4,['#d23b3b','#2e8b57','#f2c14e','#3a6db5','#fff','#7a3d9b'][i],0,g);
+ // Kiosk, awning, tables and umbrellas: Blender model «bar-lasalle» (same frame: the counter faces −z). Signs stay here.
+ k.prop('bar-lasalle',x,0,z,yaw,1,c=>{k.box('bar-body',0,1.8,0,22,3.6,7,'#f0c95a',0,c);k.box('bar-counter',0,1.15,-3.9,22,1,1.2,'#a8673d',0,c);k.box('bar-awning',0,3.9,-4.6,24,.25,4,'#c8432f',0,c);
+  for(let i=0;i<8;i++)k.box('awning-stripe',-10.5+i*3,3.94,-4.6,1.4,.27,4.05,'#f6efe1',0,c);k.box('bar-roof',0,3.85,0,23,.4,8,ROOF,0,c);k.box('bar-sign-back',0,5.1,-3.5,8.4,2,.2,'#f6efe1',0,c);
+  for(let i=0;i<5;i++){const tx=-9+i*4.5;k.cyl('bar-table',tx,.75,-9,1.5,1.6,'#b28d54',1.6,c).scaling.y=.08;k.cyl('table-leg',tx,.4,-9,.8,.15,'#555',.15,c);k.cyl('umbrella-pole',tx,1.6,-9,3.2,.1,'#ddd',.1,c);k.cyl('umbrella',tx,3.1,-9,.5,3.6,i%2?'#2f7a4e':'#c8432f',.2,c);for(const s of [-1,1])k.box('bar-stool',tx+s*1.2,.5,-9,.6,.15,.6,'#d6724a',0,c);}
+  for(let i=0;i<6;i++)k.box('bar-shelf-item',-8+i*3.2,1.95,-4.1,.5,.8,.4,['#d23b3b','#2e8b57','#f2c14e','#3a6db5','#fff','#7a3d9b'][i],0,c);});
+ k.label('EL BAR',0,5.1,-3.75,8,1.6,0,'#fff3d0','#c8432f',g);k.label('RASPADOS · ENCHILADAS · GASEOSA C$5 · VIGORÓN',0,2.9,-3.56,18,.7,0,'#2b3a2c','#fff3d0',g);
  return g;
 }
 export {Vector3};

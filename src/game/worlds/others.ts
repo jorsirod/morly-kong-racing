@@ -68,8 +68,8 @@ export function managuaLandmarks(k:Kit,route:Route,battle:boolean){
  for(let i=0;i<14;i++){const x=-230+i*32;k.cyl('malecon-lamp',x,3,-184,6,.2,'#4c5a63');k.glow('malecon-lamp-head',x,6.1,-184,.9,.5,.9,'#fff2c2');if(i%2)k.tree(x+12,-188,'palm',0,.9);}
  k.sign('PUERTO SALVADOR ALLENDE',60,-190,0,10,1.4,3.4,'#fff3d0','#1f5fae');k.sign('MALECÓN DE MANAGUA',-150,-190,0,9,1.4,3.4,'#fff3d0','#1f5fae');
  // Concha Acústica: a white shell over a stage, facing the lake.
- const shell=new TransformNode('concha',k.scene);shell.parent=k.root;shell.position.set(-20,0,-205);shell.rotation.y=Math.PI;
- k.box('concha-stage',0,.6,0,16,1.2,8,'#e7e1d1',0,shell);for(let i=0;i<7;i++){const a=-Math.PI/2+i*Math.PI/6;const rib=k.box('concha-rib',Math.sin(a)*8,5,Math.cos(a)*3-1,.9,9,.7,'#fbf8ef',a,shell);rib.rotation.x=-.35;}k.label('CONCHA ACÚSTICA',0,1.4,4.05,7,.8,0,'#1f5fae','#fbf8ef',shell);
+ const shell=new TransformNode('concha',k.scene);shell.parent=k.root;shell.position.set(-20,0,-205); // opens toward the plaza, the lake behind
+ k.prop('concha',-20,0,-205,0,1,c=>{k.box('concha-stage',0,.6,0,16,1.2,8,'#e7e1d1',0,c);for(let i=0;i<7;i++){const a=-Math.PI/2+i*Math.PI/6;const rib=k.box('concha-rib',Math.sin(a)*8,5,Math.cos(a)*3-1,.9,9,.7,'#fbf8ef',a,c);rib.rotation.x=-.35;}});k.label('CONCHA ACÚSTICA',0,1.4,4.05,7,.8,0,'#1f5fae','#fbf8ef',shell);
  if(battle)return;
  // Antigua Catedral: neoclassical façade, two towers (clock on one), dome, weathered stone.
  // The Blender model has its façade at the origin facing +z; the code version keeps its old layout (façade at z=-7.5, turned).
@@ -83,7 +83,8 @@ export function managuaLandmarks(k:Kit,route:Route,battle:boolean){
  k.label('ANTIGUA CATEDRAL',-72,2.6,-97.8,9,1.1,0,'#fff3d0','#5a4b3a');
  // Palacio Nacional de la Cultura across the plaza: columns and a long cornice.
  const pal=new TransformNode('palacio',k.scene);pal.parent=k.root;pal.position.set(-108,0,-94);pal.rotation.y=Math.PI*.9;
- k.box('pal-body',0,6,0,40,12,18,'#ead9b4',0,pal);k.box('pal-cornice',0,12.4,0,42,1,19,'#d9c49a',0,pal);for(let i=0;i<10;i++)k.cyl('pal-column',-16+i*3.55,5,-9.6,10,1,'#f5ecd6',.9,pal);k.label('PALACIO DE LA CULTURA',0,11,-9.8,14,1.2,0,'#5a4b3a','#f5ecd6',pal);
+ k.prop('palacio',-108,0,-94,Math.PI*.9,1,c=>{k.box('pal-body',0,6,0,40,12,18,'#ead9b4',0,c);k.box('pal-cornice',0,12.4,0,42,1,19,'#d9c49a',0,c);for(let i=0;i<10;i++)k.cyl('pal-column',-16+i*3.55,5,-9.6,10,1,'#f5ecd6',.9,c);});
+ k.label('PALACIO DE LA CULTURA',0,13,-13.2,12,.9,0,'#5a4b3a','#f5ecd6',pal);
  const plaza=k.box('plaza',-92,.01,-104,60,.06,34,'#cfc6b0');plaza.material=surfaceTexture(k.scene,'tile','#cfc6b0');
  // Loma de Tiscapa: crater lagoon right below the mirador lane, its rim and the silhouette on the hill.
  const lagoon=MeshBuilder.CreateDisc('tiscapa-lagoon',{radius:32,tessellation:40},k.scene);lagoon.parent=k.root;lagoon.rotation.x=Math.PI/2;lagoon.position.set(141,.6,40);lagoon.material=waterMat(k.scene,'#3b8f86',6);
@@ -152,9 +153,12 @@ export function dressManagua(k:Kit,route:Route){
   if(special(route,d))continue;
   for(const side of [-1,1]){
    if(r()<.3)continue;const p=beside(route,d,(route.width*.72+9+r()*8)*side);if(p.z<-168||k.blocked(p.x,p.z,6)||Math.hypot(p.x-141,p.z-40)<62||Math.hypot(p.x+72,p.z+108)<30||Math.hypot(p.x+108,p.z+94)<28||Math.hypot(p.x+172,p.z+45)<34)continue;
-   const h=6+Math.floor(r()*3)*3.5,w=8+r()*6,g=new TransformNode('casa',k.scene);g.parent=k.root;g.position.set(p.x,p.y,p.z);g.rotation.y=facing(p.yaw,side);
-   k.box('house',0,h/2,0,w,h,8,walls[Math.floor(r()*walls.length)],0,g);k.box('house-roof',0,h+.25,0,w+.6,.5,8.6,r()<.5?'#a85a3e':'#6f7a82',0,g);
-   for(let f=0;f<h/3.5-.5;f++)for(let i=0;i<Math.floor(w/3);i++)k.box('house-window',-w/2+1.6+i*3,2+f*3.4,4.05,1.3,1.4,.06,'#2f5d6e',0,g);
+   const h=6+Math.floor(r()*3)*3.5,w=8+r()*6,Y=facing(p.yaw,side),g=new TransformNode('casa',k.scene);g.parent=k.root;g.position.set(p.x,p.y,p.z);g.rotation.y=Y;
+   const wall=walls[Math.floor(r()*walls.length)],roof=r()<.5?'#a85a3e':'#6f7a82',sx=w/10;
+   // Blender models «casa-m1/2/3» (by height) and «casa-techo», 10 m wide: stretched to the house and tinted with its colours.
+   k.prop('casa-m'+(Math.round((h-6)/3.5)+1),p.x,p.y,p.z,Y,[sx,1,1],c=>{const f=new TransformNode('casa-code',k.scene);f.parent=c;f.scaling.x=1/sx;
+    k.box('house',0,h/2,0,w,h,8,wall,0,f);for(let fl=0;fl<h/3.5-.5;fl++)for(let i=0;i<Math.floor(w/3);i++)k.box('house-window',-w/2+1.6+i*3,2+fl*3.4,4.05,1.3,1.4,.06,'#2f5d6e',0,f);},wall);
+   k.prop('casa-techo',p.x,p.y+h,p.z,Y,[sx,1,1],c=>{const f=new TransformNode('casa-code',k.scene);f.parent=c;f.scaling.x=1/sx;k.box('house-roof',0,.25,0,w+.6,.5,8.6,roof,0,f);},roof);
    if(r()<.25){k.box('pulperia-awning',0,3,5,w,.15,2.5,'#c8432f',0,g);k.label('PULPERÍA',0,4.6,4.1,4,.7,0,'#fff3d0','#c8432f',g);}
   }
  }
@@ -223,8 +227,10 @@ export function dressSanJuan(k:Kit,route:Route){
  const r=rng(1898),colors=['#f2b8a0','#9fd5d1','#f6dc8c','#c7b3e6','#f4f0e4','#a8d08d'];
  for(let d=8;d<route.length;d+=15){if(special(route,d))continue;for(const side of [-1,1]){if(r()<.4)continue;const raw=route.width*.72+5+r()*8,elevated=sample(route,d).y>1,p=beside(route,d,(elevated?Math.min(raw,route.width/2+12):raw)*side);if(k.blocked(p.x,p.z,4)||p.z<-176&&p.y<1)continue; // on raised road, stay on the 14 m shelf (no floating trees)
   if(p.y>12){k.tree(p.x,p.z,r()<.6?'palm':'bush',p.y,.9);continue;}
-  const g=new TransformNode('casa-playa',k.scene);g.parent=k.root;g.position.set(p.x,p.y,p.z);g.rotation.y=facing(p.yaw,side);const h=4.5+Math.floor(r()*2)*3.4;
-  k.box('beach-house',0,h/2,0,8,h,7,colors[Math.floor(r()*colors.length)],0,g);k.box('beach-roof',0,h+.4,0,9,.5,8,'#a8553a',0,g);k.box('balcony',0,h-1.8,3.9,7.6,.15,1.4,'#8a5a3a',0,g);for(let i=0;i<5;i++)k.box('baluster',-3.6+i*1.8,h-1.3,4.55,.12,.9,.12,'#f4f0e4',0,g);
+  const Y=facing(p.yaw,side),g=new TransformNode('casa-playa',k.scene);g.parent=k.root;g.position.set(p.x,p.y,p.z);g.rotation.y=Y;const h=4.5+Math.floor(r()*2)*3.4,wall=colors[Math.floor(r()*colors.length)];
+  // Blender: walls «casa-playa-1/2» tinted pastel, and the tiled roof with its balcony «teja-playa» at the house's height.
+  k.prop(h>5?'casa-playa-2':'casa-playa-1',p.x,p.y,p.z,Y,1,c=>k.box('beach-house',0,h/2,0,8,h,7,wall,0,c),wall);
+  k.prop('teja-playa',p.x,p.y+h,p.z,Y,1,c=>{k.box('beach-roof',0,.4,0,9,.5,8,'#a8553a',0,c);k.box('balcony',0,-1.8,3.9,7.6,.15,1.4,'#8a5a3a',0,c);for(let i=0;i<5;i++)k.box('baluster',-3.6+i*1.8,-1.3,4.55,.12,.9,.12,'#f4f0e4',0,c);});
   if(r()<.3)k.label(['RANCHO EL TIBURÓN','SURF · TABLAS','MARISCOS DOÑA LUPE','HOSPEDAJE'][Math.floor(r()*4)],0,h-.6,3.55,5,.7,0,'#fff3d0','#2f6b8f',g);
  }}
  // Boats bobbing in the bay.

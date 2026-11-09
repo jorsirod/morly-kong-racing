@@ -1043,15 +1043,272 @@ def palmera_copa(seed=5):
     return _finish(B, root, 0.35, 3.0, 16)
 
 
+# --------------------------------------------------------------------------- casas (teñidas por instancia)
+
+def _window(parts, x, y, z, w=1.3, h=1.4, grille=False):
+    """Ventana hacia +z: vidrio hundido, marco, alféizar y, si se pide, verja de hierro."""
+    parts["glass"].append(gbox(w, h, 0.06, x, y, z + 0.02))
+    parts["frame"] += [gbox(w + 0.24, 0.12, 0.12, x, y + h / 2 + 0.06, z + 0.06), gbox(w + 0.34, 0.12, 0.22, x, y - h / 2 - 0.06, z + 0.1),
+                       gbox(0.12, h, 0.12, x - w / 2 - 0.06, y, z + 0.06), gbox(0.12, h, 0.12, x + w / 2 + 0.06, y, z + 0.06)]
+    if grille:
+        parts["iron"] += [gbox(0.05, h, 0.05, x - w / 2 + (i + 0.5) * w / 5, y, z + 0.16) for i in range(5)]
+        parts["iron"].append(gbox(w, 0.05, 0.05, x, y, z + 0.16))
+
+
+def casa_managua(floors, kind):
+    """Casa de barrio de Managua (10 × 8 m, el juego la estira a su ancho): paredes blancas que el juego tiñe del color
+    de cada casa, ventanas con marco, verjas abajo, puerta, cornisa y un aire acondicionado. Frente hacia +z."""
+    B, root = _begin(kind)
+    h = {1: 6.0, 2: 9.5, 3: 13.0}[floors]
+    M = dict(wall=L.mat("casa-wall", "#ffffff", 0.9), glass=L.mat("casa-glass", "#2f5d6e", 0.25),
+             frame=L.mat("casa-frame", "#f4f0e6", 0.7), iron=L.mat("casa-iron", "#2b2f33", 0.5),
+             door=L.mat("casa-door", "#7a5234", 0.8), ac=L.mat("casa-ac", "#d9dde0", 0.5))
+    P = {k: [] for k in M}
+    P["wall"] += [gbox(10, h, 8, 0, h / 2, 0), gbox(10.2, 0.35, 8.2, 0, h - 0.4, 0), gbox(10.1, 0.5, 8.1, 0, 0.25, 0)]
+    rows = int(h / 3.5 - 0.5) + 1
+    for f in range(rows):
+        y = 2 + f * 3.4
+        if y > h - 1:
+            continue
+        for i, x in enumerate((-3.3, 0.0, 3.3)):
+            if f == 0 and i == 1:
+                P["door"].append(gbox(1.2, 2.3, 0.08, x, 1.15, 4.03))
+                P["frame"].append(gbox(1.5, 0.15, 0.14, x, 2.38, 4.06))
+                continue
+            _window(P, x, y, 4.0, grille=f == 0)
+    P["ac"] += [gbox(0.9, 0.55, 0.5, 3.3, 2 + 3.4 * min(1, rows - 1) - 1.1, 4.3)]
+    for k, bms in P.items():
+        if bms:
+            _part(B, root, M[k].name, bms, M[k], 20)
+    return _finish(B, root, 0.5, 2.0, 16)
+
+
+def casa_techo():
+    """Losa del techo de las casas de Managua con pretil; blanca, el juego la tiñe de teja o de lámina."""
+    B, root = _begin("casa-techo")
+    m = L.mat("casa-roof", "#ffffff", 0.85)
+    parts = [gbox(10.6, 0.35, 8.6, 0, 0.17, 0)]
+    for sx in (-1, 1):
+        parts.append(gbox(0.25, 0.6, 8.6, sx * 5.17, 0.6, 0))
+    for sz in (-1, 1):
+        parts.append(gbox(10.6, 0.6, 0.25, 0, 0.6, sz * 4.17))
+    parts.append(gbox(1.2, 1.0, 1.2, -3.2, 0.85, -2.0))  # tanque de agua
+    _part(B, root, "casa-roof", parts, m, 20)
+    return _finish(B, root, 0.5, 2.0, 16)
+
+
+def casa_playa(floors, kind):
+    """Casa de San Juan del Sur (8 × 7 m): paredes que el juego tiñe de pastel, ventanas con postigos, puerta.
+    El techo de teja y el balcón son otra pieza (teja-playa), igual para las dos alturas."""
+    B, root = _begin(kind)
+    h = 4.5 if floors == 1 else 7.9
+    M = dict(wall=L.mat("playa-wall", "#ffffff", 0.9), glass=L.mat("casa-glass", "#2f5d6e", 0.25),
+             frame=L.mat("casa-frame", "#f4f0e6", 0.7), iron=L.mat("playa-shutter", "#2f8fa0", 0.6),
+             door=L.mat("casa-door", "#7a5234", 0.8))
+    P = {k: [] for k in M}
+    P["wall"] += [gbox(8, h, 7, 0, h / 2, 0), gbox(8.1, 0.45, 7.1, 0, 0.22, 0)]
+    P["door"].append(gbox(1.2, 2.3, 0.08, -2.2, 1.15, 3.53))
+    for x in (0.4, 2.6):
+        _window(P, x, 1.7, 3.5, 1.1, 1.3)
+        P["iron"] += [gbox(0.55, 1.4, 0.06, x - 0.9, 1.7, 3.6), gbox(0.55, 1.4, 0.06, x + 0.9, 1.7, 3.6)]
+    if floors == 2:
+        for x in (-2.2, 0.4, 2.6):  # puertas al balcón
+            P["glass"].append(gbox(1.0, 2.0, 0.06, x, h - 2.6 + 1.05, 3.52))
+            P["frame"].append(gbox(1.2, 0.12, 0.12, x, h - 2.6 + 2.1, 3.56))
+    for k, bms in P.items():
+        if bms:
+            _part(B, root, M[k].name, bms, M[k], 20)
+    return _finish(B, root, 0.5, 2.0, 16)
+
+
+def teja_playa():
+    """Techo de teja a dos aguas de las casas de playa, con el balcón de madera y su baranda blanca 1,8 m más abajo
+    (el juego lo pone a la altura de cada casa)."""
+    B, root = _begin("teja-playa")
+    roof = L.mat("playa-roof", "#a8553a", 0.85, double=True)
+    wood = L.mat("playa-wood", "#8a5a3a", 0.8)
+    white = L.mat("playa-rail", "#f4f0e4", 0.6)
+    _part(B, root, "playa-roof", [tile_roof(9.0, 4.1, -4.1, 0.1, 1.9, period=0.38), gbox(8.2, 0.25, 7.2, 0, 0.1, 0)], roof, 30)
+    _part(B, root, "playa-wood", [gbox(7.6, 0.18, 1.5, 0, -1.8, 4.2), gbox(7.8, 0.22, 0.1, 0, 0.05, 4.1)] +
+          [gbox(0.14, 1.8, 0.14, x, -0.9, 4.85) for x in (-3.7, 3.7)], wood, 20)
+    _part(B, root, "playa-rail", [gbox(7.5, 0.1, 0.1, 0, -0.85, 4.85)] + [gbox(0.07, 0.8, 0.07, -3.5 + i * 0.5, -1.3, 4.85) for i in range(15)],
+          white, 20)
+    return _finish(B, root, 0.5, 2.0, 16)
+
+
+# --------------------------------------------------------------------------- Managua: Palacio y Concha
+
+def palacio():
+    """Palacio Nacional de la Cultura: cuerpo neoclásico de dos pisos, pórtico central con frontón y seis columnas,
+    columnata a lo largo de la fachada, cornisa y balaustrada. En el marco del código: la fachada mira hacia −z."""
+    B, root = _begin("palacio")
+    body = L.mat("pal-body", "#ead9b4", 0.85)
+    trim = L.mat("pal-trim", "#f5ecd6", 0.7)
+    cornice = L.mat("pal-cornice", "#d9c49a", 0.8)
+    dark = L.mat("pal-dark", "#3c4a55", 0.6)
+    P = dict(body=[gbox(40, 12, 18, 0, 6, 0), gbox(12, 13.5, 3, 0, 6.75, -9.6)], trim=[], cornice=[], dark=[])
+    P["cornice"] += [gbox(42, 1, 19, 0, 12.4, 0), gbox(41, 0.4, 18.6, 0, 6.2, 0), gbox(41, 0.6, 18.6, 0, 0.3, 0)]
+    for i in range(10):  # columnata del frente
+        x = -16 + i * 3.55
+        if abs(x) < 5.5:
+            continue
+        P["trim"] += [prism(0.45, 10, 0.6, seg=10, center=(x, -9.6)), gbox(1.1, 0.4, 1.1, x, 10.8, -9.6), gbox(1.1, 0.5, 1.1, x, 0.35, -9.6)]
+    P["trim"].append(gbox(40, 0.8, 1.4, 0, 11.4, -9.6))
+    for i in range(6):  # pórtico
+        x = -5 + i * 2
+        P["trim"] += [prism(0.55, 11.5, 0.6, seg=12, center=(x, -12.0)), gbox(1.3, 0.45, 1.3, x, 12.3, -12.0), gbox(1.3, 0.5, 1.3, x, 0.35, -12.0)]
+    P["trim"] += [gbox(13, 1.0, 3.4, 0, 13.0, -11.4)]
+    bm = bmesh.new()
+    pts = [Vector((-6.5, 13.5, -13.1)), Vector((6.5, 13.5, -13.1)), Vector((0, 16.6, -13.1)),
+           Vector((-6.5, 13.5, -9.7)), Vector((6.5, 13.5, -9.7)), Vector((0, 16.6, -9.7))]
+    v = [gv(bm, p) for p in pts]
+    bm.faces.new((v[0], v[1], v[2]))
+    bm.faces.new((v[5], v[4], v[3]))
+    bm.faces.new((v[1], v[4], v[5], v[2]))
+    bm.faces.new((v[0], v[2], v[5], v[3]))
+    bmesh.ops.recalc_face_normals(bm, faces=bm.faces)
+    P["cornice"].append(bm)
+    P["trim"] += [gbox(14, 0.4, 5, 0, 0.2, -13.2), gbox(13, 0.4, 3, 0, 0.6, -13.5)]
+    # Balaustrada sobre la cornisa.
+    for i in range(41):
+        x = -20 + i
+        P["trim"] += [gbox(0.18, 0.8, 0.18, x, 13.3, -9.3), gbox(0.18, 0.8, 0.18, x, 13.3, 9.3)]
+    P["trim"] += [gbox(40.5, 0.18, 0.35, 0, 13.8, -9.3), gbox(40.5, 0.18, 0.35, 0, 13.8, 9.3)]
+    for f, y in enumerate((3.2, 8.8)):  # ventanas de los dos pisos, frente y fondo
+        for i in range(12):
+            x = -18 + i * 3.27
+            if abs(x) < 6.5:
+                continue
+            for z, d in ((-9.03, 1), (9.03, -1)):
+                P["dark"].append(arch_window(1.3, 2.6, x, y - 1.3, z, depth=0.08) if d < 0 else gbox(1.3, 2.4, 0.08, x, y, z))
+    P["dark"] += [arch_window(2.4, 4.6, 0, 0.8, -11.12, depth=0.1), arch_window(1.8, 3.4, -3.5, 0.8, -11.12), arch_window(1.8, 3.4, 3.5, 0.8, -11.12)]
+    for k, m in (("body", body), ("trim", trim), ("cornice", cornice), ("dark", dark)):
+        _part(B, root, m.name, P[k], m, 25)
+    return _finish(B, root, 0.5, 5.0, 16)
+
+
+def concha():
+    """Concha Acústica del malecón: escenario y cinco arcos blancos escalonados que forman la concha, abierta hacia +z
+    (el público). En el marco del código."""
+    B, root = _begin("concha")
+    white = L.mat("concha-white", "#fbf8ef", 0.6, double=True)
+    stage = L.mat("concha-stage", "#e7e1d1", 0.85)
+    bands = []
+    for i in range(5):
+        R = 9.5 - i * 1.15
+        z0 = 2.5 - i * 1.25
+        n = 18
+        bm = bmesh.new()
+        rings = []
+        for j in range(n + 1):
+            a = math.pi * j / n
+            outer = [Vector((R * math.cos(a), 1.2 + R * math.sin(a), z0)), Vector((R * math.cos(a), 1.2 + R * math.sin(a), z0 - 1.5)),
+                     Vector(((R - 0.4) * math.cos(a), 1.2 + (R - 0.4) * math.sin(a), z0 - 1.5)), Vector(((R - 0.4) * math.cos(a), 1.2 + (R - 0.4) * math.sin(a), z0))]
+            rings.append([gv(bm, p) for p in outer])
+        for a_, b_ in zip(rings, rings[1:]):
+            for k in range(4):
+                bm.faces.new((a_[k], a_[(k + 1) % 4], b_[(k + 1) % 4], b_[k]))
+        bm.faces.new(list(reversed(rings[0])))
+        bm.faces.new(rings[-1])
+        bmesh.ops.recalc_face_normals(bm, faces=bm.faces)
+        bands.append(bm)
+    bands.append(arch_window(9.2, 5.8, 0, 0, -3.9, seg=12, depth=0.3))  # fondo en arco, dentro del último aro
+    _part(B, root, "concha-white", bands, white, 35)
+    _part(B, root, "concha-stage", [gbox(16, 1.2, 8, 0, 0.6, 0), gbox(6, 0.3, 1.2, 0, 0.15, 4.6), gbox(5, 0.3, 0.8, 0, 0.45, 4.3)], stage, 20)
+    return _finish(B, root, 0.5, 4.0, 16)
+
+
+# --------------------------------------------------------------------------- La Salle: cafetería y bar
+
+def cafeteria():
+    """Cafetería junto a la pista (frente hacia +z, la calle): cuerpo, techo de teja, mostrador, toldo a rayas verde y
+    blanco, tablero del rótulo, frascos de dulces y mesas con bancos. La señora y los rótulos los pone el juego."""
+    B, root, M, P = _begin_parts("cafeteria")
+    green = L.mat("cafe-green", "#2f7a4e", 0.6)
+    white = L.mat("cafe-white", "#f6efe1", 0.7)
+    jar = {c: L.mat("cafe-jar-" + c[1:], c, 0.3) for c in ("#f2c14e", "#d23b3b", "#fff4e0", "#7cc36b")}
+    P["wall"].append(gbox(16, 4, 6, 0, 2, -2))
+    P["roof"].append(tile_roof(17.5, 3.2, -5.4, 4.0, 5.3, z_ridge=-1.2, period=0.4))
+    P["wood"] += [gbox(14, 1.2, 1.2, 0, 0.6, 1.4)]
+    P["cream"] += [gbox(14.4, 0.12, 1.5, 0, 1.25, 1.4), gbox(9.4, 1.9, 0.15, 0, 5.3, 3.0)]
+    stripes_g, stripes_w = [], []
+    for i in range(9):
+        sl = gbox(1.8, 0.12, 3.0, -7.2 + i * 1.8, 3.75, 2.6)
+        bmesh.ops.rotate(sl, verts=sl.verts, cent=G(0, 3.75, 2.6), matrix=Matrix.Rotation(-0.18, 3, "X"))
+        (stripes_w if i % 2 else stripes_g).append(sl)
+    P["trim"] += [gbox(0.15, 3.0, 0.15, x, 2.1, 3.9) for x in (-7.8, 7.8)]
+    jars = {c: [] for c in jar}
+    for i, c in enumerate(jar):
+        jars[c].append(prism(0.35, 0.6, 1.31, seg=10, center=(-5 + i * 1.4, 1.4)))
+    tables = []
+    for i in range(3):
+        tx = -5 + i * 5
+        tables += [prism(1.0, 0.12, 0.7, seg=12, center=(tx, -7.5)), prism(0.08, 0.7, 0, seg=6, center=(tx, -7.5)),
+                   gbox(2.2, 0.12, 0.45, tx, 0.45, -8.7), gbox(2.2, 0.12, 0.45, tx, 0.45, -6.3)]
+    P["wood"] += tables
+    _part(B, root, "cafe-green", stripes_g, green, 20)
+    _part(B, root, "cafe-white", stripes_w, white, 20)
+    for c, bms in jars.items():
+        _part(B, root, jar[c].name, bms, jar[c], 30)
+    _flush(B, root, M, P)
+    return _finish(B, root, 0.5, 2.5, 16)
+
+
+def bar_lasalle():
+    """«El bar» junto a las canchas, en el marco del código (el mostrador mira hacia −z): kiosko amarillo, techo de
+    teja, mostrador, toldo rojo y blanco, repisa con gaseosas y cinco mesas con sombrilla y bancos."""
+    B, root, M, P = _begin_parts("bar-lasalle")
+    yellow = L.mat("bar-yellow", "#f0c95a", 0.8)
+    red = L.mat("bar-red", "#c8432f", 0.6)
+    white = L.mat("bar-white", "#f6efe1", 0.7)
+    green = L.mat("bar-green", "#2f7a4e", 0.6)
+    _part(B, root, "bar-yellow", gbox(22, 3.6, 7, 0, 1.8, 0), yellow, 20)
+    P["roof"].append(tile_roof(23, 4.4, -4.4, 3.7, 5.0, period=0.4))
+    P["wood"] += [gbox(22, 1.0, 1.2, 0, 1.15, -3.9)]
+    P["cream"] += [gbox(8.4, 2.0, 0.2, 0, 5.4, -3.5)]
+    reds, whites = [], []
+    for i in range(16):
+        sl = gbox(1.5, 0.12, 4.0, -11.25 + i * 1.5, 3.9, -4.7)
+        bmesh.ops.rotate(sl, verts=sl.verts, cent=G(0, 3.9, -4.7), matrix=Matrix.Rotation(0.15, 3, "X"))
+        (whites if i % 2 else reds).append(sl)
+    umb_r, umb_g, legs = [], [], []
+    for i in range(5):
+        tx = -9 + i * 4.5
+        legs += [prism(0.8, 0.1, 0.72, seg=12, center=(tx, -9)), prism(0.07, 0.75, 0, seg=6, center=(tx, -9)),
+                 prism(0.05, 3.0, 0, seg=6, center=(tx, -9))]
+        legs += [prism(0.3, 0.1, 0.45, seg=8, center=(tx + sx * 1.2, -9)) for sx in (-1, 1)]
+        u = prism(1.8, 0.5, 2.85, seg=8, radius_top=0.1, center=(tx, -9))
+        (umb_g if i % 2 else umb_r).append(u)
+    P["wood"] += legs
+    _part(B, root, "bar-red", reds + umb_r, red, 20)
+    _part(B, root, "bar-white", whites, white, 20)
+    _part(B, root, "bar-green", umb_g, green, 20)
+    cans = {c: [] for c in ("#d23b3b", "#2e8b57", "#f2c14e", "#3a6db5", "#ffffff", "#7a3d9b")}
+    for i, c in enumerate(cans):
+        cans[c].append(prism(0.22, 0.8, 1.55, seg=8, center=(-8 + i * 3.2, -4.1)))
+    for c, bms in cans.items():
+        m = L.mat("bar-can-" + c[1:], c, 0.4)
+        _part(B, root, m.name, bms, m, 30)
+    _flush(B, root, M, P)
+    return _finish(B, root, 0.5, 2.5, 16)
+
+
 VEGETATION = {"palm": palm, "mango": mango, "malinche": malinche, "ceiba": ceiba, "pine": pine, "bush": bush,
               "rock": rock}
 LANDMARKS = {"cristo": cristo, "catedral": catedral, "arbol-vida": arbol_vida, "chinamo": chinamo, "lona": lona,
              "volcano": volcano, "aula-pb": aula_pb, "aula-pa": aula_pa, "aula-techo": aula_techo, "capilla": capilla,
              "porton-lasalle": porton_lasalle, "bus-escolar": bus_escolar, "barra": barra,
-             "palmera-tronco": palmera_tronco, "palmera-copa": palmera_copa}
-FILES = {"vegetation": list(VEGETATION), "cristo": ["cristo"], "managua": ["catedral", "arbol-vida"],
+             "palmera-tronco": palmera_tronco, "palmera-copa": palmera_copa,
+             "casa-m1": lambda: casa_managua(1, "casa-m1"), "casa-m2": lambda: casa_managua(2, "casa-m2"),
+             "casa-m3": lambda: casa_managua(3, "casa-m3"), "casa-techo": casa_techo,
+             "casa-playa-1": lambda: casa_playa(1, "casa-playa-1"), "casa-playa-2": lambda: casa_playa(2, "casa-playa-2"),
+             "teja-playa": teja_playa, "palacio": palacio, "concha": concha, "cafeteria": cafeteria,
+             "bar-lasalle": bar_lasalle}
+FILES = {"vegetation": list(VEGETATION), "cristo": ["cristo"],
+         "managua": ["catedral", "arbol-vida", "palacio", "concha", "casa-m1", "casa-m2", "casa-m3", "casa-techo"],
          "oriental": ["chinamo", "lona"], "masaya": ["volcano"],
-         "lasalle": ["aula-pb", "aula-pa", "aula-techo", "capilla", "porton-lasalle", "bus-escolar"],
+         "lasalle": ["aula-pb", "aula-pa", "aula-techo", "capilla", "porton-lasalle", "bus-escolar", "cafeteria", "bar-lasalle"],
+         "sanjuan": ["casa-playa-1", "casa-playa-2", "teja-playa"],
          "hipa": ["barra", "palmera-tronco", "palmera-copa"]}
 
 
