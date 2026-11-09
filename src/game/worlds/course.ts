@@ -12,6 +12,7 @@ import { sample, sampleLane, type Route } from '../../../shared/track';
 import { rampHeight, type CRamp, type Lane } from '../../../shared/course';
 import { material, textLabel } from '../models';
 import { Kit, rng, surfaceTexture } from './kit';
+import { buildStunts } from './stunts';
 import '@babylonjs/core/Meshes/Builders/ribbonBuilder';
 
 /*
@@ -65,6 +66,7 @@ function frames(get:(d:number)=>Frame,from:number,to:number,step=2.5){const out:
 export function buildCourse(kit:Kit,route:Route,trackId:string,style:TrackStyle){
  const scene=kit.scene,root=kit.root,c=route.course,L=route.length,w=route.width,half=w/2,mainAt=(d:number)=>sample(route,d) as Frame;
  const gapsMain=c.gaps.filter(g=>g.lane==='').map(g=>[g.from,g.to] as [number,number]);
+ buildStunts(kit,route,trackId==='hipa-hipa');
  const roadMat=surfaceTexture(scene,'asphalt',style.road),roughMat=surfaceTexture(scene,'dirt',style.rough);
  const rt=roadMat.diffuseTexture as Texture|null;if(rt){rt.vScale=1.2;}
  // ── Main road, broken at the gaps ──

@@ -23,6 +23,7 @@ import type {GameState,PlayerState} from '../../shared/types';
 import {buildVehicle,buildCharacter,buildProjectile,addVehicleDecals,material,cylinder,sphere,box,textLabel,aimArm,pilotArms,type VehicleModel} from './models';
 import {buildWorld} from './world';
 import {INTRO} from '../../shared/simulation';
+import {stuntAt,stuntPose} from '../../shared/stunts';
 import {RaceEffects} from './effects';
 import {AttackView} from './attacks';
 import {grade,lightColors,lookFor,skyDome} from './look';
@@ -70,6 +71,7 @@ export class RaceRenderer{
  private lastEvent=0;private guests:{node:TransformNode;until:number;owner:string;born:number;moon?:boolean}[]=[];private frames=0;private seconds=0;private slowWindows=0;private auto:boolean;
  private cam={ready:false,yaw:0,antic:0,lift:0,groundY:0,pos:new Vector3(),look:new Vector3(),dip:0,cast:-9,fallPos:null as Vector3|null,air:0};
  /** Screen overlays the HUD draws (bird splats, warnings). */ screen:ScreenFx={splats:[],birdWarn:0,inTunnel:false};
+ private camUp=new Vector3(0,1,0);
  private tunnelLight:PointLight|null=null;private baseFog={start:220,end:560,color:new Color3(.73,.91,.99)};
  constructor(canvas:HTMLCanvasElement,state:GameState){
   this.engine=new Engine(canvas,true,{powerPreference:'high-performance',stencil:true,preserveDrawingBuffer:false},false);
@@ -155,9 +157,12 @@ export class RaceRenderer{
   for(let pass=0;pass<3;pass++)for(let i=0;i<poses.length;i++)for(let j=i+1;j<poses.length;j++)resolveVehicleCollision(poses[i],poses[j]);
   const lodDistance=QUALITY[this.quality].lod;
   for(const p of poses){let c=this.cars.get(p.id);if(!c||c.vehicleId!==p.vehicleId||c.characterId!==p.characterId){if(c){c.model.root.dispose();c.shadow.dispose();c.label?.remove();}c=this.actor(p,id);this.cars.set(p.id,c);}
-   const root=c.model.root;root.position.set(p.x,p.y,p.z);root.rotation.y=p.yaw;const distance=me?Math.hypot(p.x-me.x,p.z-me.z):0;root.setEnabled(distance<170);const full=distance<lodDistance||p.id===id;c.model.body.setEnabled(full);c.lod.setEnabled(!full);
+   const root=c.model.root;root.position.set(p.x,p.y,p.z);root.rotation.set(0,p.yaw,0);
+   // Loops, corkscrews and tubes: the car is drawn on the 3D stunt path for its distance along the lap.
+   const stunt=!this.arena&&p.fall<=0?stuntAt(routeFor(state.trackId),p.progress):undefined;
+   if(stunt){const ps=stuntPose(routeFor(state.trackId),stunt,p.progress);root.position.set(ps.x,ps.y,ps.z);root.rotation.set(-ps.pitch,ps.yaw,ps.roll);}const distance=me?Math.hypot(p.x-me.x,p.z-me.z):0;root.setEnabled(distance<170);const full=distance<lodDistance||p.id===id;c.model.body.setEnabled(full);c.lod.setEnabled(!full);
    if(full){this.animate(c,p,state,dt,p.id===id);const decals=c.decals??(c.decals=c.model.body.getChildTransformNodes(true).find(n=>n.name==='decals')??null);decals?.setEnabled(distance<30||p.id===id);}
-   const ground=this.arena?0:sample(routeFor(state.trackId),p.progress).y;c.shadow.setEnabled(p.fall<=0&&p.y>ground-1);c.shadow.position.set(p.x,ground+.075,p.z);c.shadow.rotation.y=p.yaw+c.driftYaw;c.shadow.scaling.x=1/(1+Math.max(0,p.y-ground)*.16);c.shadow.scaling.z=1.8*c.shadow.scaling.x;
+   const ground=this.arena?0:sample(routeFor(state.trackId),p.progress).y;c.shadow.setEnabled(p.fall<=0&&p.y>ground-1&&!stunt);c.shadow.position.set(p.x,ground+.075,p.z);c.shadow.rotation.y=p.yaw+c.driftYaw;c.shadow.scaling.x=1/(1+Math.max(0,p.y-ground)*.16);c.shadow.scaling.z=1.8*c.shadow.scaling.x;
   }
   for(const pick of state.pickups){let node=this.boxes.get(pick.id);if(!node||node.metadata?.kind!==pick.kind){node?.dispose();node=pick.kind===1?this.itemBox():pick.kind===2?this.quesillo():this.chargeBox();node.metadata={kind:pick.kind};this.boxes.set(pick.id,node);}
    if(pick.kind===2){this.placeTreat(node,pick,state.time);continue;}
@@ -393,8 +398,21 @@ export class RaceRenderer{
   }
   else if(!this.cam.ready||this.cam.fallPos){this.cam.fallPos=null;this.cam.pos.copyFrom(desired);this.cam.look.copyFrom(look);this.cam.ready=true;this.cam.groundY=root.position.y;}
   else{Vector3.LerpToRef(this.cam.pos,desired,k(13),this.cam.pos);Vector3.LerpToRef(this.cam.look,look,k(16),this.cam.look);}
-  this.camera.position.copyFrom(this.cam.pos);this.camera.setTarget(this.cam.look);
-  this.camera.rotation.z=this.reduced?0:-me.turnRate*.01-me.driftDir*.018+Math.sin(state.tick)*shake*.12;
+  // Through a stunt the camera rides behind the car in its own frame (up included), so the loop turns the world over.
+  const stunt=!this.arena&&me.fall<=0&&state.phase==='running'?stuntAt(routeFor(state.trackId),me.progress):undefined;
+  if(stunt){const r=routeFor(state.trackId),ps=stuntPose(r,stunt,me.progress),back=stuntPose(r,stunt,me.progress-7),f=new Vector3(...ps.fwd),u=new Vector3(...ps.up),pos=new Vector3(ps.x,ps.y,ps.z);
+   // The camera trails along the stunt path itself (7 m behind, lifted off that point's surface), so it stays inside
+   // the loop or tube instead of cutting through the track.
+   const camAt=new Vector3(back.x,back.y,back.z).add(new Vector3(...back.up).scale(2.6));
+   Vector3.LerpToRef(this.cam.pos,camAt,k(14),this.cam.pos);Vector3.LerpToRef(this.cam.look,pos.add(f.scale(5)).add(u.scale(.9)),k(18),this.cam.look);
+   Vector3.LerpToRef(this.camUp,u,k(9),this.camUp);this.cam.groundY=ps.y;}
+  else Vector3.LerpToRef(this.camUp,Vector3.Up(),k(6),this.camUp);
+  this.camUp.normalize();
+  this.camera.position.copyFrom(this.cam.pos);
+  const tilted=stunt||this.camUp.y<.997;
+  if(tilted){const dir=this.cam.look.subtract(this.cam.pos);if(dir.lengthSquared()>1e-4){dir.normalize();this.camera.rotationQuaternion=Quaternion.FromLookDirectionRH(dir,this.camUp);}}
+  else{if(this.camera.rotationQuaternion){this.camera.rotationQuaternion=null;this.camUp.set(0,1,0);}this.camera.setTarget(this.cam.look);}
+  if(!tilted)this.camera.rotation.z=this.reduced?0:-me.turnRate*.01-me.driftDir*.018+Math.sin(state.tick)*shake*.12;
   const fov=.9+Math.max(0,Math.min(1,(speed-10)/12))*.06+(boost?me.boostLevel>=4?.13:.08:0)+this.cam.air*.05+cine*.06;this.camera.fov=lerp(this.camera.fov,fov,k(boost?7:3));
   this.sun.position.set(me.x-35,me.y+60,me.z-40);
  }

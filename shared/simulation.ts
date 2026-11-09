@@ -3,6 +3,7 @@ import { resolveVehicleCollision, vehicleDynamics, vehicleVelocity } from './dyn
 import { character, vehicle, TRACKS } from './content';
 import { angle, clamp, closest, laneOpen, lerp, routeFor, sample, sampleLane, type RoadPoint, type Route } from './track';
 import { rampHeight, type CRamp } from './course';
+import { STUNT, stuntRail } from './stunts';
 import { BONG, ITEMS, hash01, rollItem, type ItemId } from './items';
 import { EMPTY_INPUT, FIXED_DT, type AttackDefinition, type GameState, type Mode, type PlayerInput, type PlayerState, type Shot } from './types';
 
@@ -177,13 +178,21 @@ export function stepPlayer(p:PlayerState,input:PlayerInput,route:Route,mode:Mode
   p.y=0;p.vy=0;p.air=0;p.gvy=0;
  } else {
   const n=closest(route,p.x,p.z,{y:p.y,hint:p.progress,lap:p.lap}),edge=openEdge(route,n),side=n.offset>=0?1:-1,open=edge.side===2||edge.side===side;
+  // Stunts (loops, corkscrews, tubes): the car rides a centred rail with a minimum speed, so everybody makes it round.
+  // The renderer draws it on the 3D stunt path (shared/stunts.ts).
+  const rail=n.lane===''&&p.fall<=0?stuntRail(route,n.progress):undefined;
+  if(rail){
+   const c=sample(route,n.progress),k=Math.exp(-6*dt);p.x=c.x+(p.x-c.x)*k;p.z=c.z+(p.z-c.z)*k;p.yaw=c.yaw;
+   p.speed=Math.max(p.speed,STUNT.minSpeed);p.lateralSpeed=0;p.turnRate=0;p.yawKick=0;p.pushX=0;p.pushZ=0;p.driftDir=0;p.driftCharge=0;
+   p.vy=0;p.air=0;p.gvy=0;p.y=groundAt(route,n)??c.y;if(p.boost<.3){p.boost=.3;p.boostLevel=Math.max(p.boostLevel,2);}p.immune=Math.max(p.immune,.2);
+  }
   // The barrier's inner face sits at WALL.face of the width. The car's own extent toward the wall (its half width
   // side-on, up to its half length nose-first) decides how close its centre can get: bodies never sink into walls.
   const rel=angle(p.yaw-n.yaw),reach=dynamics.halfWidth*Math.abs(Math.cos(rel))+dynamics.halfLength*Math.abs(Math.sin(rel))*.85;
   const limit=n.width*WALL.face-WALL.inset-reach,soft=limit-WALL.soft;
   // Where a lane forks off or merges, being inside the other road means there is no wall between them.
   const fork=n.distance>soft&&insideOtherRoad(route,p,n,reach);
-  if(!open&&!fork&&n.distance>soft&&n.distance<Math.max(route.width,n.width)*2.5){
+  if(!rail&&!open&&!fork&&n.distance>soft&&n.distance<Math.max(route.width,n.width)*2.5){
    const nx=(p.x-n.x)/n.distance,nz=(p.z-n.z)/n.distance,penetration=n.distance-soft,velocity=vehicleVelocity(p),outward=velocity.x*nx+velocity.z*nz;
    // A forgiving cushion catches the tail before the wall instead of teleporting or killing all speed.
    const response=(penetration*7+Math.max(0,outward)*3)*dt;

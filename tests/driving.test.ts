@@ -34,11 +34,11 @@ describe('conducción arcade',()=>{
  it('se recupera rápido tras un aturdimiento',()=>{
   const p=car('p','silver-surfer');p.speed=20;p.stun=.45;steps(p,.5,{});expect(p.recover).toBeGreaterThan(.9);steps(p,1.4,{});expect(p.speed).toBeGreaterThan(17);
  });
- it('la ayuda del borde endereza sin bloquear y nadie sale con ayuda en manos libres',()=>{
-  const route=routeFor('la-salle'),q=sample(route,200),p=car('p','silver-surfer');p.x=q.x+Math.cos(q.yaw)*(route.width*.5-2.5);p.z=q.z-Math.sin(q.yaw)*(route.width*.5-2.5);p.yaw=q.yaw+.15;p.speed=20;p.progress=200;
+ it('la ayuda del borde endereza sin bloquear y nadie sale con ayuda en manos libres',()=>{ // (300 m: lejos del loop de La Salle, donde el riel centra el carro)
+  const route=routeFor('la-salle'),q=sample(route,300),p=car('p','silver-surfer');p.x=q.x+Math.cos(q.yaw)*(route.width*.5-2.5);p.z=q.z-Math.sin(q.yaw)*(route.width*.5-2.5);p.yaw=q.yaw+.15;p.speed=20;p.progress=300;
   let worst=0;for(let i=0;i<90;i++){stepPlayer(p,{...EMPTY_INPUT,assist:true},route,'race');worst=Math.max(worst,Math.abs(roadFrame(route,p).offset));}expect(worst).toBeLessThan(route.width*.5);
   // Without help the same car leaves the asphalt: the guard is what saved it.
-  const raw=car('r','silver-surfer');Object.assign(raw,{x:q.x+Math.cos(q.yaw)*(route.width*.5-2.5),z:q.z-Math.sin(q.yaw)*(route.width*.5-2.5),yaw:q.yaw+.15,speed:20,progress:200});let rawWorst=0;for(let i=0;i<90;i++){stepPlayer(raw,{...EMPTY_INPUT,assist:false},route,'race');rawWorst=Math.max(rawWorst,Math.abs(roadFrame(route,raw).offset));}expect(rawWorst).toBeGreaterThan(route.width*.5);
+  const raw=car('r','silver-surfer');Object.assign(raw,{x:q.x+Math.cos(q.yaw)*(route.width*.5-2.5),z:q.z-Math.sin(q.yaw)*(route.width*.5-2.5),yaw:q.yaw+.15,speed:20,progress:300});let rawWorst=0;for(let i=0;i<90;i++){stepPlayer(raw,{...EMPTY_INPUT,assist:false},route,'race');rawWorst=Math.max(rawWorst,Math.abs(roadFrame(route,raw).offset));}expect(rawWorst).toBeGreaterThan(route.width*.5);
  });
  it('salida perfecta con derrape justo antes del ¡DALE!; antes de tiempo no',()=>{
   const sim=new Simulation('race');const good=sim.addPlayer(car('a','silver-surfer')),early=sim.addPlayer(car('b','silver-surfer'));sim.start();

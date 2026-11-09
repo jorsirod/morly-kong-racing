@@ -18,6 +18,8 @@ export interface PadDef { at:number; offset?:number; width?:number; len?:number;
 export interface GapDef { from:number; to:number; kind:GapKind; lane?:string }
 export interface EdgeDef { from:number; to:number; side:-1|0|1; kind:GapKind|'cliff'; lane?:string }
 export interface AltDef { id:string; name:string; from:number; to:number; via:[number,number][]; width:number; rough?:boolean; laps?:number[]; lift?:number; sign?:string }
+/** Stunt on the main road: `loop` (vertical), `roll` (sideways corkscrew) or `tube` (all the way round inside a tube). */
+export interface StuntDef { kind:'loop'|'roll'|'tube'; at:number; len:number; radius?:number; dir?:1|-1; turns?:number }
 export interface RowDef { at:number; lane?:string }
 export interface TreatDef { at:number; offsets:number[]; kind:'quesillo'; /** Roadside the thrower stands on (-1 left, 1 right). */ side:-1|1; lane?:string }
 export interface CourseDef {
@@ -28,6 +30,7 @@ export interface CourseDef {
  /** Visual: cross streets where buses cross the course (fractions of the lap). */ crossings?:number[];
  /** Treats a character drops on the road (La Salle's quesillo): a small turbo for whoever grabs one. */ treats?:TreatDef[];
  rough?:[number,number][]; charges:RowDef[]; items:RowDef[];
+ /** Loops, corkscrews and tubes (fractions of the lap; `len` in metres). */ stunts?:StuntDef[];
 }
 
 export interface Lane { id:string; name:string; points:Point[]; dist:number[]; length:number; from:number; to:number; width:number; rough:boolean; laps:number[]|null; sign:string }
@@ -35,15 +38,17 @@ export interface CRamp { lane:string; at:number; len:number; height:number; lift
 export interface CPad { lane:string; at:number; len:number; offset:number; width:number; power:number; super:boolean; laps:number[]|null }
 export interface CGap { lane:string; from:number; to:number; kind:GapKind }
 export interface CEdge { lane:string; from:number; to:number; side:number; kind:string }
+export interface CStunt { kind:'loop'|'roll'|'tube'; from:number; to:number; radius:number; dir:1|-1; turns:number }
 export interface CTreat { lane:string; at:number; offsets:number[]; kind:string; side:number }
-export interface Course { ramps:CRamp[]; pads:CPad[]; gaps:CGap[]; edges:CEdge[]; bridges:[number,number][]; tunnels:[number,number][]; covered:[number,number][]; treats:CTreat[]; crossings:number[]; rough:[number,number][]; charges:{lane:string;at:number}[]; items:{lane:string;at:number}[]; elev:ElevDef[] }
+export interface Course { ramps:CRamp[]; pads:CPad[]; gaps:CGap[]; edges:CEdge[]; bridges:[number,number][]; tunnels:[number,number][]; covered:[number,number][]; treats:CTreat[]; crossings:number[]; rough:[number,number][]; charges:{lane:string;at:number}[]; stunts:CStunt[]; items:{lane:string;at:number}[]; elev:ElevDef[] }
 
 export const COURSES:Record<string,CourseDef>={
  // La Salle: túmulos, la loma del norte, las canchas (se abren en la 2.ª vuelta), el gran salto sobre la zanja, la
  // cafetería (la señora tira quesillos a la calle: turbo para quien lo agarre) y el atajo por la cancha de fútbol.
  'la-salle':{
+  stunts:[{kind:'loop',at:.205,len:40,dir:1}],
   elev:[{from:.598,to:.668,height:4.5,ramp:30},{from:.706,to:.80,height:4,ramp:26},{from:.17,to:.176,height:2.8,ramp:11},{from:.952,to:.958,height:2.8,ramp:11}],
-  ramps:[{at:.152,lift:3.2,height:.35,len:3},{at:.578,lift:4.2,height:.45,len:3.5},{at:.727,len:13,height:2.2,lift:8,minSpeed:19,big:true},{at:.905,lift:3.4,height:.36,len:3},{at:.085,lift:3,height:.3,len:3,offset:4,width:6},
+  ramps:[{at:.152,lift:3.2,height:.35,len:3},{at:.578,lift:4.2,height:.45,len:3.5},{at:.727,len:13,height:2.2,lift:10.0,minSpeed:19,big:true},{at:.905,lift:3.4,height:.36,len:3},{at:.085,lift:3,height:.3,len:3,offset:4,width:6},
    {lane:'canchas',at:.43,len:7,height:1,lift:5.2,minSpeed:15},{lane:'futbol',at:.52,len:5,height:.7,lift:4.6,minSpeed:14,width:6}],
   pads:[{at:.025,offset:-4,power:.8},{at:.372,offset:3.5,power:.9},{at:.708,power:1.5,super:true,width:10},{at:.89,offset:4,power:.8},{lane:'canchas',at:.32,power:1.2,super:true,width:5},{lane:'futbol',at:.38,power:1.2,super:true,width:5}],
   gaps:[{from:.7395,to:.7555,kind:'mud'},{lane:'canchas',from:.48,to:.535,kind:'water'}],
@@ -54,9 +59,10 @@ export const COURSES:Record<string,CourseDef>={
  },
  // Mercado Oriental: calles angostas, peatones, el cauce y el callejón de los chinamos.
  oriental:{
+  stunts:[{kind:'roll',at:.253,len:50,dir:1}],
   elev:[{from:.548,to:.62,height:3.6,ramp:22},{from:.16,to:.166,height:2.8,ramp:11},{from:.34,to:.346,height:2.8,ramp:11}],
   rough:[[.30,.52]],
-  ramps:[{at:.205,lift:3,height:.3,len:3},{at:.432,lift:3.6,height:.35,len:3},{at:.566,len:11,height:2,lift:7.6,minSpeed:18.5,big:true},
+  ramps:[{at:.205,lift:3,height:.3,len:3},{at:.432,lift:3.6,height:.35,len:3},{at:.566,len:11,height:2,lift:9.5,minSpeed:18.5,big:true},
    {lane:'callejon',at:.52,len:5,height:.8,lift:4.4,minSpeed:14,width:6}],
   pads:[{at:.06,offset:3.5,power:.8},{at:.55,power:1.5,super:true,width:10},{at:.69,offset:-3.5,power:.9},{at:.9,offset:-3,power:.8},{lane:'callejon',at:.2,power:1,width:5}],
   gaps:[{from:.5775,to:.5915,kind:'mud'}],
@@ -66,8 +72,9 @@ export const COURSES:Record<string,CourseDef>={
  },
  // Managua: malecón, paso a desnivel (figura de ocho), Loma de Tiscapa y la calle rota.
  managua:{
+  stunts:[{kind:'tube',at:.1524,len:34,radius:4.2,dir:-1}], // ends before the overpass (s≈242)
   elev:[{from:.7763,to:.8487,height:4,ramp:24},{from:.24,to:.246,height:2.8,ramp:11}],
-  ramps:[{at:.0585,lift:3.2,height:.35,len:3},{at:.3291,lift:3.4,height:.35,len:3},{at:.8114,len:12,height:2.2,lift:8,minSpeed:19,big:true}],
+  ramps:[{at:.0585,lift:3.2,height:.35,len:3},{at:.3291,lift:3.4,height:.35,len:3},{at:.8114,len:12,height:2.2,lift:10.0,minSpeed:19,big:true}],
   pads:[{at:.0195,offset:-4.5,power:.9},{at:.2651,offset:4.5,power:.9},{at:.5505,power:1.1,width:10},{at:.7937,power:1.5,super:true,width:11},{at:.884,offset:-4.5,power:1,width:5},{at:.9303,offset:4.5,power:.8},{lane:'mirador',at:.25,power:1.2,width:5,super:true}],
   gaps:[{from:.8239,to:.8377,kind:'water'}],
   edges:[{lane:'mirador',from:.18,to:.86,side:1,kind:'water'}],
@@ -78,7 +85,8 @@ export const COURSES:Record<string,CourseDef>={
  // Hipa Hipa: pads al ritmo, el salto sobre la piscina VIP, la espiral de tres vueltas alrededor de la palmera gigante (cuatro
  // calles apiladas en su entrada), la bajada larga con brinco y el atajo por la barra.
  'hipa-hipa':{
-  ramps:[{at:.046,lift:3.2,height:.32,len:3},{at:.151,len:11,height:2,lift:7.6,minSpeed:18.5,big:true},{at:.254,lift:3.6,height:.35,len:3},
+  stunts:[{kind:'loop',at:.30,len:40,dir:-1,radius:9}],
+  ramps:[{at:.046,lift:3.2,height:.32,len:3},{at:.151,len:11,height:2,lift:9.5,minSpeed:18.5,big:true},{at:.254,lift:3.6,height:.35,len:3},
    {at:.775,lift:4.4,height:.5,len:4,minSpeed:16},{at:.81,lift:3.8,height:.4,len:3.5},{at:.955,lift:3.4,height:.35,len:3,offset:4,width:6},
    {lane:'barra',at:.5,len:4,height:.6,lift:4.4,minSpeed:14,width:6}],
   pads:[{at:.023,offset:3.5,power:.9},{at:.1406,power:1.5,super:true,width:10},{at:.223,offset:-4,power:.9},{at:.4,power:1,width:6,offset:-2},{at:.47,power:1,width:6,offset:2},{at:.54,power:1,width:6,offset:-2},{at:.61,power:1,width:6,offset:2},{at:.68,power:1,width:6,offset:-2},
@@ -94,7 +102,7 @@ export const COURSES:Record<string,CourseDef>={
   elev:[{from:.085,to:.095,height:2.8,ramp:11},{from:.284,to:.29,height:2.8,ramp:11},{from:.445,to:.452,height:2.6,ramp:12},{from:.855,to:.862,height:2.8,ramp:11}],
   rough:[[.12,.24],[.32,.58],[.78,.84]],
   ramps:[{at:.045,lift:3.2,height:.32,len:3,offset:-4,width:6},{at:.175,lift:3.6,height:.38,len:3},{at:.33,lift:3.8,height:.4,len:3.2,offset:4,width:6},{at:.398,lift:3.4,height:.35,len:3},{at:.52,lift:4,height:.45,len:3.5},
-   {at:.6205,len:4,height:.7,lift:4.6,minSpeed:15},{at:.656,len:4,height:.7,lift:4.6,minSpeed:15},{at:.716,len:13,height:2.4,lift:8.2,minSpeed:19.5,big:true},{at:.80,lift:3.6,height:.38,len:3},{at:.93,lift:3.4,height:.35,len:3,offset:4,width:6},
+   {at:.6205,len:4,height:.7,lift:4.6,minSpeed:15},{at:.656,len:4,height:.7,lift:4.6,minSpeed:15},{at:.716,len:13,height:2.4,lift:10.25,minSpeed:19.5,big:true},{at:.80,lift:3.6,height:.38,len:3},{at:.93,lift:3.4,height:.35,len:3,offset:4,width:6},
    {lane:'cresta',at:.47,len:4,height:.6,lift:4.2,minSpeed:14}],
   pads:[{at:.05,offset:4,power:.9},{at:.16,offset:-4,power:.9},{at:.3,offset:-4,power:.9},{at:.49,power:1,width:8},{at:.61,power:.8,width:8},{at:.70,power:1.6,super:true,width:12},{at:.78,offset:4,power:.9},{at:.9,offset:-4,power:.8},{lane:'cresta',at:.2,power:1,width:5}],
   gaps:[{from:.6245,to:.632,kind:'lava'},{from:.660,to:.6675,kind:'lava'},{from:.7275,to:.7495,kind:'lava'},{lane:'cresta',from:.53,to:.6,kind:'lava'}],
@@ -106,9 +114,10 @@ export const COURSES:Record<string,CourseDef>={
  // San Juan del Sur: malecón, pueblo, subida al Cristo, el salto de la quebrada, el puente y la playa: el salto del
  // estero junto al mar, rampas de arena entre las palmeras y la orilla con dunas.
  'san-juan':{
+  stunts:[{kind:'loop',at:.315,len:40,dir:1},{kind:'roll',at:.689,len:50,dir:-1}],
   elev:[{from:.585,to:.655,height:3.6,ramp:24},{from:.768,to:.812,height:2.6,ramp:16},{from:.22,to:.226,height:2.8,ramp:11},{from:.45,to:.456,height:2.8,ramp:11}],
   rough:[[.86,.9]],
-  ramps:[{at:.054,len:11,height:2,lift:7.4,minSpeed:18.5,big:true},{at:.12,lift:3,height:.3,len:3},{at:.37,lift:3.6,height:.4,len:3},{at:.613,len:12,height:2.2,lift:8,minSpeed:19,big:true},
+  ramps:[{at:.054,len:11,height:2,lift:9.25,minSpeed:18.5,big:true},{at:.12,lift:3,height:.3,len:3},{at:.37,lift:3.6,height:.4,len:3},{at:.613,len:12,height:2.2,lift:10.0,minSpeed:19,big:true},
    {at:.93,lift:3.6,height:.4,len:3.5,offset:-4,width:6},{at:.965,lift:3.6,height:.4,len:3.5,offset:4,width:6},
    {lane:'playa',at:.2,len:4,height:.6,lift:4.4,minSpeed:14,width:7},{lane:'playa',at:.38,len:4,height:.6,lift:4.4,minSpeed:14,width:7},{lane:'playa',at:.55,len:6,height:1,lift:5,minSpeed:16},{lane:'playa',at:.8,len:4,height:.7,lift:4.6,minSpeed:14,width:7}],
   pads:[{at:.03,offset:4,power:.8},{at:.042,power:1.5,super:true,width:10},{at:.25,offset:-4,power:.9},{at:.596,power:1.5,super:true,width:10},{at:.82,offset:3.5,power:.8},{lane:'playa',at:.1,power:1,width:5},{lane:'playa',at:.45,power:1.2,width:5,super:true}],
@@ -149,6 +158,7 @@ export function compileCourse(def:CourseDef|undefined,length:number,lanes:Lane[]
   gaps:(d.gaps??[]).map(g=>({lane:g.lane??'',from:m(g.lane,g.from),to:m(g.lane,g.to),kind:g.kind})),
   edges:(d.edges??[]).map(e=>({lane:e.lane??'',from:m(e.lane,e.from),to:m(e.lane,e.to),side:e.side,kind:e.kind})),
   bridges:(d.bridges??[]).map(([a,b])=>[a*length,b*length]),tunnels:(d.tunnels??[]).map(([a,b])=>[a*length,b*length]),covered:(d.covered??[]).map(([a,b])=>[a*length,b*length]),crossings:(d.crossings??[]).map(f=>f*length),treats:(d.treats??[]).map(t=>({lane:t.lane??'',at:m(t.lane,t.at),offsets:t.offsets,kind:t.kind,side:t.side})),rough:(d.rough??[]).map(([a,b])=>[a*length,b*length]),
+  stunts:(d.stunts??[]).map(st=>({kind:st.kind,from:st.at*length,to:st.at*length+st.len,radius:st.radius??(st.kind==='loop'?8:st.kind==='tube'?5:4.5),dir:st.dir??1,turns:st.turns??1})),
   charges:d.charges.map(r=>({lane:r.lane??'',at:m(r.lane,r.at)})),items:d.items.map(r=>({lane:r.lane??'',at:m(r.lane,r.at)})),elev:d.elev??[],
  };
 }
