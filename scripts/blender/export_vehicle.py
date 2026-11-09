@@ -158,6 +158,12 @@ def export_vehicle(vehicle_id, repo_root=None, out_path=None):
         export_extras=False,
         export_draco_mesh_compression_enable=False,
     )
+    # Oclusión ambiental horneada en el atributo «AO» (ver mklib.bake_ao): se exporta como COLOR_0
+    # y el juego la multiplica por el color base.
+    if any(o.type == "MESH" and "AO" in o.data.color_attributes for o in objects):
+        wanted.update(export_vertex_color="NAME", export_vertex_color_name="AO", export_all_vertex_colors=False)
+    else:
+        wanted.update(export_vertex_color="NONE")
     available = set(bpy.ops.export_scene.gltf.get_rna_type().properties.keys())
     try:
         result = bpy.ops.export_scene.gltf(**{k: v for k, v in wanted.items() if k in available})
