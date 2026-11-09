@@ -12,6 +12,7 @@ import { sample, sampleLane, type Route } from '../../../shared/track';
 import { rampHeight, type CRamp, type Lane } from '../../../shared/course';
 import { material, textLabel } from '../models';
 import { Kit, rng, surfaceTexture } from './kit';
+import { surfaceMaterial } from './textures';
 import { buildStunts } from './stunts';
 import '@babylonjs/core/Meshes/Builders/ribbonBuilder';
 
@@ -36,9 +37,9 @@ function canvasMaterial(scene:Scene,key:string,paint:(ctx:CanvasRenderingContext
 export const stripesMat=(scene:Scene,a='#ffd33d',b='#13234d')=>canvasMaterial(scene,'stripes'+a+b,(c,s)=>{c.fillStyle=b;c.fillRect(0,0,s,s);c.fillStyle=a;for(let i=-s;i<s*2;i+=s/2){c.beginPath();c.moveTo(i,0);c.lineTo(i+s/4,0);c.lineTo(i+s/4-s,s);c.lineTo(i-s,s);c.fill();}},{emissive:'#2a2410'});
 const chevronMat=(scene:Scene,color:string,glow:string)=>canvasMaterial(scene,'chevron'+color,(c,s)=>{c.fillStyle='rgba(10,20,50,.55)';c.fillRect(0,0,s,s);c.strokeStyle=color;c.lineWidth=s*.14;c.lineJoin='round';for(const y of [s*.3,s*.78]){c.beginPath();c.moveTo(s*.16,y);c.lineTo(s*.5,y-s*.24);c.lineTo(s*.84,y);c.stroke();}},{emissive:glow,alpha:true});
 const plankMat=(scene:Scene,base:string)=>canvasMaterial(scene,'planks'+base,(c,s)=>{const r=rng(base.length*31);c.fillStyle=base;c.fillRect(0,0,s,s);for(let i=0;i<8;i++){c.fillStyle=`rgba(${60+r()*40},${40+r()*25},20,${.18+r()*.2})`;c.fillRect(0,i*s/8,s,s/8-2);c.fillStyle='rgba(40,25,10,.6)';c.fillRect(0,i*s/8+s/8-2,s,2);c.fillRect(r()*s,i*s/8,2,s/8);}});
-export const lavaMat=(scene:Scene)=>canvasMaterial(scene,'lava',(c,s)=>{const r=rng(77);c.fillStyle='#ff6a1f';c.fillRect(0,0,s,s);for(let i=0;i<40;i++){c.fillStyle=r()<.5?'rgba(255,214,90,.75)':'rgba(140,30,10,.55)';c.beginPath();c.ellipse(r()*s,r()*s,4+r()*14,3+r()*8,r()*3,0,Math.PI*2);c.fill();}},{emissive:'#ff5a14'});
-export const waterMat=(scene:Scene,color='#3f9fc4')=>{const m=canvasMaterial(scene,'water'+color,(c,s)=>{const r=rng(5);c.fillStyle=color;c.fillRect(0,0,s,s);c.strokeStyle='rgba(255,255,255,.35)';c.lineWidth=2;for(let i=0;i<14;i++){const x=r()*s,y=r()*s;c.beginPath();c.moveTo(x,y);c.quadraticCurveTo(x+8,y-4,x+16,y);c.stroke();}},{emissive:'#0d3346'});m.alpha=.92;return m;};
-const mudMat=(scene:Scene)=>canvasMaterial(scene,'mud',(c,s)=>{const r=rng(9);c.fillStyle='#5c4630';c.fillRect(0,0,s,s);for(let i=0;i<50;i++){c.fillStyle=r()<.5?'rgba(40,28,16,.6)':'rgba(130,100,60,.4)';c.beginPath();c.ellipse(r()*s,r()*s,3+r()*10,2+r()*6,r()*3,0,Math.PI*2);c.fill();}});
+export const lavaMat=(scene:Scene,u=1,v=u)=>surfaceMaterial(scene,'lava','#ff6a1f',u,v);
+export const waterMat=(scene:Scene,color='#3f9fc4',u=1,v=u)=>surfaceMaterial(scene,'water',color,u,v);
+const mudMat=(scene:Scene,u=1,v=u)=>surfaceMaterial(scene,'mud','#5c4630',u,v);
 const courtMat=(scene:Scene)=>canvasMaterial(scene,'court',(c,s)=>{c.fillStyle='#d98852';c.fillRect(0,0,s,s);c.strokeStyle='#fff2ce';c.lineWidth=4;c.strokeRect(6,6,s-12,s-12);c.beginPath();c.moveTo(s/2,6);c.lineTo(s/2,s-6);c.stroke();c.beginPath();c.arc(s/2,s/2,s*.16,0,Math.PI*2);c.stroke();});
 const neonFloor=(scene:Scene)=>canvasMaterial(scene,'neonfloor',(c,s)=>{const cols=['#ff5fb0','#45e0ff','#ffd33d','#8bff6a'];for(let i=0;i<4;i++)for(let j=0;j<4;j++){c.fillStyle=cols[(i+j*3)%4];c.fillRect(i*s/4+2,j*s/4+2,s/4-4,s/4-4);}},{emissive:'#3a2a4a'});
 function laneSurface(scene:Scene,kind:TrackStyle['lane'][string]['kind'],color:string){
@@ -67,8 +68,8 @@ export function buildCourse(kit:Kit,route:Route,trackId:string,style:TrackStyle)
  const scene=kit.scene,root=kit.root,c=route.course,L=route.length,w=route.width,half=w/2,mainAt=(d:number)=>sample(route,d) as Frame;
  const gapsMain=c.gaps.filter(g=>g.lane==='').map(g=>[g.from,g.to] as [number,number]);
  buildStunts(kit,route,trackId==='hipa-hipa');
- const roadMat=surfaceTexture(scene,'asphalt',style.road),roughMat=surfaceTexture(scene,'dirt',style.rough);
- const rt=roadMat.diffuseTexture as Texture|null;if(rt){rt.vScale=1.2;}
+ const roadMat=surfaceTexture(scene,'asphalt',style.road,1,1.2),roughMat=surfaceTexture(scene,'dirt',style.rough);
+ 
  // ── Main road, broken at the gaps ──
  for(const [a,b] of ranges(L,gapsMain)){
   const f=frames(mainAt,a,b);strip(scene,root,'road',f.map(p=>at(p,-half,.035)),f.map(p=>at(p,half,.035)),roadMat);
@@ -99,7 +100,7 @@ export function buildCourse(kit:Kit,route:Route,trackId:string,style:TrackStyle)
   const floorY=Math.min(a.y,b.y)-(g.kind==='lava'||g.kind==='water'?Math.min(3.4,Math.max(1,Math.min(a.y,b.y)+.1)):Math.min(6,Math.max(1.2,Math.min(a.y,b.y)+.2)));
   const span=width+(g.lane?2:style.shelf*2),mid=get((g.from+g.to)/2),len=g.to-g.from+6;
   const floor=MeshBuilder.CreateGround('gap-floor',{width:span,height:len},scene);floor.parent=root;floor.position.set(mid.x,floorY,mid.z);floor.rotation.y=mid.yaw;floor.isPickable=false;
-  floor.material=g.kind==='lava'?lavaMat(scene):g.kind==='water'?waterMat(scene):mudMat(scene);
+  floor.material=g.kind==='lava'?lavaMat(scene,5):g.kind==='water'?waterMat(scene,'#3f9fc4',5):mudMat(scene,5);
   for(const [edge,dir] of [[a,1],[b,-1]] as const){const top=edge.y,h=Math.max(.6,top-floorY+.2);const face=kit.box('gap-cliff',edge.x-Math.sin(edge.yaw)*dir*.4,top-h/2,edge.z-Math.cos(edge.yaw)*dir*.4,span,h,.8,style.skirt==='rock'?'#4a403a':'#7b6248',edge.yaw);face.rotation.y=edge.yaw;face.material=surfaceTexture(scene,style.skirt==='rock'?'rock':'dirt',style.skirt==='rock'?'#6a5d55':'#a0805c');
    const warn=kit.box('gap-edge',edge.x-Math.sin(edge.yaw)*dir*.15,top+.04,edge.z-Math.cos(edge.yaw)*dir*.15,width,.08,.5,'#ffd33d',edge.yaw);warn.material=stripesMat(scene,'#ffd33d','#c8321f');
    // Broken asphalt chunks and rebar at the far lip read as «calle rota».

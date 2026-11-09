@@ -21,17 +21,19 @@ function neonMat(k:Kit,c:string){const name='club-neon-'+c,m=(k.scene.getMateria
 /** A bar: counter, glowing bottle shelf, neon name, stools, a bartender and people waiting for their drink. */
 function bar(k:Kit,x:number,y:number,z:number,yaw:number,name:string,color:string,seed:number){
  const g=new TransformNode('club-bar',k.scene);g.parent=k.root;g.position.set(x,y,z);g.rotation.y=yaw;const r=rng(seed);
- k.box('bar-floor',0,.06,1,20,.12,12,'#2a2440',0,g);
- k.box('bar-counter',0,.65,2.2,16,1.3,1.4,'#3a2a4a',0,g);const top=k.box('bar-counter-top',0,1.35,2.2,16.4,.12,1.7,color,0,g);top.material=neonMat(k,color);
- k.box('bar-back',0,2.6,-1.6,17,5.2,.6,'#1a1630',0,g);
- for(let row=0;row<3;row++){k.box('bar-shelf',0,1.6+row*1.1,-1.15,15,.1,.5,'#5a4a6a',0,g);for(let i=0;i<14;i++){const c=NEON[Math.floor(r()*NEON.length)];const b=k.cyl('bottle',-6.5+i,2.05+row*1.1,-1.15,.8,.28,c,.14,g);b.material=material(k.scene,c,true,.85);}}
- k.box('bar-roof',0,5.4,.8,20,.3,7.5,'#241c38',0,g);
- for(const s of [-1,1]){k.cyl('bar-pillar',s*9.4,2.7,4.2,5.4,.35,'#3a2a4a',.35,g);const strip=k.box('bar-neon-strip',s*9.4,2.7,4.45,.12,5.2,.12,color,0,g);strip.material=neonMat(k,color);}
+ // The structure, shelves, bottles, stools and bartender are the Blender model «barra»; the neon in the bar's colour
+ // (counter top, pillar strips, roof edge) stays here because it pulses with the music.
+ k.prop('barra',x,y,z,yaw,1,b=>{
+  k.box('bar-floor',0,.06,1,20,.12,12,'#2a2440',0,b);k.box('bar-counter',0,.65,2.2,16,1.3,1.4,'#3a2a4a',0,b);k.box('bar-back',0,2.6,-1.6,17,5.2,.6,'#1a1630',0,b);
+  for(let row=0;row<3;row++){k.box('bar-shelf',0,1.6+row*1.1,-1.15,15,.1,.5,'#5a4a6a',0,b);for(let i=0;i<14;i++){const c=NEON[Math.floor(r()*NEON.length)];const bt=k.cyl('bottle',-6.5+i,2.05+row*1.1,-1.15,.8,.28,c,.14,b);bt.material=material(k.scene,c,true,.85);}}
+  k.box('bar-roof',0,5.4,.8,20,.3,7.5,'#241c38',0,b);for(const s of [-1,1])k.cyl('bar-pillar',s*9.4,2.7,4.2,5.4,.35,'#3a2a4a',.35,b);
+  for(let i=0;i<7;i++){const sx=-6+i*2;k.cyl('stool-leg',sx,.45,3.6,.9,.12,'#9aa0b4',.12,b);k.cyl('stool-seat',sx,.95,3.6,.14,.75,NEON[i%NEON.length],.75,b);}
+  k.cyl('bartender-body',-2,1.35,.8,1.5,.8,'#11131a',.65,b);k.ball('bartender-head',-2,2.45,.8,.62,'#c48a64',undefined,b);k.box('bartender-bowtie',-2,2.05,1.2,.4,.14,.1,'#e53b35',0,b);
+ });
+ const top=k.box('bar-counter-top',0,1.35,2.2,16.4,.12,1.7,color,0,g);top.material=neonMat(k,color);
+ for(const s of [-1,1]){const strip=k.box('bar-neon-strip',s*9.4,2.7,4.45,.12,5.2,.12,color,0,g);strip.material=neonMat(k,color);}
  const edge=k.box('bar-roof-neon',0,5.25,4.55,20,.18,.12,color,0,g);edge.material=neonMat(k,color);
  k.label(name,0,6.4,4.5,12,1.6,0,'#ffffff',color,g);
- for(let i=0;i<7;i++){const sx=-6+i*2;k.cyl('stool-leg',sx,.45,3.6,.9,.12,'#9aa0b4',.12,g);k.cyl('stool-seat',sx,.95,3.6,.14,.75,NEON[i%NEON.length],.75,g);}
- // Bartender behind the counter.
- k.cyl('bartender-body',-2,1.35,.8,1.5,.8,'#11131a',.65,g);k.ball('bartender-head',-2,2.45,.8,.62,'#c48a64',undefined,g);k.box('bartender-bowtie',-2,2.05,1.2,.4,.14,.1,'#e53b35',0,g);
  k.crowd(x+Math.sin(yaw)*6.4,z+Math.cos(yaw)*6.4,yaw+Math.PI,8,y,1.2);
  return g;
 }
@@ -46,12 +48,17 @@ function giantPalm(k:Kit,beat:(t:number)=>number){
  k.anims.push({node:tiles,update:t=>{const b=beat(t),step=Math.floor(t*128/60)%5;tileMats.forEach((m,i)=>{m.emissiveColor=Color3.FromHexString(NEON[(i+step)%NEON.length]).scale(.28+b*.8);});}});
  // Trunk: stacked, slightly leaning segments with neon rings.
  const palm=new TransformNode('giant-palm',k.scene);palm.parent=k.root;palm.position.set(x,0,z);
- for(let i=0;i<11;i++){const seg=k.cyl('giant-palm-trunk',Math.sin(i*.3)*.25,1.6+i*3,0,3.2,3.8-i*.18,'#8a6a46',3.6-i*.18,palm);seg.rotation.z=.02;
+ // Trunk: Blender model «palmera-tronco» (fits inside the neon rings, which stay here and pulse with the music).
+ k.prop('palmera-tronco',x,0,z,0,1,t=>{for(let i=0;i<11;i++){const seg=k.cyl('giant-palm-trunk',Math.sin(i*.3)*.25,1.6+i*3,0,3.2,3.8-i*.18,'#8a6a46',3.6-i*.18,t);seg.rotation.z=.02;}});
+ for(let i=0;i<11;i++){
   if(i%2===0){const ring=MeshBuilder.CreateTorus('palm-ring',{diameter:4-i*.18,thickness:.22,tessellation:24},k.scene);ring.parent=palm;ring.position.set(Math.sin(i*.3)*.25,2.9+i*3,0);ring.material=neonMat(k,NEON[(i/2)%NEON.length]);ring.isPickable=false;}}
  const crown=new TransformNode('palm-crown',k.scene);crown.parent=palm;crown.position.set(.4,34,0);crown.metadata={animate:true};
- for(let i=0;i<11;i++){const a=i/11*Math.PI*2,leaf=k.ball('giant-frond',Math.sin(a)*6.5,-1.2,Math.cos(a)*6.5,11,i%2?'#3f9a4f':'#5cbf5a',new Vector3(.36,.1,1.55),crown);leaf.rotation.y=a;leaf.rotation.x=.42;
-  const tip=k.ball('frond-tip',Math.sin(a)*11.5,-4.2,Math.cos(a)*11.5,3.6,i%2?'#3f9a4f':'#5cbf5a',new Vector3(.4,.12,1.2),crown);tip.rotation.y=a;tip.rotation.x=.9;}
- for(let i=0;i<6;i++){const a=i/6*Math.PI*2,c=k.ball('glow-coconut',Math.sin(a)*1.3,-1.6,Math.cos(a)*1.3,1.1,'#ffd33d',undefined,crown);c.material=neonMat(k,'#ffd33d');}
+ // Fronds and glowing coconuts: Blender model «palmera-copa», hung from the swaying crown.
+ k.prop('palmera-copa',0,0,0,0,1,cp=>{
+ for(let i=0;i<11;i++){const a=i/11*Math.PI*2,leaf=k.ball('giant-frond',Math.sin(a)*6.5,-1.2,Math.cos(a)*6.5,11,i%2?'#3f9a4f':'#5cbf5a',new Vector3(.36,.1,1.55),cp);leaf.rotation.y=a;leaf.rotation.x=.42;
+  const tip=k.ball('frond-tip',Math.sin(a)*11.5,-4.2,Math.cos(a)*11.5,3.6,i%2?'#3f9a4f':'#5cbf5a',new Vector3(.4,.12,1.2),cp);tip.rotation.y=a;tip.rotation.x=.9;}
+ for(let i=0;i<6;i++){const a=i/6*Math.PI*2,c=k.ball('glow-coconut',Math.sin(a)*1.3,-1.6,Math.cos(a)*1.3,1.1,'#ffd33d',undefined,cp);c.material=neonMat(k,'#ffd33d');}
+ },undefined,crown);
  k.anims.push({node:crown,update:t=>{crown.rotation.y=Math.sin(t*.35)*.08;crown.rotation.z=Math.sin(t*.5)*.03;}});
  // Dancers in rings around the palm and a sign facing the entry of the spiral.
  for(const [rad,count] of [[7,10],[11,14],[15,18]] as const)for(let i=0;i<count;i+=Math.ceil(count/5)){const a=i/count*Math.PI*2+rad;k.crowd(x+Math.sin(a)*rad,z+Math.cos(a)*rad,a+Math.PI/2,3,0,1.1);}

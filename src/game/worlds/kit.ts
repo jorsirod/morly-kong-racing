@@ -1,3 +1,4 @@
+import { surfaceMaterial } from './textures';
 import { Color3 } from '@babylonjs/core/Maths/math.color';
 import { Vector3 } from '@babylonjs/core/Maths/math.vector';
 import { MeshBuilder } from '@babylonjs/core/Meshes/meshBuilder';
@@ -9,6 +10,7 @@ import { Texture } from '@babylonjs/core/Materials/Textures/texture';
 import type { Scene } from '@babylonjs/core/scene';
 import { sample, type Route } from '../../../shared/track';
 import { material, textLabel } from '../models';
+import type { PropSpot } from './props';
 import '@babylonjs/core/Meshes/Builders/boxBuilder';
 import '@babylonjs/core/Meshes/Builders/cylinderBuilder';
 import '@babylonjs/core/Meshes/Builders/sphereBuilder';
@@ -24,6 +26,8 @@ export function rng(seed:number){let s=seed>>>0||1;return()=>{s^=s<<13;s^=s>>>17
 export type LaneGate={node:TransformNode;lane:string;laps:number[]};
 export class Kit {
  anims:Anim[]=[];gates:LaneGate[]=[];
+ /** Pieces a Blender model can replace (see props.ts), and the nodes holding each type's code version. */
+ props:PropSpot[]=[];propGroups=new Map<string,TransformNode[]>();
  constructor(readonly scene:Scene,readonly root:TransformNode,readonly route?:Route){}
  /** True when (x,z) is within `margin` of an alternative lane's surface. */
  onLane(x:number,z:number,margin=2){const r=this.route;if(!r)return false;for(const l of r.lanes)for(const p of l.points)if(Math.hypot(p.x-x,p.z-z)<l.width*.5+margin)return true;return false;}
@@ -42,16 +46,32 @@ export class Kit {
  label(text:string,x:number,y:number,z:number,w:number,h:number,yaw:number,color='#fff5d8',bg='#163e3b',parent:TransformNode=this.root){const m=textLabel(this.scene,parent,text,x,y,z,w,h,color,bg);if(m)m.rotation.y=yaw+Math.PI;return m;}
  /** Free-standing signboard on two posts. */
  sign(text:string,x:number,z:number,yaw:number,w=8,h=1.8,y=3.2,color='#fff5d8',bg='#1d4d43'){for(const s of [-1,1])this.cyl('sign-post',x+Math.cos(yaw)*s*w*.42,y/2,z-Math.sin(yaw)*s*w*.42,y,.18,'#5d6b70');this.box('sign-board',x,y+h/2-.1,z,w+.3,h+.3,.12,'#e9dfc2',yaw);this.label(text,x+Math.sin(yaw)*.08,y+h/2-.1,z+Math.cos(yaw)*.08,w,h,yaw,color,bg);}
+ /** Holder (identity, under the root) for code that a type's Blender model replaces; removed when the model arrives. */
+ propFallback(type:string){const n=new TransformNode('props-'+type,this.scene);n.parent=this.root;n.metadata={propType:type};const l=this.propGroups.get(type)??[];l.push(n);this.propGroups.set(type,l);return n;}
+ /**
+  * Scenery piece with a Blender model (props.ts). `build` draws the code version around (0,0,0), front toward +z.
+  * With `parent` (an animated node) the piece moves with it; otherwise it is static and merged.
+  */
+ prop(type:string,x:number,y:number,z:number,yaw:number,scale:number|[number,number,number],build:(g:TransformNode)=>void,tint?:number|string,parent?:TransformNode){
+  const g=new TransformNode('prop-'+type,this.scene);
+  if(parent){g.parent=parent;g.metadata={animate:true};const l=this.propGroups.get(type)??[];l.push(g);this.propGroups.set(type,l);}
+  else g.parent=this.propGroups.get(type)?.[0]??this.propFallback(type);
+  g.position.set(x,y,z);g.rotation.y=yaw;if(typeof scale==='number')g.scaling.setAll(scale);else g.scaling.set(...scale);build(g);
+  this.props.push({type,x,y,z,yaw,scale,tint,parent});return g;
+ }
  tree(x:number,z:number,kind:'mango'|'malinche'|'palm'|'pine'|'bush'|'ceiba'='mango',y=0,scale=1){
-  const s=scale;
-  if(kind==='bush'){for(let k=0;k<3;k++)this.ball('bush',x+(k-1)*.9*s,y+.8*s,z+(k%2)*.6*s,2.1*s,['#5aa63f','#76bd4a','#4f9a3e'][k]);return;}
-  this.shadow(x,z,y,(kind==='palm'?4:7)*s);
-  if(kind==='palm'){const t=this.cyl('palm-trunk',x,y+4*s,z,8*s,.55*s,'#9c8460',.4*s);t.rotation.z=.08;for(let i=0;i<7;i++){const leaf=this.ball('palm-leaf',x+Math.sin(i*.9)*2.2*s,y+7.9*s,z+Math.cos(i*.9)*2.2*s,3.4*s,i%2?'#4f9a54':'#6bb35c',new Vector3(.45,.13,1.6));leaf.rotation.y=i*.9;leaf.rotation.x=.35;}this.ball('coconuts',x,y+7.6*s,z,1*s,'#7d5a2e');return;}
-  if(kind==='pine'){this.cyl('pine-trunk',x,y+1.5*s,z,3*s,.5*s,'#7b5e45');for(let i=0;i<3;i++)this.cyl('pine-crown',x,y+(3.2+i*1.7)*s,z,2.6*s,(4.6-i*1.3)*s,'#3f7a4f',.2*s);return;}
-  this.cyl('trunk',x,y+2.4*s,z,4.8*s,.6*s,'#7f6a4f',.42*s);
-  const crown=kind==='malinche'?['#e2492f','#f06a3a','#c93a2a']:kind==='ceiba'?['#5f9e4c','#7ab95a','#4d8a43']:['#4f8f44','#6aa955','#3f7d3b'];
-  const wide=kind==='ceiba'?1.5:kind==='malinche'?1.3:1;
-  this.ball('crown',x,y+5.8*s,z,5.6*s*wide,crown[0],new Vector3(1,.62,1));this.ball('crown',x+1.6*s,y+5.2*s,z-.8*s,3.8*s*wide,crown[1],new Vector3(1,.7,1));this.ball('crown',x-1.5*s,y+5*s,z+1*s,3.6*s*wide,crown[2],new Vector3(1,.7,1));
+  // Same spot, same tree for everyone: yaw and a slight shade change come from the position.
+  const h=Math.abs(Math.sin(x*12.9898+z*78.233)*43758.5453)%1,yaw=h*Math.PI*2,tint=.9+((h*7.31)%1)*.18;
+  if(kind!=='bush')this.shadow(x,z,y,(kind==='palm'?4:7)*scale);
+  this.prop(kind,x,y,z,yaw,scale,g=>{
+   if(kind==='bush'){for(let k=0;k<3;k++)this.ball('bush',(k-1)*.9,.8,(k%2)*.6,2.1,['#5aa63f','#76bd4a','#4f9a3e'][k],undefined,g);return;}
+   if(kind==='palm'){const t=this.cyl('palm-trunk',0,4,0,8,.55,'#9c8460',.4,g);t.rotation.z=.08;for(let i=0;i<7;i++){const leaf=this.ball('palm-leaf',Math.sin(i*.9)*2.2,7.9,Math.cos(i*.9)*2.2,3.4,i%2?'#4f9a54':'#6bb35c',new Vector3(.45,.13,1.6),g);leaf.rotation.y=i*.9;leaf.rotation.x=.35;}this.ball('coconuts',0,7.6,0,1,'#7d5a2e',undefined,g);return;}
+   if(kind==='pine'){this.cyl('pine-trunk',0,1.5,0,3,.5,'#7b5e45',.5,g);for(let i=0;i<3;i++)this.cyl('pine-crown',0,3.2+i*1.7,0,2.6,4.6-i*1.3,'#3f7a4f',.2,g);return;}
+   this.cyl('trunk',0,2.4,0,4.8,.6,'#7f6a4f',.42,g);
+   const crown=kind==='malinche'?['#e2492f','#f06a3a','#c93a2a']:kind==='ceiba'?['#5f9e4c','#7ab95a','#4d8a43']:['#4f8f44','#6aa955','#3f7d3b'];
+   const wide=kind==='ceiba'?1.5:kind==='malinche'?1.3:1;
+   this.ball('crown',0,5.8,0,5.6*wide,crown[0],new Vector3(1,.62,1),g);this.ball('crown',1.6,5.2,-.8,3.8*wide,crown[1],new Vector3(1,.7,1),g);this.ball('crown',-1.5,5,1,3.6*wide,crown[2],new Vector3(1,.7,1),g);
+  },tint);
  }
  shadow(x:number,z:number,y:number,size:number){const m=MeshBuilder.CreateCylinder('baked-shadow',{height:.015,diameter:size,tessellation:14},this.scene);m.position.set(x+.6,y-.05,z+.6);m.scaling.z=.8;m.material=material(this.scene,'#263f33',false,.16);m.parent=this.root;m.isPickable=false;}
  /** Row of simple spectators that bob and cheer. Kept as one animated group. */
@@ -81,19 +101,6 @@ export class Kit {
   }
  }
 }
-/** Tileable procedural textures: grass, dirt, sand, asphalt. Cheap and offline. */
-export function surfaceTexture(scene:Scene,kind:'grass'|'dirt'|'sand'|'asphalt'|'rock'|'tile',base:string){
- const name='surface-'+kind+base,cached=scene.getMaterialByName(name) as StandardMaterial|null;if(cached)return cached;
- const m=new StandardMaterial(name,scene);m.specularColor=new Color3(.06,.06,.06);
- if(typeof document==='undefined'){m.diffuseColor=Color3.FromHexString(base);return m;}
- const size=256,tex=new DynamicTexture(name,{width:size,height:size},scene,true),ctx=tex.getContext() as CanvasRenderingContext2D,r=rng(kind.length*977+base.charCodeAt(1));
- ctx.fillStyle=base;ctx.fillRect(0,0,size,size);
- const c=Color3.FromHexString(base),shade=(k:number,a:number)=>`rgba(${Math.round(Math.min(255,c.r*255*k))},${Math.round(Math.min(255,c.g*255*k))},${Math.round(Math.min(255,c.b*255*k))},${a})`;
- const blotch=(n:number,min:number,max:number,k:number,a:number)=>{for(let i=0;i<n;i++){const x=r()*size,y=r()*size,s=min+r()*(max-min);for(const [ox,oy] of [[0,0],[size,0],[-size,0],[0,size],[0,-size]]){ctx.fillStyle=shade(k,a);ctx.beginPath();ctx.ellipse(x+ox,y+oy,s,s*(.6+r()*.5),r()*3,0,Math.PI*2);ctx.fill();}}};
- if(kind==='grass'){blotch(26,10,36,.86,.35);blotch(22,8,26,1.12,.3);for(let i=0;i<900;i++){ctx.fillStyle=shade(r()<.5?.75:1.2,.55);ctx.fillRect(r()*size,r()*size,1.4,3.5);}}
- else if(kind==='asphalt'){blotch(30,6,30,.88,.25);for(let i=0;i<2600;i++){ctx.fillStyle=shade(r()<.5?.7:1.3,.5);ctx.fillRect(r()*size,r()*size,1.5,1.5);}ctx.strokeStyle=shade(.6,.35);ctx.lineWidth=1.5;for(let i=0;i<5;i++){ctx.beginPath();let x=r()*size,y=r()*size;ctx.moveTo(x,y);for(let k=0;k<5;k++){x+=(r()-.5)*40;y+=(r()-.5)*40;ctx.lineTo(x,y);}ctx.stroke();}}
- else if(kind==='tile'){ctx.strokeStyle=shade(.82,.8);ctx.lineWidth=3;for(let i=0;i<=4;i++){ctx.beginPath();ctx.moveTo(i*64,0);ctx.lineTo(i*64,size);ctx.stroke();ctx.beginPath();ctx.moveTo(0,i*64);ctx.lineTo(size,i*64);ctx.stroke();}blotch(10,6,20,.93,.25);}
- else{blotch(30,8,40,.85,.4);blotch(20,6,24,1.15,.3);for(let i=0;i<1600;i++){ctx.fillStyle=shade(r()<.5?.7:1.25,.6);const s=kind==='rock'?2.5:1.6;ctx.fillRect(r()*size,r()*size,s,s);}}
- tex.update();tex.wrapU=tex.wrapV=Texture.WRAP_ADDRESSMODE;tex.anisotropicFilteringLevel=4;m.diffuseTexture=tex;return m;
-}
+/** Tileable surface materials (colour + normal map), painted on the device: see textures.ts. */
+export function surfaceTexture(scene:Scene,kind:'grass'|'dirt'|'sand'|'asphalt'|'rock'|'tile',base:string,u=1,v=u){return surfaceMaterial(scene,kind,base,u,v);}
 export {Vector3,Mesh,MeshBuilder,TransformNode};

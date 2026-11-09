@@ -4,7 +4,14 @@ import { StandardMaterial } from '@babylonjs/core/Materials/standardMaterial';
 import { DynamicTexture } from '@babylonjs/core/Materials/Textures/dynamicTexture';
 import { ColorCurves } from '@babylonjs/core/Materials/colorCurves';
 import type { Scene } from '@babylonjs/core/scene';
+import { RawCubeTexture } from '@babylonjs/core/Materials/Textures/rawCubeTexture';
+import { Texture } from '@babylonjs/core/Materials/Textures/texture';
+import { Constants } from '@babylonjs/core/Engines/constants';
+import { SphericalPolynomial } from '@babylonjs/core/Maths/sphericalPolynomial';
+import { PBRMaterial } from '@babylonjs/core/Materials/PBR/pbrMaterial';
+import type { Material } from '@babylonjs/core/Materials/material';
 import '@babylonjs/core/Meshes/Builders/sphereBuilder';
+import '@babylonjs/core/Materials/Textures/rawCubeTexture';
 
 /*
  * The colour grade of each world: a painted sky dome, the fog that melts into its horizon and the
@@ -55,4 +62,42 @@ export function skyDome(scene:Scene,look:Look){
   sun.material=sm;
  }
  return dome;
+}
+
+/*
+ * Reflections for the GLB cars (their PBR materials): a tiny cube map painted from the world's own sky
+ * colours. It is generated on the device, so there is nothing to download and it works offline.
+ * The sky goes top -> mid -> horizon above, and the horizon fades into the darker ground below, so
+ * hoods and roofs reflect sky while the lower body picks up the road. It is used ONLY as a reflection
+ * on paint, chrome, glass and rims (no diffuse sky light): applied scene-wide it tinted tyres and
+ * dark trim blue and washed out the paint colours.
+ */
+const srgb=(h:string)=>{const c=Color3.FromHexString(h);return[c.r,c.g,c.b];};
+const mix=(a:number[],b:number[],t:number)=>a.map((v,i)=>v+(b[i]-v)*t);
+const smooth=(e0:number,e1:number,x:number)=>{const t=Math.min(1,Math.max(0,(x-e0)/(e1-e0)));return t*t*(3-2*t);};
+export function skyColorAt(look:Look,y:number){
+ const top=srgb(look.top),mid=srgb(look.mid),hor=srgb(look.horizon),ground=srgb(look.hemiGround).map(v=>v*.55),road=srgb('#5d6168').map(v=>v*.7);
+ if(y>=0)return y<.35?mix(hor,mid,smooth(0,.35,y)):mix(mid,top,smooth(.35,1,y));
+ return mix(mix(hor,ground,.35),mix(ground,road,.5),smooth(0,.3,-y));
+}
+export function skyReflection(scene:Scene,look:Look,size=32){
+ const cached=scene.getTextureByName('sky-reflection');if(cached)return cached as RawCubeTexture;
+ const dir=(face:number,u:number,v:number)=>{switch(face){case 0:return[1,-v,-u];case 1:return[-1,-v,u];case 2:return[u,1,v];case 3:return[u,-1,-v];case 4:return[u,-v,1];default:return[-u,-v,-1];}};
+ const faces:Uint8Array[]=[];
+ for(let f=0;f<6;f++){const b=new Uint8Array(size*size*4);
+  for(let j=0;j<size;j++)for(let i=0;i<size;i++){const u=2*(i+.5)/size-1,v=2*(j+.5)/size-1,d=dir(f,u,v),c=skyColorAt(look,d[1]/Math.hypot(d[0],d[1],d[2])),k=(j*size+i)*4;
+   for(let n=0;n<3;n++)b[k+n]=Math.round(Math.min(1,c[n])*255);b[k+3]=255;}
+  faces.push(b);}
+ const tex=new RawCubeTexture(scene,faces,size,Constants.TEXTUREFORMAT_RGBA,Constants.TEXTURETYPE_UNSIGNED_BYTE,true,false,Texture.TRILINEAR_SAMPLINGMODE);
+ tex.gammaSpace=true;tex.name='sky-reflection';tex.sphericalPolynomial=new SphericalPolynomial();
+ return tex;
+}
+/** Gloss for the GLB cars: sky reflections on paint, chrome, glass and rims, and a light clear coat on the paint. */
+export function paintFinish(scene:Scene,look:Look,materials:Material[],clearCoat=true){
+ const tex=skyReflection(scene,look);
+ for(const m of materials){if(!(m instanceof PBRMaterial))continue;
+  if(!/paint|chrome|glass|rim|cover|mirror|windscreen/.test(m.name))continue;
+  m.reflectionTexture=tex;
+  // Paint keeps its colour: a full sky reflection turned orange pink and black blue.
+  if(/paint/.test(m.name)){m.environmentIntensity=.45;if(clearCoat){m.clearCoat.isEnabled=true;m.clearCoat.intensity=.2;m.clearCoat.roughness=.1;}}}
 }
