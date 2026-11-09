@@ -85,7 +85,7 @@ def main():
         activate(DESIGN)
         for p in todo:
             lo, hi = job["f0"][p]; best = None
-            for attempt in range(8):
+            for attempt in range(16):
                 audio = fetch({"model": DESIGN, "input": job["ref"][p], "instruct": job["voices"][p] + " " + job["accent"], "lang_code": "spanish",
                                "response_format": "wav", "stream": False, "max_tokens": 1200, "temperature": .7, "top_p": .9, "top_k": 40, "repetition_penalty": 1.05})
                 f0, dur = pitch(audio)
@@ -106,8 +106,8 @@ def main():
     if lines:
         activate(CLONE)
         for i, l in enumerate(lines, 1):
-            t = time.time(); best = None; limit = max(ref_f0[l["id"]] * 1.55, 150)
-            for attempt in range(4):
+            t = time.time(); best = None; limit = max(ref_f0[l["id"]] * 1.3, 135)
+            for attempt in range(6):
                 try:
                     audio = fetch({"model": CLONE, "input": l["text"], "lang_code": "spanish", "ref_audio": str(refs / f"{l['id']}.wav"), "ref_text": job["ref"][l["id"]],
                                    "response_format": "wav", "stream": False, "max_tokens": 600, "temperature": .65, "top_p": .92, "top_k": 40, "repetition_penalty": 1.05})
