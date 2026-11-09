@@ -8,6 +8,7 @@ cargado en el mismo espacio de nombres:
 
     ns = {}
     exec(open("<repo>/scripts/blender/mklib.py").read(), ns)
+    exec(open("<repo>/scripts/blender/car_kit.py").read(), ns)
     exec(open("<repo>/art/blender/silver_surfer.py").read(), ns)
     ns["build"]()
 
@@ -54,63 +55,13 @@ WHEEL_R, WHEEL_W, WHEEL_X = 0.56, 0.44, 1.08
 AXLES = {"front": -1.30, "rear": 1.32}
 
 
-def tire_profile(r=WHEEL_R, w=WHEEL_W, inner=0.34, round_r=0.11, seg=4):
-    """Perfil de llanta todoterreno (x, radio), cerrado, para lathe_x."""
-    hw = w / 2
-    pts = []
-    # hombro exterior redondeado (lado +x), banda, hombro interior, flanco hacia el rin
-    for i in range(seg + 1):
-        a = math.radians(0 + 90 * i / seg)
-        pts.append((hw - round_r + round_r * math.cos(a), r - round_r + round_r * math.sin(a)))
-    for i in range(seg + 1):
-        a = math.radians(90 + 90 * i / seg)
-        pts.append((-hw + round_r + round_r * math.cos(a), r - round_r + round_r * math.sin(a)))
-    pts.append((-hw + 0.03, inner + 0.03))
-    pts.append((-hw + 0.08, inner))
-    pts.append((hw - 0.08, inner))
-    pts.append((hw - 0.03, inner + 0.03))
-    # se recorre en sentido contrario para que las normales queden hacia afuera
-    return list(reversed(pts))
-
-
-def wheel_meshes(B, spin, side):
-    """Llanta, rin de 6 rayos, tacos y tuerca dentro de wheel-spin-*. side = +1 izquierda, -1 derecha."""
-    s = side
-    tire = lathe_x(tire_profile(), seg=36)
-    if s < 0:
-        bmesh.ops.scale(tire, vec=(-1, 1, 1), verts=tire.verts)
-        bmesh.ops.reverse_faces(tire, faces=tire.faces)
-    # Tacos: bloques alternados sobre la banda de rodadura.
-    lugs = bmesh.new()
-    for k in range(18):
-        a = 2 * math.pi * k / 18
-        off = 0.07 if k % 2 else -0.07
-        b = box(0.16, 0.13, 0.05, bevel=0.015, seg=1, center=(off, 0, WHEEL_R + 0.012))
-        bmesh.ops.rotate(b, verts=b.verts, cent=(0, 0, 0), matrix=Matrix.Rotation(a, 3, "X"))
-        me_tmp = bpy.data.meshes.new("tmp"); b.to_mesh(me_tmp); b.free(); lugs.from_mesh(me_tmp); bpy.data.meshes.remove(me_tmp)
-    B.mesh(f"tire-{spin.name[11:]}", merge(tire, lugs), spin, mat("tire", TIRE, rough=0.8), smooth_angle=50)
-    # Rin: disco hundido + 6 rayos + centro.
-    face_x = s * (WHEEL_W / 2 - 0.06)
-    rim = merge(
-        cylinder(0.33, 0.05, "X", seg=28, center=(face_x - s * 0.04, 0, 0)),
-        cylinder(0.30, 0.04, "X", seg=28, center=(face_x, 0, 0), radius2=0.27),
-    )
-    spokes = bmesh.new()
-    for k in range(6):
-        a = 2 * math.pi * k / 6
-        b = box(0.05, 0.075, 0.24, bevel=0.012, seg=1, center=(face_x + s * 0.02, 0, 0.15))
-        bmesh.ops.rotate(b, verts=b.verts, cent=(0, 0, 0), matrix=Matrix.Rotation(a, 3, "X"))
-        me_tmp = bpy.data.meshes.new("tmp"); b.to_mesh(me_tmp); b.free(); spokes.from_mesh(me_tmp); bpy.data.meshes.remove(me_tmp)
-    hub = cylinder(0.09, 0.08, "X", seg=16, center=(face_x + s * 0.04, 0, 0), radius2=0.06)
-    B.mesh(f"rim-{spin.name[11:]}", merge(rim, spokes, hub), spin, mat("rim", RIM, rough=0.3), smooth_angle=40)
-
-
 def build():
+    use_scene(VEHICLE_ID)
     B = Builder(VEHICLE_ID)
     root = B.empty(f"vehicle-{VEHICLE_ID}", size=0.6)
     body = B.empty("body", root, size=0.4)
 
-    paint = mat("paint", PAINT, rough=0.32)
+    paint = mat("paint", PAINT, rough=0.26)
     dark = mat("dark", DARK, rough=0.55)
     trim = mat("trim", TRIM, rough=0.6)
     bumper = mat("bumper", BUMPER, rough=0.7)
@@ -166,6 +117,23 @@ def build():
         me_tmp = bpy.data.meshes.new("tmp"); q.to_mesh(me_tmp); q.free(); side_glass.from_mesh(me_tmp); bpy.data.meshes.remove(me_tmp)
     back = quad([(0.80, 1.946, 1.58), (-0.80, 1.946, 1.58), (-0.78, 1.946, ROOF - 0.06), (0.78, 1.946, ROOF - 0.06)])
     B.mesh("windows", merge(side_glass, back), body, glass, smooth_angle=10)
+    # Molduras de goma alrededor de los vidrios.
+    rubber = bmesh.new()
+    for s in (1, -1):
+        x = s * 1.03
+        for a, b in (((x, 0.62, 1.54), (x, 1.78, 1.54)), ((x, 1.78, 1.54), (x, 1.76, ROOF - 0.04)),
+                     ((x, 1.76, ROOF - 0.04), (x, 0.66, ROOF - 0.04)), ((x, 0.66, ROOF - 0.04), (x, 0.62, 1.54))):
+            bm_ = bar(a, b, 0.035)
+            me_tmp = bpy.data.meshes.new("tmp"); bm_.to_mesh(me_tmp); bm_.free(); rubber.from_mesh(me_tmp); bpy.data.meshes.remove(me_tmp)
+    for a, b in (((0.80, 1.952, 1.58), (-0.80, 1.952, 1.58)), ((-0.80, 1.952, 1.58), (-0.78, 1.952, ROOF - 0.06)),
+                 ((-0.78, 1.952, ROOF - 0.06), (0.78, 1.952, ROOF - 0.06)), ((0.78, 1.952, ROOF - 0.06), (0.80, 1.952, 1.58))):
+        bm_ = bar(a, b, 0.035)
+        me_tmp = bpy.data.meshes.new("tmp"); bm_.to_mesh(me_tmp); bm_.free(); rubber.from_mesh(me_tmp); bpy.data.meshes.remove(me_tmp)
+    B.mesh("window-rubber", rubber, body, dark, smooth_angle=50)
+    # Canaletas del techo y línea lateral de la carrocería (sobre los pasos de rueda).
+    B.mesh("roof-drip-rails", merge(box(0.035, 1.42, 0.035, bevel=0.012, center=(1.0, 1.18, ROOF + 0.05)), box(0.035, 1.42, 0.035, bevel=0.012, center=(-1.0, 1.18, ROOF + 0.05))), body, trim)
+    B.mesh("body-line", merge(rounded_bar(3.66, 0.022, 0.05, 0.01, "Y", center=(HW + 0.004, 0.0, 1.29), seg=2, div=0),
+                              rounded_bar(3.66, 0.022, 0.05, 0.01, "Y", center=(-HW - 0.004, 0.0, 1.29), seg=2, div=0)), body, paint, smooth_angle=50)
     # Pared delantera de la cabina trasera vista desde el frente abierto: tapizado oscuro.
     B.mesh("bulkhead", box(1.86, 0.03, 0.62, bevel=0.06, seg=2, center=(0, ROOF_FRONT - 0.012, BELT + 0.36)), body, mat("interior", INTERIOR, rough=0.7))
 
@@ -219,6 +187,7 @@ def build():
            body, mat("fog", FOG, rough=0.1, emissive=True), smooth_angle=40)
     B.mesh("turn-signals", merge(box(0.16, 0.04, 0.09, bevel=0.02, center=(0.97, -2.16, 0.74)), box(0.16, 0.04, 0.09, bevel=0.02, center=(-0.97, -2.16, 0.74))),
            body, mat("signal", SIGNAL, rough=0.2, emissive=True))
+    B.mesh("bumper-intake", box(0.74, 0.02, 0.10, bevel=0.02, center=(0, -2.163, 0.70)), body, dark)
     B.mesh("tow-hook", box(0.12, 0.14, 0.11, bevel=0.03, center=(0, -2.18, 0.63)), body, chrome)
 
     # ---- Costados: estribo, puerta, manija, espejos.
@@ -258,7 +227,7 @@ def build():
            body, mat("tail", TAIL, rough=0.2, emissive=True))
     B.mesh("rear-bumper", rounded_bar(2.16, 0.24, 0.25, 0.08, "X", center=(0, 1.98, 0.72)), body, bumper)
     B.mesh("exhaust", cylinder(0.07, 0.30, "Y", seg=14, center=(0.70, 2.0, 0.50)), body, chrome)
-    spare = lathe_x(tire_profile(r=0.50, w=0.34, inner=0.30, round_r=0.10), seg=32)
+    spare = lathe_x(tire_profile(0.50, 0.34, 0.30, 0.10), seg=32)
     bmesh.ops.rotate(spare, verts=spare.verts, cent=(0, 0, 0), matrix=Matrix.Rotation(-math.pi / 2, 3, "Z"))
     bmesh.ops.translate(spare, vec=(0, 2.17, 1.30), verts=spare.verts)
     B.mesh("spare-tire", spare, body, mat("tire", TIRE, rough=0.8), smooth_angle=50)
@@ -290,12 +259,12 @@ def build():
     B.empty("driver-socket", body, (0, 0.12, 0))
     B.empty("passenger-socket", body, (-0.48, -0.10, 1.04))
 
-    # ---- Ruedas: pivote (dirección) > giro (rodadura) > mallas.
+    # ---- Ruedas (kit común): pivote (dirección) > giro (rodadura) > llanta y rin con tuercas.
     for axle, y in AXLES.items():
         for side_name, s in (("left", 1), ("right", -1)):
             pivot = B.empty(f"wheel-pivot-{axle}-{side_name}", body, (s * WHEEL_X, y, WHEEL_R), size=0.3)
             spin = B.empty(f"wheel-spin-{axle}-{side_name}", pivot, (0, 0, 0), size=0.2)
-            wheel_meshes(B, spin, s)
+            wheel_meshes(B, spin, s, WHEEL_R, WHEEL_W, "offroad", RIM, "")
 
     objs = list(B.col.all_objects)
     return {"objects": len(objs), "triangles": triangles(objs)}
