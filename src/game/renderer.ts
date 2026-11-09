@@ -27,6 +27,7 @@ import {stuntAt,stuntPose} from '../../shared/stunts';
 import {RaceEffects} from './effects';
 import {AttackView} from './attacks';
 import {grade,lightColors,lookFor,paintFinish,skyDome} from './look';
+import {setTextureQuality} from './worlds/textures';
 import {DefaultRenderingPipeline} from '@babylonjs/core/PostProcesses/RenderPipeline/Pipelines/defaultRenderingPipeline';
 import '@babylonjs/core/PostProcesses/RenderPipeline/postProcessRenderPipelineManagerSceneComponent';
 import '@babylonjs/loaders/glTF';
@@ -101,7 +102,7 @@ export class RaceRenderer{
   // element itself so the image is never drawn stretched to an old size.
   try{this.observer=new ResizeObserver(()=>this.engine.resize());this.observer.observe(canvas);}catch{/* old browsers: window resize below */}
   window.visualViewport?.addEventListener('resize',this.resize);
-  this.trackId=state.trackId;grade(this.scene,lookFor(this.trackId));this.arena=state.mode==='battle';this.light();this.camera=new FreeCamera('race-camera',new Vector3(0,6,-12),this.scene);this.camera.minZ=.15;this.camera.maxZ=650;this.camera.fov=.9;this.post();
+  this.trackId=state.trackId;grade(this.scene,lookFor(this.trackId));this.arena=state.mode==='battle';this.light();setTextureQuality(this.quality==='baja');this.camera=new FreeCamera('race-camera',new Vector3(0,6,-12),this.scene);this.camera.minZ=.15;this.camera.maxZ=650;this.camera.fov=.9;this.post();
   this.world=buildWorld(this.scene,this.trackId,this.arena);this.effects=new RaceEffects(this.scene);this.attacks=new AttackView(this.scene);this.hazardView=new HazardView(this.scene);this.birds=new Birds(this.scene);this.effects.setQuality(QUALITY[this.quality].low);window.addEventListener('resize',this.resize);
  }
  private light(){

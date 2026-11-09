@@ -55,3 +55,34 @@ blender -b art/blender/silver-surfer.blend --python scripts/blender/export_vehic
 ```
 
 El script revisa la escena antes de exportar (nombres, jerarquía, ruedas, orientación y triángulos), exporta solo el carro de la escena activa con la configuración correcta y escribe `art/blender/exports/<id>.glb`. Después corre `npm run assets` y `npm test`, y prueba el carro en el juego.
+
+## Escenarios (vegetación y monumentos)
+
+`art/blender/scenery.blend` tiene una escena por pieza (`prop-palm`, `prop-cristo`, `prop-catedral`…), construida por `art/blender/scenery.py`. Cada pieza tiene un empty raíz que se llama exactamente como su tipo en el juego, en el origen, sin rotación ni escala. Se modela en coordenadas del juego con `G()`: y hacia arriba y +z como frente de la pieza.
+
+| Archivo | Tipos |
+|---|---|
+| `public/models/scenery/vegetation.glb` | `palm`, `mango`, `malinche`, `ceiba`, `pine`, `bush`, `rock` |
+| `public/models/scenery/cristo.glb` | `cristo` |
+| `public/models/scenery/managua.glb` | `catedral`, `arbol-vida`, `palacio`, `concha`, `casa-m1`, `casa-m2`, `casa-m3`, `casa-techo` |
+| `public/models/scenery/oriental.glb` | `chinamo`, `lona` |
+| `public/models/scenery/masaya.glb` | `volcano` |
+| `public/models/scenery/lasalle.glb` | `aula-pb`, `aula-pa`, `aula-techo` (módulos de aulas que se repiten y estiran), `capilla`, `porton-lasalle`, `bus-escolar`, `cafeteria`, `bar-lasalle` |
+| `public/models/scenery/sanjuan.glb` | `casa-playa-1`, `casa-playa-2`, `teja-playa` |
+| `public/models/scenery/hipa.glb` | `barra`, `palmera-tronco`, `palmera-copa` (cuelga del nodo que se mece) |
+
+```python
+import sys; sys.path[:0] = ["<repo>/scripts/blender", "<repo>/art/blender"]
+import scenery, export_scenery
+scenery.build("palm")                      # o scenery.build_all()
+export_scenery.export_file("vegetation", repo_root="<repo>")
+```
+
+En el juego, `kit.prop(tipo, x, y, z, yaw, escala, códigoDeRespaldo, tinte)` coloca la pieza (`src/game/worlds/props.ts`). Primero el mundo se dibuja con la versión de código. Cuando llega el GLB, cada tipo pasa a dibujarse con *thin instances*: una llamada de dibujo por material, sin importar cuántas palmeras tenga la pista. Si el GLB falta, se queda la versión de código.
+
+- **Materiales:** se convierten a `StandardMaterial`, como el resto del mundo, con la misma regla de color que los carros (base 0,62 × color lineal). Si el nombre empieza con `tex-<tipo>`, el material usa la textura procedural del juego; la pieza debe llevar UV en metros (`planar_uv`).
+- **Piezas blancas:** las lonas, los Árboles de la Vida, las rocas y las paredes y techos de las casas se modelan en blanco y el juego les da el color de cada ejemplar.
+- **Oclusión ambiental:** va horneada en el atributo `AO`, como en los carros.
+- **Piezas animadas:** `kit.prop(…, parent)` cuelga el modelo de un nodo que se mueve, como la copa de la palmera gigante.
+- **Varias piezas por bloque:** `kit.propFallback(tipo)` guarda el código de respaldo de un bloque entero mientras sus módulos llegan como varias piezas.
+- **Contrato y presupuesto:** `tests/scenery.test.ts` revisa el contrato y el presupuesto de triángulos por tipo (`src/game/worlds/propFiles.ts`).
