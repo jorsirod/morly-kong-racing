@@ -1,4 +1,4 @@
-import { SCORES, musicStep, type Drum, type Inst } from './music';
+import { PLAYLISTS, SCORES, musicStep, type Drum, type Inst, type Score } from './music';
 interface Voice { source: AudioScheduledSourceNode; nodes: AudioNode[]; released: boolean; music: boolean; }
 const bounded = (value:number,min:number,max:number,fallback=min) => Number.isFinite(value)?Math.max(min,Math.min(max,value)):fallback;
 const read = (key:string,fallback:string) => {try{return localStorage.getItem(key)??fallback;}catch{return fallback;}};
@@ -24,6 +24,13 @@ const ENGINES:Record<string,{base:number;range:number;filter:number;wave:Oscilla
  'black-diamond':{base:64,range:78,filter:340,wave:'square',gears:5},
 };
 /** Original arcade soundtrack and material sounds, synthesized on device. No files, no licences. */
+/** Each world has two or three songs; races take turns through them (remembered per browser, random if storage fails). */
+function pickSong(trackId:string):Score{
+ const list=PLAYLISTS[trackId]??PLAYLISTS['la-salle'];let index=Math.floor(Math.random()*list.length);
+ try{const key='morly-song-'+trackId,last=Number(localStorage.getItem(key));if(Number.isFinite(last)&&localStorage.getItem(key)!==null)index=(last+1)%list.length;localStorage.setItem(key,String(index));}catch{/* private mode */}
+ return list[index]??SCORES[trackId]??SCORES['la-salle'];
+}
+
 export class GameAudio {
  context:AudioContext|null=null;
  muted=audioSettings.muted;
@@ -38,7 +45,7 @@ export class GameAudio {
  private unlock=()=>{if(this.context?.state==='suspended')this.context.resume().catch(()=>{});};
  private storage=(event:StorageEvent)=>{if(event.key==='morly-muted')this.muted=event.newValue==='yes';this.applyLevels();};
  private visibility=()=>this.applyLevels();
- constructor(private trackId='la-salle'){this.score=SCORES[trackId]??SCORES['la-salle'];}
+ constructor(private trackId='la-salle'){this.score=pickSong(trackId);}
 
  start(){
   if(this.disposed)return;
@@ -106,8 +113,8 @@ export class GameAudio {
  private playStep(beat:number,at:number,step:number){
   if(!this.canPlay(true))return;
   const out=musicStep(this.score,beat,{level:this.level,tension:this.tension,speed:this.speedRatio,boost:this.boosting});
-  for(const n of out.notes)this.instrument(n.inst,n.freq,n.len*step,n.vol,n.pan,at);
-  for(const d of out.drums)this.drum(d.drum,d.vol,d.pan,at);
+  for(const n of out.notes)this.instrument(n.inst,n.freq,n.len*step,n.vol,n.pan,at+n.offset*step);
+  for(const d of out.drums)this.drum(d.drum,d.vol,d.pan,at+d.offset*step);
  }
  /** Small synth voices for the score: each instrument is a recipe of oscillators, envelope and filter. */
  private synth(at:number,len:number,pan:number,vol:number,parts:{type:OscillatorType;ratio:number;gain:number;detune?:number}[],env:{a:number;d:number;s:number;r:number},freq:number,filter?:{type:BiquadFilterType;freq:number;q?:number;open?:number},drive=0){
@@ -146,6 +153,14 @@ export class GameAudio {
    case 'sub':return this.synth(at,len,pan,vol,[{type:'sine',ratio:1,gain:1},{type:'triangle',ratio:2,gain:.08}],{a:.005,d:.4,s:.55,r:.12},freq,{type:'lowpass',freq:420},1.4);
    // 8-bit pulse: raw square, no filter.
    case 'chip':return this.synth(at,len,pan,vol*.7,[{type:'square',ratio:1,gain:1}],{a:.002,d:.05,s:.75,r:.03},freq);
+   // Electric piano: bell-like tine over a round fundamental.
+   case 'rhodes':return this.synth(at,Math.min(len,1.4),pan,vol,[{type:'sine',ratio:1,gain:1},{type:'sine',ratio:2,gain:.22},{type:'sine',ratio:7.02,gain:.05}],{a:.004,d:.6,s:.3,r:.3},freq,{type:'lowpass',freq:2600});
+   case 'vibes':return this.synth(at,Math.min(len,1),pan,vol,[{type:'sine',ratio:1,gain:1},{type:'sine',ratio:4,gain:.22}],{a:.002,d:.8,s:.15,r:.45},freq);
+   case 'upright':return this.synth(at,len,pan,vol*1.1,[{type:'triangle',ratio:1,gain:1},{type:'sine',ratio:2,gain:.15}],{a:.005,d:.25,s:.35,r:.08},freq,{type:'lowpass',freq:620});
+   // Wah guitar: the band-pass sweeps open on every note, with a touch of crunch.
+   case 'wah':return this.synth(at,Math.min(len,.8),pan,vol,[{type:'sawtooth',ratio:1,gain:.7},{type:'triangle',ratio:1,gain:.5,detune:6}],{a:.004,d:.25,s:.5,r:.12},freq,{type:'bandpass',freq:1500,q:3.5,open:.16},2);
+   case 'nylon':return this.synth(at,Math.min(len,.5),pan,vol,[{type:'triangle',ratio:1,gain:1},{type:'sine',ratio:2,gain:.3},{type:'sine',ratio:3,gain:.08}],{a:.003,d:.25,s:.1,r:.15},freq,{type:'lowpass',freq:2000});
+   case 'strings':return this.synth(at,len,pan,vol,[{type:'sawtooth',ratio:1,gain:.55,detune:-8},{type:'sawtooth',ratio:1,gain:.55,detune:8}],{a:.25,d:.2,s:.8,r:.4},freq,{type:'lowpass',freq:2000});
    case 'pluck':return this.synth(at,len,pan,vol,[{type:'square',ratio:1,gain:.8}],{a:.003,d:.08,s:.2,r:.05},freq,{type:'lowpass',freq:1800});
   }
  }
@@ -167,6 +182,8 @@ export class GameAudio {
    case 'crash':this.noise(.8,'highpass',4200,pan-.2,vol,0,undefined,true,at);break;
    case 'tamb':this.noise(.07,'highpass',8200,pan+.3,vol,0,undefined,true,at);this.tone(5200,.04,'square',0,pan+.3,vol*.12,undefined,true,at);break;
    case 'boom':this.tone(70,.55,'sine',0,pan,vol,34,true,at);break;
+   case 'ride':this.noise(.35,'highpass',6200,pan+.25,vol,0,undefined,true,at);this.tone(3100,.25,'sine',0,pan+.25,vol*.12,undefined,true,at);break;
+   case 'brush':this.noise(.09,'bandpass',2600,pan-.1,vol,0,undefined,true,at);break;
    case 'riser':this.noise(.8,'bandpass',400,pan,vol,0,6000,true,at);break;
   }
  }
@@ -175,7 +192,7 @@ export class GameAudio {
   if(!this.context)return;const at=this.context.currentTime+.05,r=this.score.root*2**(2/12)*2;
   [[1,0],[1.26,.12],[1.5,.24],[2,.36]].forEach(([k,d])=>this.instrument('brass',r*k,.18,.11,0,at+d));this.instrument('brass',r*2,.5,.1,0,at+.5);this.instrument('brass',r*1.5,.5,.06,0,at+.5);
  }
- setTrack(id:string){this.score=SCORES[id]??this.score;}
+ setTrack(id:string){if(PLAYLISTS[id])this.score=pickSong(id);}
  /** 0 calm (countdown/menus), 1 racing, 2 final lap. */
  setIntensity(level:number){const next=Math.round(bounded(level,0,2,0));if(next===2&&this.level===1)this.fanfare();this.level=next;}
  /** 0–1: danger nearby (the Bong coming, a rival on your bumper on the final lap). */
