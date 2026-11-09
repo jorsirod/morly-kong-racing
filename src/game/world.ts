@@ -10,9 +10,11 @@ import { track } from '../../shared/content';
 import { routeFor, sample } from '../../shared/track';
 import { cylinder,sphere,material,textLabel } from './models';
 import { Kit,rng,surfaceTexture,type Anim } from './worlds/kit';
+import { lavaMat,waterMat } from './worlds/course';
+import { upgradeProps } from './worlds/props';
 import { buildCourse,type TrackStyle } from './worlds/course';
 import { buildLaSalle } from './worlds/lasalle';
-import { dressOriental,dressManagua,dressMasaya,dressSanJuan,managuaLandmarks } from './worlds/others';
+import { dressOriental,dressManagua,dressMasaya,dressSanJuan,managuaLandmarks,lavaRock } from './worlds/others';
 import { dressHipaClub } from './worlds/hipa';
 import { Texture } from '@babylonjs/core/Materials/Textures/texture';
 import '@babylonjs/core/Meshes/Builders/ribbonBuilder';
@@ -36,7 +38,7 @@ export function buildWorld(scene:Scene,id:string,battle=false) {
  const kit=new Kit(scene,root,route),c=route.course,L=route.length;
  // Tiled procedural ground so the world never looks like a flat-coloured board.
  const groundKind=id==='masaya'?'rock':id==='oriental'?'dirt':id==='hipa-hipa'?'tile':'grass';
- const base=MeshBuilder.CreateGround('ground',{width:1400,height:1400},scene);const groundMat=surfaceTexture(scene,groundKind,id==='la-salle'?'#7fb653':def.ground);const gt=groundMat.diffuseTexture as Texture|null;if(gt){gt.uScale=gt.vScale=id==='hipa-hipa'?160:120;}base.material=groundMat;base.parent=root;base.position.y=-.2;
+ const base=MeshBuilder.CreateGround('ground',{width:1400,height:1400},scene);const tiles=id==='hipa-hipa'?160:120,groundMat=surfaceTexture(scene,groundKind,id==='la-salle'?'#7fb653':def.ground,tiles);base.material=groundMat;base.parent=root;base.position.y=-.2;
  if(battle){box(scene,root,'arena',0,-.03,0,160,.15,130,'#bfaa79');for(const x of [-80,80])box(scene,root,'wall',x,1.2,0,1.2,2.5,132,'#d9bc77');for(const z of [-65,65])box(scene,root,'wall',0,1.2,z,160,2.5,1.2,'#d9bc77');}
  else {
   buildCourse(kit,route,id,STYLES[id]??STYLES['la-salle']);
@@ -48,7 +50,7 @@ export function buildWorld(scene:Scene,id:string,battle=false) {
  }
  /** Sections where roadside dressing would float or block: gaps, bridges, tunnels, ramps. */
  const special=(d:number)=>c.gaps.some(g=>g.lane===''&&d>g.from-10&&d<g.to+10)||c.bridges.some(([a,b])=>d>a-6&&d<b+6)||c.tunnels.some(([a,b])=>d>a-4&&d<b+4)||c.ramps.some(r=>r.lane===''&&r.big&&d>r.at-6&&d<r.at+r.len+6)||c.covered.some(([a,b])=>d>a-6&&d<b+6)||c.crossings.some(x=>Math.abs(d-x)<16);
- function tree(x:number,z:number,y=0,palm=false){if(y===0)groundShadow(scene,root,x,z,6);sphere(scene,root,'tree-split',x+1.6,y+6.8,z-.8,3.4,'#91d564',new Vector3(1,.95,1));cylinder(scene,root,'trunk',x,y+3,z,6,.55,'#887456',.35);if(palm){for(let i=0;i<6;i++){const leaf=sphere(scene,root,'palm-leaf',x+Math.sin(i)*2,y+6,z+Math.cos(i)*2,3,'#60956d',new Vector3(.6,.15,1.7));leaf.rotation.y=i;}}else{sphere(scene,root,'tree',x,y+6,z,6,'#6da477',new Vector3(1,1.3,1));sphere(scene,root,'tree',x-1.5,y+5,z+1,4,'#7caf81');}}
+ const tree=(x:number,z:number,y=0,palm=false)=>kit.tree(x,z,palm?'palm':'mango',y);
  function building(x:number,z:number,w:number,d:number,color='#e7cc91',h=7,y=0){box(scene,root,'building',x,y+h/2,z,w,h,d,color);box(scene,root,'roof',x,y+h+.12,z,w+.5,.5,d+.5,'#bb735a');for(const xSide of [-1,1])box(scene,root,'building-corner',x+xSide*(w/2-.3),y+h*.5,z-d/2-.14,.35,h,.3,'#fff1d2');for(let i=0;i<Math.floor(w/4);i++)box(scene,root,'window',x-w/2+2+i*4,y+h*.6,z-d/2-.03,1.8,2.3,.05,'#39766f');}
  function sign(text:string,x:number,z:number,y=4){cylinder(scene,root,'sign-post',x,y/2,z,y,.2,'#64745e');const m=textLabel(scene,root,text,x,y,z,10,2);if(m)m.billboardMode=Mesh.BILLBOARDMODE_Y;}
  const night=id==='hipa-hipa';
@@ -62,26 +64,32 @@ export function buildWorld(scene:Scene,id:string,battle=false) {
  } else if(night){
   // Hipa Hipa: the club, the bars, the dance floor and the giant palm live in worlds/hipa.ts.
  } else if(id==='masaya'){
-  cylinder(scene,root,'volcano',0,13,battle?240:0,32,250,'#768273',180);cylinder(scene,root,'crater',0,30,battle?240:0,2,155,'#3e504a',168);cylinder(scene,root,'lava',0,30.1,battle?240:0,.15,105,'#d67b45');const glow=scene.getMaterialByName('mat-#d67b45-false-1');if(glow)(glow as ReturnType<typeof material>).emissiveColor=(glow as ReturnType<typeof material>).diffuseColor.scale(.6);
-  for(let i=0;i<24;i++){const a=i/24*Math.PI*2;sphere(scene,root,'crater-rock',Math.sin(a)*85,30,Math.cos(a)*85+(battle?240:0),16,'#657368',new Vector3(1,.6,1));}
-  for(let i=0;i<35;i++){const a=i*2.4,x=Math.sin(a)*(220+i*3),z=Math.cos(a)*(220+i*3);if(kit.blocked(x,z,8))continue;sphere(scene,root,'rock',x,2,z,6+i%5,'#788678');}
+  // Volcán Masaya (Blender model «volcano», crater floor just under the lava at y = 30).
+  const vz=battle?240:0;kit.prop('volcano',0,0,vz,0,1,g=>{cylinder(scene,g,'volcano',0,13,0,32,250,'#768273',180);cylinder(scene,g,'crater',0,30,0,2,155,'#3e504a',168);
+   for(let i=0;i<24;i++){const a=i/24*Math.PI*2;sphere(scene,g,'crater-rock',Math.sin(a)*85,30,Math.cos(a)*85,16,'#657368',new Vector3(1,.6,1));}});cylinder(scene,root,'lava',0,30.1,battle?240:0,.15,105,'#d67b45').material=lavaMat(scene,6);const glow=scene.getMaterialByName('mat-#d67b45-false-1');if(glow)(glow as ReturnType<typeof material>).emissiveColor=(glow as ReturnType<typeof material>).diffuseColor.scale(.6);
+  for(let i=0;i<35;i++){const a=i*2.4,x=Math.sin(a)*(220+i*3),z=Math.cos(a)*(220+i*3);if(kit.blocked(x,z,8))continue;lavaRock(kit,x,-1.2,z,(6+i%5)/1.6,new Vector3(1,.8,1),i*1.7,'#788678');}
   sign('CRÁTER SANTIAGO',45,181,46);for(let i=0;i<10;i++){const x=-215+i*8,z=-130;if(!kit.blocked(x,z,4))tree(x,z,0);}
  } else {
-  box(scene,root,'ocean',0,-.15,-445,1400,.1,550,'#63b5c4');box(scene,root,'beach',0,-.1,-210,750,.1,75,'#e8cc92');
+  box(scene,root,'ocean',0,-.15,-445,1400,.1,550,'#63b5c4').material=waterMat(scene,'#63b5c4',110,44);box(scene,root,'beach',0,-.1,-210,750,.1,75,'#e8cc92').material=surfaceTexture(scene,'sand','#e8cc92',60,6);
   for(let i=0;i<14;i++){const x=-190+i*29,z=-226;if(!kit.blocked(x,z,4))tree(x,z,0,true);}for(let i=0;i<8;i++){const x=-95+i*26,z=-262;if(!kit.blocked(x,z,8))building(x,z,20,13,['#df9a78','#e4cb8c','#9fbaba'][i%3],6);}
   box(scene,root,'pier',-55,1,-300,8,1,95,'#ad9067');for(let i=0;i<8;i++)box(scene,root,'pier-leg',-55,-2,-260-i*10,.4,7,.4,'#907955');
-  const cx=78,cz=208,cy=40;cylinder(scene,root,'christ-hill',cx,15,cz,35,125,'#8ea478',72);cylinder(scene,root,'christ-base',cx,cy+3,cz,6,15,'#d9d5bd');cylinder(scene,root,'christ-robe',cx,cy+13,cz,16,8,'#efebd4',4);sphere(scene,root,'christ-head',cx,cy+24,cz,4.5,'#efebd4');
-  const arms=box(scene,root,'christ-arms',cx,cy+19,cz,27,2.5,2.5,'#efebd4');arms.rotation.z=-.06;for(const x of [-14,14])sphere(scene,root,'christ-hands',cx+x,cy+19,cz,2.8,'#efebd4');sign('CRISTO DE LA MISERICORDIA',cx,cz-16,cy+7);
+  // Cristo de la Misericordia on its hill above the bay, looking at the sea (props.ts swaps in the Blender model).
+  const cx=78,cz=208,cy=40;cylinder(scene,root,'christ-hill',cx,15,cz,35,125,'#8ea478',72);
+  kit.prop('cristo',cx,32.5,cz,Math.PI,1.5,p=>{const g=new TransformNode('christ-code',scene);g.parent=p;g.scaling.setAll(1/1.5); // the code version keeps its old sizecylinder(scene,g,'christ-base',0,(cy+6-32.5)/2,0,cy+6-32.5,15,'#d9d5bd');cylinder(scene,g,'christ-robe',0,cy+13-32.5,0,16,8,'#efebd4',4);sphere(scene,g,'christ-head',0,cy+24-32.5,0,4.5,'#efebd4');
+   const arms=box(scene,g,'christ-arms',0,cy+19-32.5,0,27,2.5,2.5,'#efebd4');arms.rotation.z=-.06;for(const x of [-14,14])sphere(scene,g,'christ-hands',x,cy+19-32.5,0,2.8,'#efebd4');});
+  sign('CRISTO DE LA MISERICORDIA',cx,cz-16,cy+7);
  }
  if(!battle){const dress={oriental:dressOriental,managua:dressManagua,'hipa-hipa':dressHipaClub,masaya:dressMasaya,'san-juan':dressSanJuan}[id];dress?.(kit,route);}
  if(!night){for(let i=0;i<7;i++){const cloud=new TransformNode('cloud',scene);cloud.parent=root;cloud.position.set(-250+i*75,48+(i%3)*5,-220);for(let k=0;k<3;k++)sphere(scene,cloud,'cloud-puff',k*8,Math.sin(k)*2,0,17,'#fff6df',new Vector3(1.15,.5,.7));}
- if(!battle)for(let d=20;d<L;d+=35){if(special(d))continue;const p=sample(route,d);if(id==='la-salle'&&p.x>140&&p.z>-75&&p.z<65)continue;for(const side of [-1,1]){const x=p.x+Math.cos(p.yaw)*(def.width*.85+4)*side,z=p.z-Math.sin(p.yaw)*(def.width*.85+4)*side;if(!kit.blocked(x,z,1.5)){for(let k=0;k<3;k++)sphere(scene,root,'roadside-bush',x+k*.8,p.y+1.1,z,2.4,['#62ad43','#85c84e','#b8dc5a'][k]);}const next=sample(route,d+15);if(Math.abs(Math.atan2(Math.sin(next.yaw-p.yaw),Math.cos(next.yaw-p.yaw)))>.15){const fx=p.x+Math.cos(p.yaw)*(def.width*.72+.7)*side,fz=p.z-Math.sin(p.yaw)*(def.width*.72+.7)*side;if(kit.onLane(fx,fz,1.5))continue;const sign=box(scene,root,'curve-arrow',fx,p.y+1.8,fz,2.2,1.1,.12,'#ffdc49');sign.rotation.y=p.yaw;const mark=textLabel(scene,root,side>0?'‹':'›',fx,p.y+1.8,fz,1.7,.9,'#1a355c','#ffdc49');if(mark)mark.rotation.y=p.yaw;cylinder(scene,root,'arrow-post',fx,p.y+.8,fz,1.6,.12,'#597080');}}}
+ if(!battle)for(let d=20;d<L;d+=35){if(special(d))continue;const p=sample(route,d);if(id==='la-salle'&&p.x>140&&p.z>-75&&p.z<65)continue;for(const side of [-1,1]){const x=p.x+Math.cos(p.yaw)*(def.width*.85+4)*side,z=p.z-Math.sin(p.yaw)*(def.width*.85+4)*side;if(!kit.blocked(x,z,1.5))kit.tree(x,z,'bush',p.y,.95);const next=sample(route,d+15);if(Math.abs(Math.atan2(Math.sin(next.yaw-p.yaw),Math.cos(next.yaw-p.yaw)))>.15){const fx=p.x+Math.cos(p.yaw)*(def.width*.72+.7)*side,fz=p.z-Math.sin(p.yaw)*(def.width*.72+.7)*side;if(kit.onLane(fx,fz,1.5))continue;const sign=box(scene,root,'curve-arrow',fx,p.y+1.8,fz,2.2,1.1,.12,'#ffdc49');sign.rotation.y=p.yaw;const mark=textLabel(scene,root,side>0?'‹':'›',fx,p.y+1.8,fz,1.7,.9,'#1a355c','#ffdc49');if(mark)mark.rotation.y=p.yaw;cylinder(scene,root,'arrow-post',fx,p.y+.8,fz,1.6,.12,'#597080');}}}
  for(let i=0;i<14;i++){const a=i*2.4,x=Math.sin(a)*(285+i*6),z=Math.cos(a)*(285+i*6);sphere(scene,root,'hill',x,8,z,90,def.ground,new Vector3(1,.45,1));}}
  if(!battle&&!night)scatterDetail(kit,route,id);
  // Bake static primitives into a small set of material batches.
- const groups=new Map<string,Mesh[]>();for(const m of root.getChildMeshes(false) as Mesh[]){if(!m.material||m.name.startsWith('label')||m.parent?.metadata?.animate||m.metadata?.keep)continue;const k=m.material.name,g=groups.get(k)??[];g.push(m);groups.set(k,g);}
- for(const group of groups.values())if(group.length>1){const m=Mesh.MergeMeshes(group,true,true,undefined,false,false);if(m){m.parent=root;m.isPickable=false;}}
- root.getChildMeshes().forEach(m=>{m.isPickable=false;m.receiveShadows=true;if(!m.parent?.metadata?.animate)m.freezeWorldMatrix();});root.metadata={anims:kit.anims as Anim[],gates:kit.gates};return root;
+ // Pieces with a Blender model are merged inside their type's group, so the whole group can be swapped later.
+ const propGroup=(m:Mesh)=>{for(let n=m.parent;n;n=n.parent)if(n.metadata?.propType)return n as TransformNode;return null;};
+ const groups=new Map<string,{meshes:Mesh[];parent:TransformNode}>();for(const m of root.getChildMeshes(false) as Mesh[]){if(!m.material||m.name.startsWith('label')||m.parent?.metadata?.animate||m.metadata?.keep)continue;const pg=propGroup(m),k=(pg?pg.name+'|':'')+m.material.name,g=groups.get(k)??{meshes:[],parent:pg??root};g.meshes.push(m);groups.set(k,g);}
+ for(const group of groups.values())if(group.meshes.length>1){const m=Mesh.MergeMeshes(group.meshes,true,true,undefined,false,false);if(m){m.parent=group.parent;m.isPickable=false;}}
+ root.getChildMeshes().forEach(m=>{m.isPickable=false;m.receiveShadows=true;if(!m.parent?.metadata?.animate)m.freezeWorldMatrix();});root.metadata={anims:kit.anims as Anim[],gates:kit.gates};upgradeProps(kit);return root;
 }
 
 /** Grass tufts and wild flowers along the verges, as thin instances (one draw call each). Masaya gets dry tufts and

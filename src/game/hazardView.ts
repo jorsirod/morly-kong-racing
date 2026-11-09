@@ -1,3 +1,4 @@
+import { surfaceMaterial } from './worlds/textures';
 import { Color3 } from '@babylonjs/core/Maths/math.color';
 import { Vector3 } from '@babylonjs/core/Maths/math.vector';
 import { MeshBuilder } from '@babylonjs/core/Meshes/meshBuilder';
@@ -33,7 +34,7 @@ export class HazardView{
  private warnMat:StandardMaterial;private lavaMat:StandardMaterial;private foamMat:StandardMaterial;
  constructor(private scene:Scene){
   this.warnMat=material(scene,'#ff3b1f',true,.55);this.warnMat.disableDepthWrite=true;
-  this.lavaMat=material(scene,'#ff7a2e',true,.92);this.foamMat=material(scene,'#f4fbff',true,.85);
+  this.lavaMat=surfaceMaterial(scene,'lava','#ff6a1f',1,3);this.foamMat=material(scene,'#f4fbff',true,.85);
  }
  private build(h:Hazard):View{
   const s=this.scene,node=new TransformNode('hazard-'+h.kind,s),parts:View['parts']={};

@@ -34,6 +34,9 @@ REQUIRED = ["body", "driver-socket", "passenger-socket"] + [
     for side in ("left", "right")
 ]
 TRIANGLES_MAX = 30000
+# Nombres que el juego busca. En un .blend con varios carros, Blender les agrega «.001»;
+# al revisar/exportar, el carro activo los toma prestados y luego se devuelven.
+CANONICAL = REQUIRED + ["ALF-plush", "alf-head-pivot", "alf-arm-left", "alf-arm-right"]
 
 
 def _repo_root_guess():
@@ -49,8 +52,40 @@ def _tree(obj):
     return [obj] + list(obj.children_recursive)
 
 
+def _claim_names(root):
+    """Da a los nodos de este carro sus nombres exactos (sin «.001»). Devuelve cómo deshacerlo."""
+    tree = _tree(root)
+    undo = []
+    for o in tree:
+        m = re.match(r"^(.*)\.\d{3}$", o.name)
+        if not m or m.group(1) not in CANONICAL:
+            continue
+        base = m.group(1)
+        holder = bpy.data.objects.get(base)
+        if holder is not None and holder not in tree:
+            holder.name = base + ".__prestado"
+            undo.append((holder, base))
+        undo.append((o, o.name))
+        o.name = base
+    return undo
+
+
+def _restore_names(undo):
+    for obj, name in reversed(undo):
+        obj.name = name
+
+
 def check_vehicle(vehicle_id):
     """Revisa la escena antes de exportar. Devuelve (raíz, lista de problemas)."""
+    root = bpy.data.objects.get(f"vehicle-{vehicle_id}")
+    undo = _claim_names(root) if root else []
+    try:
+        return _check(vehicle_id)
+    finally:
+        _restore_names(undo)
+
+
+def _check(vehicle_id):
     problems = []
     bpy.context.view_layer.update()  # matrix_world de objetos recién creados o movidos
     root = bpy.data.objects.get(f"vehicle-{vehicle_id}")
@@ -113,7 +148,16 @@ def count_triangles(objects):
 
 def export_vehicle(vehicle_id, repo_root=None, out_path=None):
     """Exporta ``vehicle-<id>`` y devuelve un resumen. Lanza RuntimeError si la escena no cumple."""
-    root, problems = check_vehicle(vehicle_id)
+    root0 = bpy.data.objects.get(f"vehicle-{vehicle_id}")
+    undo = _claim_names(root0) if root0 else []
+    try:
+        return _export(vehicle_id, repo_root, out_path)
+    finally:
+        _restore_names(undo)
+
+
+def _export(vehicle_id, repo_root, out_path):
+    root, problems = _check(vehicle_id)
     objects = _tree(root) if root else []
     triangles = count_triangles(objects) if root else 0
     if triangles > TRIANGLES_MAX:
@@ -158,6 +202,12 @@ def export_vehicle(vehicle_id, repo_root=None, out_path=None):
         export_extras=False,
         export_draco_mesh_compression_enable=False,
     )
+    # Oclusión ambiental horneada en el atributo «AO» (ver mklib.bake_ao): se exporta como COLOR_0
+    # y el juego la multiplica por el color base.
+    if any(o.type == "MESH" and "AO" in o.data.color_attributes for o in objects):
+        wanted.update(export_vertex_color="NAME", export_vertex_color_name="AO", export_all_vertex_colors=False)
+    else:
+        wanted.update(export_vertex_color="NONE")
     available = set(bpy.ops.export_scene.gltf.get_rna_type().properties.keys())
     try:
         result = bpy.ops.export_scene.gltf(**{k: v for k, v in wanted.items() if k in available})
