@@ -5,4 +5,4 @@
 
 - `imagenes.py` encola cada imagen por la API de ComfyUI y la guarda en `ComfyUI_Clean/output/morly/` (se salta las que existen).
 - `GENERAR-TODO.command` (doble clic en el Mac) genera primero las voces que falten con Qwen3-TTS y después el arte; apaga los servidores al terminar.
-- Elegidas: `icon-s11`, `cover-s7`, `world-*-s5`, `pilot-*-s3`. Exportadas a WebP: portada 1344×768 (q80), pistas 640×366 (q74), retratos 256×256 (q76).
+- Elegidas: `icon-s11`, `cover-s7`, `world-*-s5`, `pilot-*-s3` (semilla, roman, cucukis) y `pilot-*-s8` (el resto, corregidos). Exportadas a WebP: portada 1344×768 (q80), pistas 640×366 (q74), retratos 256×256 (q76).

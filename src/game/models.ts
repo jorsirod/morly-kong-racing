@@ -72,32 +72,32 @@ export function mergeParts(root:TransformNode,recursive=true,keep:TransformNode[
 // Stylised caricatures. Traits marked «confirmed» come from Jorsi; the rest are artistic choices
 // to tell the nine apart at a glance (see outputs/referencias-personajes.md).
 type Smile='grin'|'smirk'|'flat'|'wide'|'open';
-interface Look { skin:string; hair:string; head:[number,number,number]; eyes:number; brow:number; browTilt:number; haircut:'crop'|'side'|'spike'|'quiff'|'buzz'|'curly'|'up';
+interface Look { skin:string; hair:string; head:[number,number,number]; eyes:number; brow:number; browTilt:number; haircut:'crop'|'side'|'spike'|'quiff'|'buzz'|'curly'|'up'|'balding';
  /** Torso height / width multipliers and extra neck — Semilla tall, Sap Heinz thin, Enanonitas short. */ height:number; width:number; neck:number;
  cheeks:number; ears:number; nose:number; smile:Smile; beard?:'full'|'short'|'goatee'; moustache?:'thick'|'thin'; }
 const LOOKS:Record<string,Look>={
  // Semilla: the tallest of the gang (confirmed). Long face, short beard, half smile.
  semilla:{skin:'#c88b68',hair:'#2e2525',head:[.96,1.14,.94],eyes:.16,brow:.06,browTilt:.04,haircut:'crop',height:1.22,width:.94,neck:.2,cheeks:.04,ears:.21,nose:.25,smile:'smirk',beard:'short',moustache:'thick'},
  // Morly: the darkest skin of the group (confirmed), light cap, big grin, beard and moustache.
- morly:{skin:'#7d4e33',hair:'#1f1a1b',head:[1.1,1.02,.98],eyes:.15,brow:.0,browTilt:-.04,haircut:'crop',height:1,width:1.05,neck:0,cheeks:.04,ears:.42,nose:.3,smile:'grin',beard:'short',moustache:'thick'},
+ morly:{skin:'#7d4e33',hair:'#1f1a1b',head:[1.1,1.02,.98],eyes:.15,brow:.0,browTilt:-.04,haircut:'crop',height:1,width:.95,neck:0,cheeks:.04,ears:.42,nose:.3,smile:'grin',beard:'short',moustache:'thick'},
  // Chete: the only one with big round cheeks (confirmed). Side part, confident smile, gold chain.
- chete:{skin:'#d3a07c',hair:'#332c25',head:[1.08,1.02,.98],eyes:.15,brow:-.04,browTilt:.06,haircut:'side',height:.98,width:1.1,neck:-.04,cheeks:.36,ears:.2,nose:.24,smile:'wide'},
+ chete:{skin:'#d3a07c',hair:'#332c25',head:[1.0,1.06,.97],eyes:.15,brow:-.04,browTilt:.06,haircut:'balding',height:.98,width:.86,neck:-.04,cheeks:.04,ears:.2,nose:.24,smile:'wide'},
  // Coconitas: basketball player look — spiky hair, sweatband, open laugh.
- coconitas:{skin:'#b37c59',hair:'#292b30',head:[.94,1.12,.96],eyes:.17,brow:.11,browTilt:.08,haircut:'spike',height:1.08,width:1,neck:.06,cheeks:.04,ears:.21,nose:.25,smile:'open'},
+ coconitas:{skin:'#b37c59',hair:'#292b30',head:[.92,1.18,.96],eyes:.17,brow:.11,browTilt:.08,haircut:'spike',height:1.22,width:1,neck:.06,cheeks:.04,ears:.21,nose:.52,smile:'open'},
  // Calín: big ears and big nose (confirmed), white shirt and red cap (confirmed), serious brow.
- calin:{skin:'#c59576',hair:'#2b2522',head:[.96,1.1,.95],eyes:.17,brow:.02,browTilt:-.1,haircut:'up',height:1.02,width:.98,neck:.04,cheeks:.04,ears:.36,nose:.42,smile:'flat'},
+ calin:{skin:'#c59576',hair:'#2b2522',head:[.96,1.1,.95],eyes:.115,brow:.02,browTilt:-.1,haircut:'up',height:1.02,width:.98,neck:.04,cheeks:.04,ears:.56,nose:.56,smile:'flat'},
  // Sap Heinz: very thin (confirmed): narrow long face, thin neck and body, lighter skin and hair.
- 'sap-heinz':{skin:'#e0b896',hair:'#7a5536',head:[.82,1.2,.86],eyes:.15,brow:-.04,browTilt:.05,haircut:'side',height:1.1,width:.74,neck:.12,cheeks:.04,ears:.2,nose:.27,smile:'smirk'},
+ 'sap-heinz':{skin:'#e0b896',hair:'#1d1a1a',head:[.82,1.2,.86],eyes:.15,brow:-.04,browTilt:.05,haircut:'side',height:1.1,width:.74,neck:.12,cheeks:.04,ears:.2,nose:.27,smile:'smirk',moustache:'thin'},
  // Enanonitas: compact build (artistic reading of the nickname, pending confirmation), hair up, thin moustache, wide smile.
- enanonitas:{skin:'#c18b6e',hair:'#292326',head:[1.1,.98,.96],eyes:.18,brow:.08,browTilt:.02,haircut:'up',height:.84,width:1.04,neck:-.08,cheeks:.04,ears:.22,nose:.26,smile:'wide',moustache:'thin'},
+ enanonitas:{skin:'#c18b6e',hair:'#bdb6ad',head:[.92,1.08,.94],eyes:.18,brow:.08,browTilt:.02,haircut:'up',height:.84,width:.8,neck:-.08,cheeks:.02,ears:.22,nose:.26,smile:'wide',moustache:'thin'},
  // Jorsi: the artist — quiff, pencil behind the ear, paint on the shirt.
- jorsi:{skin:'#c58f71',hair:'#302b2a',head:[.99,1.06,.98],eyes:.16,brow:.1,browTilt:.03,haircut:'quiff',height:1.04,width:.98,neck:.02,cheeks:.04,ears:.21,nose:.25,smile:'grin',beard:'goatee'},
+ jorsi:{skin:'#f1d2b8',hair:'#302b2a',head:[.99,1.06,.98],eyes:.16,brow:.1,browTilt:.03,haircut:'quiff',height:1.04,width:.98,neck:.02,cheeks:.04,ears:.21,nose:.25,smile:'grin'},
  // Roman (Romie): full dark beard and moustache, short curly hair, red polo (from his photo).
  roman:{skin:'#d6a382',hair:'#1f1815',head:[1,1.08,.97],eyes:.16,brow:.07,browTilt:.05,haircut:'curly',height:1.05,width:1.02,neck:.02,cheeks:.04,ears:.21,nose:.3,smile:'smirk',beard:'full',moustache:'thick'},
  // Cucukis: very thin, fair skin, narrow eyes; sailor hat and sailor top.
  cucukis:{skin:'#f2d3ba',hair:'#5c4331',head:[.84,1.14,.9],eyes:.15,brow:.06,browTilt:-.04,haircut:'crop',height:1.08,width:.72,neck:.12,cheeks:.04,ears:.2,nose:.24,smile:'smirk'},
  // Raulín: round face and buzz cut, easy laugh.
- raulin:{skin:'#c39479',hair:'#392d27',head:[1.14,1.04,.96],eyes:.18,brow:-.03,browTilt:0,haircut:'buzz',height:.98,width:1.08,neck:-.02,cheeks:.04,ears:.23,nose:.28,smile:'open'},
+ raulin:{skin:'#c39479',hair:'#392d27',head:[1.04,1.06,.96],eyes:.18,brow:-.03,browTilt:0,haircut:'curly',height:.98,width:.96,neck:-.02,cheeks:.04,ears:.23,nose:.28,smile:'open'},
 };
 const aimTemp=new Quaternion();
 /** Points a pilot's arm (a shoulder pivot) along a direction in the pilot's own space; rate 1 snaps. */
@@ -141,15 +141,19 @@ export function buildCharacter(scene:Scene,id:string,parent:TransformNode){
  else if(f.smile==='smirk'){tube(scene,head,'mouth-line',[[-.13,1.0,mz+.03],[.02,.985,mz+.04],[.15,1.03,mz+.02]],.03,'#542c31');}
  else tube(scene,head,'mouth-line',[[-.12,1.0,mz+.03],[.12,1.0,mz+.03]],.03,'#542c31');
  // Hair.
- const crown=f.haircut==='buzz'?sphere(scene,head,'hair-crown',0,1.5,-.06,.9,f.hair,new Vector3(1.0*hx,.5,.94)):sphere(scene,head,'hair-crown',0,1.55,-.055,.86,f.hair,new Vector3(1.01*hx,.58,.92));
+ const crown=f.haircut==='balding'?sphere(scene,head,'hair-crown',0,1.2,-.3,.8,f.hair,new Vector3(1.02*hx,.45,.6)):f.haircut==='buzz'?sphere(scene,head,'hair-crown',0,1.5,-.06,.9,f.hair,new Vector3(1.0*hx,.5,.94)):sphere(scene,head,'hair-crown',0,1.55,-.055,.86,f.hair,new Vector3(1.01*hx,.58,.92));
  if(f.haircut==='side'||f.haircut==='quiff'){sphere(scene,head,'hair-lock',-.18*hx,1.62,.22,.48,f.hair,new Vector3(1.3,.45,.6));crown.rotation.z=.08;}
  if(f.haircut==='quiff')sphere(scene,head,'hair-quiff',.02,1.78,.18,.5,f.hair,new Vector3(1.1,.6,.8));
  if(f.haircut==='spike')for(let i=0;i<5;i++){const tuft=cylinder(scene,head,'hair-tuft',(i-2)*.13*hx,1.78,-.06,.32,.2,f.hair,.015);tuft.rotation.z=(i-2)*-.14;}
  if(f.haircut==='up')for(let i=0;i<4;i++){const tuft=cylinder(scene,head,'hair-tuft',(i-1.5)*.13*hx,1.74,.08,.26,.22,f.hair,.05);tuft.rotation.x=-.35;}
  if(f.haircut==='crop')sphere(scene,head,'hair-fringe',0,1.6,.24,.5,f.hair,new Vector3(1.4*hx,.3,.5));
+ // Balding: a shiny top and a low ring of tight curls around the sides and back.
+ if(f.haircut==='balding')for(let i=0;i<12;i++){const a=Math.PI*(-.06+i*1.12/11);sphere(scene,head,'hair-curl',Math.cos(a)*.47*hx,1.32+Math.sin(i*1.7)*.04,Math.sin(a)*-.42-.02,.24,f.hair);}
  if(f.haircut==='curly')for(let i=0;i<16;i++){const a=i*2.399,r=.12+((i*.37)%1)*.26;sphere(scene,head,'hair-curl',Math.cos(a)*r*hx,1.66+Math.cos(r*4)*.05-(r>.3?.05:0),-.05+Math.sin(a)*r*.9+.04,.26,f.hair);}
  if(c.cap){sphere(scene,head,'cap-crown',0,1.64,-.035,.91,c.cap,new Vector3(1.03*hx,.47,.95));const brim=box(scene,head,'cap-brim',0,1.58,.4,.7,.055,.54,c.cap);brim.rotation.x=.1;box(scene,head,'cap-badge',0,1.68,.41,.18,.13,.025,c.id==='calin'?'#fff9e9':'#e8b52b');}
  // Cucukis: narrow eyes (squashed whites, half lids) and a white sailor hat with a navy band.
+ // Calín: small eyes, close together.
+ if(c.id==='calin')for(const m of head.getChildMeshes())if(/^(eye-white|iris|pupil|eye-glint)/.test(m.name))m.scaling.scaleInPlace(.72);
  if(c.id==='cucukis'){for(const m of head.getChildMeshes())if(/^(eye-white|iris|pupil|eye-glint)/.test(m.name))m.scaling.y*=.5;for(const x of [-f.eyes,f.eyes])sphere(scene,head,'eyelid',x*hx,1.335,.43*hz,.23,f.skin,new Vector3(.9,.42,.5));
   sphere(scene,head,'sailor-hat-crown',0,1.7,-.04,.96,'#f7f7f2',new Vector3(1.02*hx,.5,1));const rim=torus(scene,head,'sailor-hat-rim',0,1.6,-.04,.98*hx,.15,'#f7f7f2');rim.scaling.y=.75;const band=torus(scene,head,'sailor-hat-band',0,1.66,-.04,.9*hx,.05,'#1d3a7a');band.scaling.y=.6;}
  // Morly «Kong»: a little monkey face — light muzzle, wide flat nose with nostrils, heavy brow and round ears.
