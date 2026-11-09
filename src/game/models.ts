@@ -72,12 +72,12 @@ export function mergeParts(root:TransformNode,recursive=true,keep:TransformNode[
 // Stylised caricatures. Traits marked «confirmed» come from Jorsi; the rest are artistic choices
 // to tell the nine apart at a glance (see outputs/referencias-personajes.md).
 type Smile='grin'|'smirk'|'flat'|'wide'|'open';
-interface Look { skin:string; hair:string; head:[number,number,number]; eyes:number; brow:number; browTilt:number; haircut:'crop'|'side'|'spike'|'quiff'|'buzz'|'curly'|'up'|'balding';
+interface Look { skin:string; hair:string; head:[number,number,number]; eyes:number; brow:number; browTilt:number; haircut:'crop'|'side'|'spike'|'quiff'|'buzz'|'curly'|'up'|'balding'|'slick';
  /** Torso height / width multipliers and extra neck — Semilla tall, Sap Heinz thin, Enanonitas short. */ height:number; width:number; neck:number;
  cheeks:number; ears:number; nose:number; smile:Smile; beard?:'full'|'short'|'goatee'; moustache?:'thick'|'thin'; }
 const LOOKS:Record<string,Look>={
  // Semilla: the tallest of the gang (confirmed). Long face, short beard, half smile.
- semilla:{skin:'#c88b68',hair:'#2e2525',head:[.96,1.14,.94],eyes:.16,brow:.06,browTilt:.04,haircut:'crop',height:1.22,width:.94,neck:.2,cheeks:.04,ears:.21,nose:.25,smile:'smirk',beard:'short',moustache:'thick'},
+ semilla:{skin:'#c88b68',hair:'#161214',head:[.96,1.14,.94],eyes:.16,brow:.06,browTilt:.04,haircut:'slick',height:1.22,width:.94,neck:.2,cheeks:.04,ears:.21,nose:.25,smile:'smirk',beard:'short',moustache:'thick'},
  // Morly: the darkest skin of the group (confirmed), light cap, big grin, beard and moustache.
  morly:{skin:'#7d4e33',hair:'#1f1a1b',head:[1.1,1.02,.98],eyes:.15,brow:.0,browTilt:-.04,haircut:'crop',height:1,width:.95,neck:0,cheeks:.04,ears:.42,nose:.3,smile:'grin',beard:'short',moustache:'thick'},
  // Chete: the only one with big round cheeks (confirmed). Side part, confident smile, gold chain.
@@ -97,7 +97,7 @@ const LOOKS:Record<string,Look>={
  // Cucukis: very thin, fair skin, narrow eyes; sailor hat and sailor top.
  cucukis:{skin:'#f2d3ba',hair:'#5c4331',head:[.84,1.14,.9],eyes:.15,brow:.06,browTilt:-.04,haircut:'crop',height:1.08,width:.72,neck:.12,cheeks:.04,ears:.2,nose:.24,smile:'smirk'},
  // Raulín: round face and buzz cut, easy laugh.
- raulin:{skin:'#c39479',hair:'#392d27',head:[1.04,1.06,.96],eyes:.18,brow:-.03,browTilt:0,haircut:'curly',height:.98,width:.96,neck:-.02,cheeks:.04,ears:.23,nose:.28,smile:'open'},
+ raulin:{skin:'#c39479',hair:'#1f1a18',head:[1.04,1.06,.96],eyes:.18,brow:-.03,browTilt:0,haircut:'spike',height:.98,width:.96,neck:-.02,cheeks:.04,ears:.23,nose:.28,smile:'open',beard:'full'},
 };
 const aimTemp=new Quaternion();
 /** Points a pilot's arm (a shoulder pivot) along a direction in the pilot's own space; rate 1 snaps. */
@@ -141,7 +141,7 @@ export function buildCharacter(scene:Scene,id:string,parent:TransformNode){
  else if(f.smile==='smirk'){tube(scene,head,'mouth-line',[[-.13,1.0,mz+.03],[.02,.985,mz+.04],[.15,1.03,mz+.02]],.03,'#542c31');}
  else tube(scene,head,'mouth-line',[[-.12,1.0,mz+.03],[.12,1.0,mz+.03]],.03,'#542c31');
  // Hair.
- const crown=f.haircut==='balding'?sphere(scene,head,'hair-crown',0,1.2,-.3,.8,f.hair,new Vector3(1.02*hx,.45,.6)):f.haircut==='buzz'?sphere(scene,head,'hair-crown',0,1.5,-.06,.9,f.hair,new Vector3(1.0*hx,.5,.94)):sphere(scene,head,'hair-crown',0,1.55,-.055,.86,f.hair,new Vector3(1.01*hx,.58,.92));
+ const crown=f.haircut==='slick'?sphere(scene,head,'hair-crown',0,1.56,-.14,.86,f.hair,new Vector3(1.02*hx,.56,.9)):f.haircut==='balding'?sphere(scene,head,'hair-crown',0,1.2,-.3,.8,f.hair,new Vector3(1.02*hx,.45,.6)):f.haircut==='buzz'?sphere(scene,head,'hair-crown',0,1.5,-.06,.9,f.hair,new Vector3(1.0*hx,.5,.94)):sphere(scene,head,'hair-crown',0,1.55,-.055,.86,f.hair,new Vector3(1.01*hx,.58,.92));
  if(f.haircut==='side'||f.haircut==='quiff'){sphere(scene,head,'hair-lock',-.18*hx,1.62,.22,.48,f.hair,new Vector3(1.3,.45,.6));crown.rotation.z=.08;}
  if(f.haircut==='quiff')sphere(scene,head,'hair-quiff',.02,1.78,.18,.5,f.hair,new Vector3(1.1,.6,.8));
  if(f.haircut==='spike')for(let i=0;i<5;i++){const tuft=cylinder(scene,head,'hair-tuft',(i-2)*.13*hx,1.78,-.06,.32,.2,f.hair,.015);tuft.rotation.z=(i-2)*-.14;}

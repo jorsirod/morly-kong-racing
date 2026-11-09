@@ -37,4 +37,10 @@ describe('música original por pista',()=>{
   for(let b=0;b<16*8;b++)echoes+=musicStep(dream,b,{level:1,tension:0,speed:.5,boost:false}).notes.filter(n=>n.offset>0).length;
   expect(echoes).toBeGreaterThan(20);
  });
+ it('el menú tiene su propio tema completo y válido',()=>{
+  const s=PLAYLISTS.menu?.[0];expect(s).toBeDefined();const steps=s.steps??16;
+  for(const name of ['A','B'] as const){expect(barLengths(s.sections[name].melody)).toEqual(Array(8).fill(steps));if(s.sections[name].riff)expect(barLengths(s.sections[name].riff!)).toEqual(Array(8).fill(steps));}
+  let notes=0;for(let b=0;b<steps*8*s.form.length;b++){const out=musicStep(s,b,{level:1,tension:0,speed:.45,boost:false});for(const n of out.notes){expect(n.freq>25&&n.freq<3000).toBe(true);notes++;}}
+  expect(notes).toBeGreaterThan(200);
+ });
 });

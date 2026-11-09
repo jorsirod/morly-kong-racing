@@ -192,6 +192,15 @@ export class GameAudio {
   if(!this.context)return;const at=this.context.currentTime+.05,r=this.score.root*2**(2/12)*2;
   [[1,0],[1.26,.12],[1.5,.24],[2,.36]].forEach(([k,d])=>this.instrument('brass',r*k,.18,.11,0,at+d));this.instrument('brass',r*2,.5,.1,0,at+.5);this.instrument('brass',r*1.5,.5,.06,0,at+.5);
  }
+ /** Clean menu sounds: a whisper of a tick on hover, a soft two-note «tic» to select, a rising chime with an air swoosh to
+  * confirm, a falling pair to go back. Short sines, no buzz, routed through the effects volume. */
+ ui(kind:'hover'|'select'|'confirm'|'back'|'toggle'){
+  if(kind==='hover'){this.tone(2350,.03,'sine',0,0,.035);return;}
+  if(kind==='toggle'){this.tone(1568,.05,'sine',0,0,.08);this.tone(2093,.06,'sine',.035,0,.06);return;}
+  if(kind==='select'){this.tone(1318.5,.07,'sine',0,-.1,.11);this.tone(1760,.11,'sine',.045,.1,.09);this.noise(.025,'bandpass',4200,0,.035);return;}
+  if(kind==='back'){this.tone(1046.5,.08,'sine',0,0,.1);this.tone(784,.14,'sine',.06,0,.09);return;}
+  [880,1108.7,1318.5,1760].forEach((f,i)=>this.tone(f,.22-i*.02,i%2?'sine':'triangle',i*.045,(i-1.5)*.15,.085));this.noise(.26,'bandpass',500,0,.05,0,3800);
+ }
  setTrack(id:string){if(PLAYLISTS[id])this.score=pickSong(id);}
  /** 0 calm (countdown/menus), 1 racing, 2 final lap. */
  setIntensity(level:number){const next=Math.round(bounded(level,0,2,0));if(next===2&&this.level===1)this.fanfare();this.level=next;}

@@ -8,7 +8,7 @@
  */
 export type Inst='square'|'brass'|'accordion'|'marimba'|'steel'|'synth'|'pad'|'bass'|'pluck'|'piano'|'organ'|'dist'|'clean'|'sub'|'chip'|'rhodes'|'vibes'|'upright'|'wah'|'nylon'|'strings';
 export type Drum='kick'|'snare'|'hat'|'openhat'|'clap'|'tom'|'lowtom'|'guiro'|'rim'|'shaker'|'cowbell'|'riser'|'scratch'|'crash'|'tamb'|'boom'|'ride'|'brush';
-export type Groove='march'|'cumbia'|'drive'|'disco'|'tribal'|'reggae'|'britpop'|'hiphop'|'numetal'|'newwave'|'funkrock'|'grunge'|'chipplat'|'chipadv'|'sonnica'|'jazz'|'lounge'|'dream'|'nurock'|'slowrock';
+export type Groove='march'|'cumbia'|'drive'|'disco'|'tribal'|'reggae'|'britpop'|'hiphop'|'numetal'|'newwave'|'funkrock'|'grunge'|'chipplat'|'chipadv'|'sonnica'|'jazz'|'lounge'|'dream'|'nurock'|'slowrock'|'soadverse'|'soadheavy';
 interface Section{chords:number[];melody:string;
  /** Optional groove for this section only (a song can drop into another style). */ groove?:Groove;
  /** Optional riff/ostinato, degrees relative to the bar's chord, played by the score's riff instrument. */ riff?:string; }
@@ -19,7 +19,7 @@ export interface Score{
  /** Dotted-eighth delay on the lead and riff (dreamy guitars). */ echo?:boolean;
  sections:Record<'A'|'B',Section>;form:('A'|'B')[];
 }
-const MAJOR=[0,2,4,5,7,9,11],MINOR=[0,2,3,5,7,8,10],MIXO=[0,2,4,5,7,9,10],DORIAN=[0,2,3,5,7,9,10],HARMONIC=[0,2,3,5,7,8,11];
+const PHRYGDOM=[0,1,4,5,7,8,10],MAJOR=[0,2,4,5,7,9,11],MINOR=[0,2,3,5,7,8,10],MIXO=[0,2,4,5,7,9,10],DORIAN=[0,2,3,5,7,9,10],HARMONIC=[0,2,3,5,7,8,11];
 
 // «Recreo en Liverpool»: sixties piano-pop for the schoolyard — bouncy piano, organ, tambourine, walking bass. G major.
 const ls_liverpool:Score={title:'Recreo en Liverpool',bpm:128,swing:.08,root:196,mode:MAJOR,groove:'britpop',lead:'piano',leadB:'organ',color:'organ',form:['A','A','B','A'],sections:{
@@ -54,6 +54,12 @@ const sj_estelar:Score={title: 'Bahía estelar', bpm: 84, swing: 0, root: 146.83
 // «Héroe de la bahía»: a heroic 8-bit adventure march — brass fanfare lead over pulse-wave harmony, rolling march snare, galloping bass. Bb major.
 const sj_heroe:Score={title: 'Héroe de la bahía', bpm: 130, swing: 0, root: 233.08, mode: MAJOR, groove: 'chipadv', lead: 'brass', leadB: 'chip', color: 'chip', form: ['A', 'A', 'B', 'A'], sections: {A: {chords: [0, 0, 3, 3, 0, 0, 4, 4], melody: '4.8 0.6 0.1 0.1|0.2 1.2 2.2 3.2 4.8|5.8 3.4 5.4|7.12 -.2 7.1 7.1|7.6 8.2 9.8|9.4 8.4 7.4 6.4|4.6 5.2 6.8|4.12 -.4'}, B: {chords: [5, 5, 3, 3, 1, 1, 4, 4], melody: '9.8 7.4 9.4|10.12 9.4|10.8 12.4 10.4|9.16|8.8 7.4 8.4|10.12 8.4|11.6 10.2 9.4 8.4|11.16'}}};
 
+// «Tóxico de Managua» (menus): original alt-metal in a rolling triple feel with an Armenian-flavoured phrygian-dominant
+// colour — a mysterious clean-guitar arpeggio verse that explodes into a drop-tuned chug, snare rolls and crashes. D.
+const menu_toxico:Score={title:'Tóxico de Managua',bpm:117,swing:0,root:146.83,mode:PHRYGDOM,groove:'soadverse',lead:'synth',leadB:'brass',color:'pad',riffInst:'clean',steps:12,form:['A','B','A','B'],sections:{
+ A:{chords:[0,0,5,5,1,1,0,0],melody:'7.3 8.3 9.3 8.3|7.6 4.6|10.3 9.3 8.3 9.3|7.9 -.3|8.2 9.1 10.3 9.2 8.1 9.3|8.6 7.6|7.3 8.3 9.3 11.3|11.9 -.3',riff:'0.1 4.1 7.1 8.1 7.1 4.1 0.1 4.1 7.1 9.1 7.1 4.1|0.1 4.1 7.1 8.1 7.1 4.1 0.1 4.1 7.1 9.1 7.1 4.1|0.1 4.1 7.1 8.1 7.1 4.1 0.1 4.1 7.1 9.1 7.1 4.1|0.1 4.1 7.1 8.1 7.1 4.1 0.1 4.1 7.1 9.1 7.1 4.1|0.1 4.1 7.1 8.1 7.1 4.1 0.1 4.1 7.1 9.1 7.1 4.1|0.1 4.1 7.1 8.1 7.1 4.1 0.1 4.1 7.1 9.1 7.1 4.1|0.1 4.1 7.1 8.1 7.1 4.1 0.1 4.1 7.1 9.1 7.1 4.1|0.1 4.1 7.1 8.1 7.1 4.1 0.1 4.1 7.1 9.1 7.1 4.1'},
+ B:{chords:[0,0,1,1,5,5,6,0],groove:'soadheavy',melody:'14.3 14.3 13.3 14.3|15.6 14.6|15.3 15.3 14.3 12.3|11.12|14.3 14.3 13.3 12.3|13.6 12.6|13.3 12.3 11.3 9.3|7.12',riff:'0.1 0.1 1.1 0.1 3.1 2.1 0.1 0.1 1.1 0.1 4.2|0.1 0.1 1.1 0.1 3.1 2.1 0.1 0.1 1.1 0.1 4.2|0.1 0.1 1.1 0.1 3.1 2.1 0.1 0.1 1.1 0.1 4.2|0.1 0.1 1.1 0.1 3.1 2.1 0.1 0.1 1.1 0.1 4.2|0.1 0.1 1.1 0.1 3.1 2.1 0.1 0.1 1.1 0.1 4.2|0.1 0.1 1.1 0.1 3.1 2.1 0.1 0.1 1.1 0.1 4.2|0.1 0.1 1.1 0.1 3.1 2.1 0.1 0.1 1.1 0.1 4.2|0.1 0.1 1.1 0.1 3.1 2.1 0.1 0.1 1.1 0.1 4.2'}}};
+
 /** Every world rotates through its songs, one per race. */
 export const PLAYLISTS:Record<string,Score[]>={
  'la-salle':[ls_8bit,ls_conciencia,ls_liverpool],
@@ -61,7 +67,8 @@ export const PLAYLISTS:Record<string,Score[]>={
  'managua':[mg_primavera,mg_crawl],
  'hipa-hipa':[hp_romance,hp_azulado,hp_scratch],
  'masaya':[ms_piedra,ms_elegido],
- 'san-juan':[sj_estelar,sj_heroe]
+ 'san-juan':[sj_estelar,sj_heroe],
+ menu:[menu_toxico]
 };
 /** The first song of each world (kept for callers that only need one). */
 export const SCORES:Record<string,Score>=Object.fromEntries(Object.entries(PLAYLISTS).map(([id,list])=>[id,list[0]]));
@@ -96,7 +103,7 @@ export function musicStep(score:Score,beat:number,st:MusicState){
  const echo=(inst:Inst,freq:number,len:number,vol:number,pan:number)=>{n(inst,freq,len,vol,pan);if(score.echo){n(inst,freq,Math.min(len,3),vol*.38,-pan-.3,3);n(inst,freq,Math.min(len,3),vol*.16,pan+.3,6);}};
  const d=(drum:Drum,vol:number,pan=0)=>drums.push({drum,vol,pan,offset:0});
  const calm=st.level<1,last=st.level>=2,downbeat=s16===0,chip=groove==='chipplat'||groove==='chipadv';
- const heavy=groove==='numetal'||groove==='grunge';
+ const heavy=groove==='numetal'||groove==='grunge'||groove==='soadheavy';
  // ——— Lead melody (and its final-lap octave double). The reprise of A answers an octave up.
  const occurrence=Math.floor(barIndex/8)%form.length,reprise=sectionName==='A'&&occurrence===form.lastIndexOf('A')&&occurrence!==form.indexOf('A')&&!calm;
  if(!calm||bar%2===0){
@@ -149,6 +156,7 @@ export function musicStep(score:Score,beat:number,st:MusicState){
   case 'dream':if(downbeat&&bar%2===0)triad.forEach((t,i)=>n('pad',f(t+7),32,calm?.024:.03,(i-1)*.45));break;
   case 'nurock':if(downbeat&&bar%2===0)[chord,chord+4].forEach((t,i)=>n('strings',f(t+7),32,.02,(i-.5)*.6));break;
   case 'slowrock':if(downbeat&&bar%2===0)triad.forEach((t,i)=>n('pad',f(t+7),32,.018,(i-1)*.4));break;
+  case 'soadverse':case 'soadheavy':if(downbeat)[chord,chord+4].forEach((t,i)=>n('strings',f(t+7),12,groove==='soadheavy'?.022:.016,(i-.5)*.6));break;
   default:if(downbeat)triad.forEach((t,i)=>n('pad',f(t+7),16,calm?.03:.025,(i-1)*.35));
  }
  // ——— Bass: one pattern per groove, always on the chord root (fifth/octave for movement).
@@ -175,6 +183,7 @@ export function musicStep(score:Score,beat:number,st:MusicState){
   case 'lounge':if(s16===0)n('upright',root,5,bassVol);if(s16===6)n('upright',fifth,2,bassVol*.8);if(s16===10)n('upright',oct,3,bassVol*.75);if(!calm&&s16===14)n('upright',f(chord-6),2,bassVol*.7);break;
   case 'dream':if(s16===0)n('bass',root,7,bassVol*.9);if(s16===8)n('bass',bar%2?fifth:root,6,bassVol*.8);break;
   case 'nurock':if(s16%2===0)n('bass',s16===14?oct:root,1.6,bassVol*(s16%4===0?1:.75));break;
+  case 'soadverse':if(s16===0)n('bass',root,5,bassVol*.9);if(s16===6)n('bass',bar%2?fifth:root,5,bassVol*.8);break;
   case 'slowrock':if(s16===0)n('bass',root,6,bassVol);if(s16===6)n('bass',root,2,bassVol*.8);if(s16===10)n('bass',f(chord-5),4,bassVol*.85);break;
  }
  // ——— Colour layer: marimba ostinato (or plucked arps on the final lap) on eighths.
@@ -239,12 +248,18 @@ export function musicStep(score:Score,beat:number,st:MusicState){
   case 'nurock':
    if(s16===0||s16===7||s16===10)d('kick',calm?.16:.26);if(s16===4||s16===12){d('snare',calm?.09:.15);if(!calm)d('clap',.06);}d('hat',s16%2?hats*.5:hats);
    if(!calm&&bar%4===3&&(s16===13||s16===14))d('scratch',.08,s16===13?-.4:.4);break;
+  // Triple-feel alt-metal: a tight verse groove, then double kicks, crashes and a snare-and-tom roll into every fourth bar.
+  case 'soadverse':
+   if(s16===0||s16===7)d('kick',calm?.14:.22);if(s16===3||s16===9)d(calm?'rim':'snare',calm?.06:.12);if(s16%2===0)d('hat',hats*.9);if(!calm&&bar%4===3&&s16>=8)d('snare',.05+(s16-8)*.03);break;
+  case 'soadheavy':
+   if(s16===0||s16===1||s16===6||s16===7||(!calm&&s16===10))d('kick',calm?.18:.3);if(s16===3||s16===9)d('snare',calm?.12:.21);if(s16%2===0)d(calm?'hat':'openhat',calm?hats:.035);
+   if(downbeat&&bar%2===0)d('crash',.08);if(!calm&&bar%4===3&&s16>=6)d(s16<9?'tom':'lowtom',.13+(s16-6)*.015,s16<9?-.3:.3);break;
   case 'slowrock':
    if(s16===0||s16===3||(!calm&&s16===11))d('kick',calm?.18:.28);if(s16===8)d('snare',calm?.12:.2);if(s16%2===0)d('hat',hats*.9);if(!calm&&downbeat&&bar%4===0)d('crash',.06);
    if(!calm&&bar%4===3&&s16>=12)d('tom',.12+(s16-12)*.02,(s16-13.5)*.2);break;
  }
  // Faster = busier: from 3/4 of top speed every groove gets a sixteenth shaker.
- if(!calm&&st.speed>.75&&s16%2===1&&!['disco','funkrock','jazz','lounge','dream','sonnica','slowrock'].includes(groove)&&!heavy)d('shaker',.025);
+ if(!calm&&st.speed>.75&&s16%2===1&&!['disco','funkrock','jazz','lounge','dream','sonnica','slowrock','soadverse'].includes(groove)&&!heavy)d('shaker',.025);
  if(last&&downbeat&&bar%4===0)d(heavy||groove==='newwave'?'crash':'openhat',.07);
  return{notes,drums,bar,section:sectionName};
 }

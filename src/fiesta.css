@@ -83,3 +83,63 @@
 .arcade-world-card.selected .world-art{filter:saturate(1.15)}
 .driver-portrait.painted{overflow:hidden}
 .driver-portrait.painted img{width:100%;height:100%;object-fit:cover;object-position:50% 22%;transform:none}
+
+/* ——— Title screen polish ——— */
+/* A softer, darker pool behind the logo instead of the heavy left curtain, so the art breathes. */
+.title-screen .title-vignette{background:radial-gradient(ellipse 48% 70% at 27% 46%,#1a0838d9 0,#2a0f6b8c 45%,transparent 75%),linear-gradient(0deg,#14062fcc 0,transparent 26%)}
+/* Entrance: the logo drops in with a bounce, the rest rises in sequence. */
+.title-content>*{animation:title-rise .55s cubic-bezier(.2,1.2,.4,1) both}
+.title-content>.game-logo{animation:title-drop .8s cubic-bezier(.2,1.5,.4,1) both}
+.title-content>:nth-child(1){animation-delay:.05s}.title-content>:nth-child(3){animation-delay:.45s}.title-content>:nth-child(4){animation-delay:.55s}
+.title-content>:nth-child(5){animation-delay:.65s}.title-content>:nth-child(6){animation-delay:.75s}.title-content>:nth-child(7){animation-delay:.85s}
+@keyframes title-rise{from{opacity:0;transform:translateY(18px)}}
+@keyframes title-drop{0%{opacity:0;transform:translateY(-70px) scale(1.15) rotate(-3deg)}60%{opacity:1}}
+.press-start{position:relative;overflow:hidden}
+.press-start::after{content:'';position:absolute;top:-20%;bottom:-20%;width:38%;left:-60%;background:linear-gradient(100deg,transparent,#ffffffcc,transparent);transform:skewX(-20deg);animation:glare 3.4s ease-in-out 1.6s infinite}
+@keyframes glare{0%,55%{left:-60%}80%,100%{left:130%}}
+/* Chips with line icons. */
+.title-links>button{display:inline-flex;align-items:center;gap:7px;font-weight:900;letter-spacing:.06em;backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)}
+.chip-icon{width:15px;height:15px;flex:0 0 auto;fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
+/* Now playing. */
+.now-playing{position:absolute;top:16px;right:18px;z-index:3;display:flex;align-items:center;gap:10px;padding:7px 14px 7px 10px;border-radius:999px;border:2px solid #ffffff55;background:#14062f99;color:#fff6dc;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);text-align:left;animation:title-rise .6s 1s both;cursor:pointer}
+.now-playing:hover{border-color:#ffd33d}
+.now-playing .np-text{display:flex;flex-direction:column;line-height:1.15}
+.now-playing small{font-size:8px;letter-spacing:.14em;color:#ff8fc4;font-weight:900}
+.now-playing b{font-size:12px;font-weight:900}
+.eq{display:flex;align-items:flex-end;gap:2px;height:16px}
+.eq i{width:3px;background:#ffd33d;border-radius:2px;animation:eq .9s ease-in-out infinite}
+.eq i:nth-child(2){animation-delay:-.3s}.eq i:nth-child(3){animation-delay:-.6s}.eq i:nth-child(4){animation-delay:-.15s}
+@keyframes eq{0%,100%{height:4px}50%{height:16px}}
+.now-playing.muted .eq i{animation:none;height:3px;background:#ffffff66}
+.now-playing.muted small{color:#ffffff99}
+/* The gang strip. */
+.gang-strip{position:absolute;right:0;bottom:44px;width:44%;overflow:hidden;z-index:2;-webkit-mask-image:linear-gradient(90deg,transparent,#000 14%,#000 86%,transparent);mask-image:linear-gradient(90deg,transparent,#000 14%,#000 86%,transparent);animation:title-rise .6s 1.1s both}
+.gang-track{display:flex;gap:10px;width:max-content;animation:gang 38s linear infinite}
+.gang-track span{position:relative;width:54px;height:54px;border-radius:14px;border:3px solid #fff6dc;overflow:hidden;box-shadow:3px 4px 0 #14062f;flex:0 0 auto;transform:rotate(-3deg)}
+.gang-track span:nth-child(even){transform:rotate(3deg) translateY(4px)}
+.gang-track img{width:100%;height:100%;object-fit:cover;object-position:50% 22%}
+.gang-track em{position:absolute;left:0;right:0;bottom:0;font:900 7px/1.5 Verdana,sans-serif;font-style:normal;text-align:center;color:#fff;background:#14062fb3;letter-spacing:.04em}
+@keyframes gang{to{transform:translateX(-50%)}}
+@media (max-height:500px) and (orientation:landscape){.gang-strip{bottom:24px;width:42%}.gang-track span{width:40px;height:40px;border-radius:10px;border-width:2px}.now-playing{top:8px;right:10px;padding:5px 10px 5px 8px}.now-playing b{font-size:10px}}
+@media (max-width:700px) and (orientation:portrait){.gang-strip{width:100%;bottom:56px}}
+@media (prefers-reduced-motion:reduce){.title-content>*,.press-start::after,.gang-track,.eq i{animation:none!important}}
+@media (max-height:500px) and (orientation:landscape){
+ .gang-strip{display:none}
+ .title-links{flex-wrap:nowrap;max-width:100%}
+ .title-links>button{font-size:8px;padding:5px 8px;gap:4px;letter-spacing:.03em}
+ .title-links .chip-icon{width:11px;height:11px}
+}
+@media (max-width:950px) and (min-height:501px){.gang-strip{width:40%}}
+
+/* ——— Pilot tiles: the painted portrait is the card (bigger faces), name underneath. ——— */
+.pilot-roster{grid-template-columns:repeat(4,minmax(0,1fr))!important;gap:8px!important}
+.pilot-card{flex-direction:column!important;align-items:stretch!important;text-align:center!important;padding:0!important;gap:0!important;min-height:0!important;overflow:hidden;border-width:2px!important;border-top-width:2px!important;border-left-width:2px!important;border-radius:12px}
+.pilot-card .driver-portrait,.pilot-card.selected .driver-portrait{width:100%!important;height:auto!important;aspect-ratio:16/11;border:0!important;border-radius:0!important;box-shadow:none!important}
+.pilot-card .driver-portrait img{object-position:50% 24%;transition:transform .25s ease}
+.pilot-card:hover .driver-portrait img,.pilot-card.selected .driver-portrait img{transform:scale(1.08)}
+.pilot-card-text{padding:4px 6px 6px;align-items:center!important;text-align:center!important}
+.pilot-card-text strong{font-size:13px!important}
+.pilot-card-text small{font-size:10px!important}
+.pilot-card .pilot-badge{position:absolute;top:5px;right:5px}
+@media (max-height:500px) and (orientation:landscape){.pilot-roster{gap:5px!important}.pilot-card .driver-portrait{aspect-ratio:16/9}.pilot-card-text{padding:2px 4px 3px}.pilot-card-text strong{font-size:11px!important}.pilot-card-text small{display:none!important}}
+@media (max-width:700px) and (orientation:portrait){.pilot-roster{grid-template-columns:repeat(3,minmax(0,1fr))!important}}
