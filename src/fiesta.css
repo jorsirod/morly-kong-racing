@@ -143,3 +143,20 @@
 .pilot-card .pilot-badge{position:absolute;top:5px;right:5px}
 @media (max-height:500px) and (orientation:landscape){.pilot-roster{gap:5px!important}.pilot-card .driver-portrait{aspect-ratio:16/9}.pilot-card-text{padding:2px 4px 3px}.pilot-card-text strong{font-size:11px!important}.pilot-card-text small{display:none!important}}
 @media (max-width:700px) and (orientation:portrait){.pilot-roster{grid-template-columns:repeat(3,minmax(0,1fr))!important}}
+
+/* ——— Car tiles: the painted car fills the top of the card. ——— */
+.arcade-car{padding:0!important;gap:0!important;overflow:hidden;justify-content:flex-start!important;border-radius:12px}
+.arcade-car .vehicle-portrait.painted{width:100%!important;height:auto!important;aspect-ratio:16/10;max-height:none}
+.arcade-car .vehicle-portrait.painted>img{object-fit:cover;transition:transform .25s ease}
+.arcade-car:hover .vehicle-portrait.painted>img,.arcade-car.selected .vehicle-portrait.painted>img{transform:scale(1.07)}
+.arcade-car>strong{padding:5px 6px 0}
+.arcade-car>small{padding:0 6px 6px}
+.arcade-car>b{position:absolute;top:6px;right:6px;z-index:1}
+@media (max-height:500px) and (orientation:landscape){.arcade-car .vehicle-portrait.painted{aspect-ratio:16/8}.arcade-car>small{display:none}.arcade-car>strong{padding:2px 4px 3px;font-size:11px}}
+.arcade-cars{grid-auto-rows:min-content;align-content:start}
+.arcade-car{min-height:0!important}
+.arcade-car>strong{position:absolute;left:0;right:0;bottom:0;padding:14px 6px 4px!important;background:linear-gradient(transparent,#14062fd9 55%);color:#fff!important;font-size:12px;text-align:center;text-shadow:1px 1px 0 #000}
+.arcade-car>small{display:none!important}
+.arcade-car.selected>strong{background:linear-gradient(transparent,#b8650fe6 55%)}
+@media (max-height:500px) and (orientation:landscape){.arcade-car .vehicle-portrait.painted{aspect-ratio:16/7}.arcade-car>strong{font-size:9px!important;padding:8px 4px 2px!important}}
+.arcade-cars{flex:0 0 auto!important}
