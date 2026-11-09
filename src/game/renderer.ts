@@ -26,7 +26,7 @@ import {INTRO} from '../../shared/simulation';
 import {stuntAt,stuntPose} from '../../shared/stunts';
 import {RaceEffects} from './effects';
 import {AttackView} from './attacks';
-import {grade,lightColors,lookFor,skyDome} from './look';
+import {grade,lightColors,lookFor,paintFinish,skyDome} from './look';
 import {DefaultRenderingPipeline} from '@babylonjs/core/PostProcesses/RenderPipeline/Pipelines/defaultRenderingPipeline';
 import '@babylonjs/core/PostProcesses/RenderPipeline/postProcessRenderPipelineManagerSceneComponent';
 import '@babylonjs/loaders/glTF';
@@ -61,6 +61,22 @@ function unmirror(top:TransformNode){
   n.position.x*=-1;const q=n.rotationQuaternion;if(q)n.rotationQuaternion=new Quaternion(q.x,-q.y,-q.z,q.w);else{n.rotation.y*=-1;n.rotation.z*=-1;}
   if('getTotalVertices' in n&&(n as AbstractMesh).getTotalVertices()>0)n.scaling.x*=-1;
  }
+}
+/** A car instance from its GLB (public/models/<id>.glb), wired like buildVehicle(): pilot, decals, wheels, ALF. */
+export function carFromAsset(scene:Scene,asset:AssetContainer,vehicleId:string,characterId:string):Car{
+ const entries=asset.instantiateModelsToScene(name=>name+'-copy',false,{doNotInstantiate:false}),root=new TransformNode('car-instance',scene);for(const n of entries.rootNodes){if(n instanceof TransformNode)unmirror(n);n.parent=root;}
+ const nodes=root.getChildTransformNodes(),body=nodes.find(n=>n.name.startsWith('body'))??root,driverSocket=nodes.find(n=>n.name.startsWith('driver-socket'))??body,passengerSocket=nodes.find(n=>n.name.startsWith('passenger-socket'))??body,driver=buildCharacter(scene,characterId,driverSocket);
+ const wheels=nodes.filter(n=>n.name.startsWith('wheel-spin-')),frontWheels=nodes.filter(n=>n.name.startsWith('wheel-pivot-front-')),alf=nodes.find(n=>n.name.startsWith('ALF-plush'));
+ const part=(name:string)=>nodes.find(n=>n.name.startsWith(name)),head=part('alf-head-pivot'),armL=part('alf-arm-left'),armR=part('alf-arm-right'),alfParts=alf&&head&&armL&&armR?{head,armL,armR}:undefined;
+ for(const n of [body,alf,head,armL,armR,...wheels,...frontWheels])eulerize(n);addVehicleDecals(scene,body,vehicleId);
+ return{root,body,driverSocket,passengerSocket,driver,alf,alfParts,wheels,frontWheels};
+}
+/** Shows the code-built car at once and swaps in the GLB (same model as in the race) when it has loaded. */
+function previewCar(scene:Scene,vehicleId:string,characterId:string,place:(car:Car)=>void,look=lookFor('la-salle')){
+ const holder={car:buildVehicle(scene,vehicleId,characterId),disposed:false};place(holder.car);
+ LoadAssetContainerAsync('/models/'+vehicleId+'.glb',scene).then(asset=>{if(holder.disposed||scene.isDisposed){asset.dispose();return;}
+  paintFinish(scene,look,asset.materials);const glb=carFromAsset(scene,asset,vehicleId,characterId);holder.car.root.dispose(false,false);holder.car=glb;place(glb);}).catch(()=>{/* keep the code-built car */});
+ return holder;
 }
 export class RaceRenderer{
  engine:Engine;scene:Scene;fps=60;
@@ -98,17 +114,12 @@ export class RaceRenderer{
   if(!night&&size){this.shadowMap=new ShadowGenerator(size,this.sun);this.shadowMap.usePercentageCloserFiltering=true;this.shadowMap.filteringQuality=ShadowGenerator.QUALITY_LOW;this.shadowMap.bias=.002;this.shadowMap.normalBias=.035;this.shadowMap.setDarkness(.24);}
   if(night)for(let i=0;i<3;i++){const light=new PointLight('club-'+i,new Vector3((i-1)*55,12,0),this.scene);light.diffuse=Color3.FromHexString(['#f262ac','#46dce6','#ffd249'][i]);light.intensity=2.3;light.range=110;}
  }
- async preload(state:GameState){const ids=[...new Set(state.players.map(p=>p.vehicleId))];await Promise.all(ids.map(async id=>{try{this.assets.set(id,await LoadAssetContainerAsync('/models/'+id+'.glb',this.scene));}catch{/* Source geometry is the offline fallback. */}}));
+ async preload(state:GameState){const ids=[...new Set(state.players.map(p=>p.vehicleId))];await Promise.all(ids.map(async id=>{try{const asset=await LoadAssetContainerAsync('/models/'+id+'.glb',this.scene);paintFinish(this.scene,lookFor(this.trackId),asset.materials,this.quality!=='baja');this.assets.set(id,asset);}catch{/* Source geometry is the offline fallback. */}}));
   // Compile shaders before the curtain opens, and size the canvas to its final layout.
   try{await this.scene.whenReadyAsync();}catch{/* render anyway */}this.engine.resize();}
  private car(vehicleId:string,characterId:string):Car{
   const asset=this.assets.get(vehicleId);if(!asset)return buildVehicle(this.scene,vehicleId,characterId);
-  const entries=asset.instantiateModelsToScene(name=>name+'-copy',false,{doNotInstantiate:false}),root=new TransformNode('car-instance',this.scene);for(const n of entries.rootNodes){if(n instanceof TransformNode)unmirror(n);n.parent=root;}
-  const nodes=root.getChildTransformNodes(),body=nodes.find(n=>n.name.startsWith('body'))??root,driverSocket=nodes.find(n=>n.name.startsWith('driver-socket'))??body,passengerSocket=nodes.find(n=>n.name.startsWith('passenger-socket'))??body,driver=buildCharacter(this.scene,characterId,driverSocket);
-  const wheels=nodes.filter(n=>n.name.startsWith('wheel-spin-')),frontWheels=nodes.filter(n=>n.name.startsWith('wheel-pivot-front-')),alf=nodes.find(n=>n.name.startsWith('ALF-plush'));
-  const part=(name:string)=>nodes.find(n=>n.name.startsWith(name)),head=part('alf-head-pivot'),armL=part('alf-arm-left'),armR=part('alf-arm-right'),alfParts=alf&&head&&armL&&armR?{head,armL,armR}:undefined;
-  for(const n of [body,alf,head,armL,armR,...wheels,...frontWheels])eulerize(n);addVehicleDecals(this.scene,body,vehicleId);
-  return{root,body,driverSocket,passengerSocket,driver,alf,alfParts,wheels,frontWheels};
+  return carFromAsset(this.scene,asset,vehicleId,characterId);
  }
  private lod(parent:TransformNode,vehicleId:string,characterId:string){
   const root=new TransformNode('distant-car',this.scene);root.parent=parent;const v=vehicle(vehicleId),d=vehicleDynamics(vehicleId);box(this.scene,root,'lod-body',0,.92,0,d.halfWidth*2,.8,d.halfLength*2,v.color);box(this.scene,root,'lod-rear',0,1.7,-.6,d.halfWidth*1.7,.55,1.35,v.color);sphere(this.scene,root,'lod-driver',-.4,2.3,.2,.8,'#c38c6b');
@@ -420,10 +431,10 @@ export class RaceRenderer{
 }
 export function garagePreview(canvas:HTMLCanvasElement,vehicleId:string,characterId:string){
  const engine=new Engine(canvas,true,{powerPreference:'low-power'},false),scene=new Scene(engine);scene.clearColor=new Color4(0,0,0,0);grade(scene,{...lookFor('la-salle'),saturation:26});scene.imageProcessingConfiguration.vignetteEnabled=false;const camera=new ArcRotateCamera('garage',Math.PI/3,1.12,8.4,new Vector3(0,1.1,0),scene);camera.lowerRadiusLimit=6;camera.upperRadiusLimit=12;camera.lowerBetaLimit=.7;camera.upperBetaLimit=1.4;camera.attachControl(canvas,true);
- const hemi=new HemisphericLight('sky',new Vector3(0,1,.5),scene);hemi.intensity=1.05;hemi.groundColor=Color3.FromHexString('#6583a3').toLinearSpace();const sun=new DirectionalLight('sun',new Vector3(-.4,-1,-.5),scene);sun.intensity=1.4;sun.diffuse=Color3.FromHexString('#fff1c5').toLinearSpace();cylinder(scene,null,'plinth',0,-.1,0,.3,7,'#233d76');const car=buildVehicle(scene,vehicleId,characterId);
+ const hemi=new HemisphericLight('sky',new Vector3(0,1,.5),scene);hemi.intensity=1.05;hemi.groundColor=Color3.FromHexString('#6583a3').toLinearSpace();const sun=new DirectionalLight('sun',new Vector3(-.4,-1,-.5),scene);sun.intensity=1.4;sun.diffuse=Color3.FromHexString('#fff1c5').toLinearSpace();cylinder(scene,null,'plinth',0,-.1,0,.3,7,'#233d76');const preview=previewCar(scene,vehicleId,characterId,()=>{});
  for(let i=0;i<10;i++){const a=i*Math.PI/5;const dash=MeshBuilder.CreateBox('plinth-stripe',{width:.08,height:.02,depth:.35},scene);dash.position.set(Math.sin(a)*3.1,.065,Math.cos(a)*3.1);dash.rotation.y=a;dash.material=material(scene,'#d6cfae');}
- const resize=()=>engine.resize();window.addEventListener('resize',resize);let last=0;engine.runRenderLoop(()=>{const t=performance.now();if(t-last<1000/30-1)return;last=t;car.body.position.y=Math.sin(t/700)*.035;scene.render();});
- return()=>{window.removeEventListener('resize',resize);scene.dispose();engine.dispose();};
+ const resize=()=>engine.resize();window.addEventListener('resize',resize);let last=0;engine.runRenderLoop(()=>{const t=performance.now();if(t-last<1000/30-1)return;last=t;preview.car.body.position.y=Math.sin(t/700)*.035;scene.render();});
+ return()=>{preview.disposed=true;window.removeEventListener('resize',resize);scene.dispose();engine.dispose();};
 }
 export function arcadeBackdrop(canvas:HTMLCanvasElement,id:string,overview=false){
  const engine=new Engine(canvas,true,{powerPreference:'low-power'},false),scene=new Scene(engine),def=track(id);
@@ -431,8 +442,9 @@ export function arcadeBackdrop(canvas:HTMLCanvasElement,id:string,overview=false
  const hemi=new HemisphericLight('sky',new Vector3(0,1,.3),scene);hemi.intensity=look.hemiPower+.05;hemi.diffuse=lc.hemiSky;hemi.groundColor=lc.hemiGround;const sun=new DirectionalLight('sun',new Vector3(-.5,-1,.4),scene);sun.intensity=look.sunPower*.9;sun.diffuse=lc.sun;buildWorld(scene,id);
  const r=routeFor(id),start=sample(r,45),focus=overview?new Vector3(0,12,0):new Vector3(start.x,start.y+1,start.z);
  let camera:ArcRotateCamera|FreeCamera;if(overview){const orbit=new ArcRotateCamera('arcade-camera',Math.PI/3,.78,420,focus,scene);orbit.lowerRadiusLimit=300;orbit.upperRadiusLimit=550;orbit.attachControl(canvas,true);camera=orbit;}else{const hero=new Vector3(start.x-Math.cos(start.yaw)*3.8,start.y+1.2,start.z+Math.sin(start.yaw)*3.8);const shot=new FreeCamera('arcade-camera',new Vector3(hero.x+Math.sin(start.yaw)*11+Math.cos(start.yaw)*7,start.y+6.2,hero.z+Math.cos(start.yaw)*11-Math.sin(start.yaw)*7),scene);shot.setTarget(hero);shot.fov=.85;camera=shot;}
- if(!overview){for(let i=0;i<3;i++){const car=buildVehicle(scene,['silver-surfer','orange-seed','hola-willy'][i],['morly','semilla','chete'][i]);const pos=sample(r,45-i*6);car.root.position.set(pos.x+Math.cos(pos.yaw)*(i-1)*3.8,pos.y,pos.z-Math.sin(pos.yaw)*(i-1)*3.8);car.root.rotation.y=pos.yaw;}}
+ const previews:{disposed:boolean}[]=[];
+ if(!overview){for(let i=0;i<3;i++){const pos=sample(r,45-i*6);previews.push(previewCar(scene,['silver-surfer','orange-seed','hola-willy'][i],['morly','semilla','chete'][i],car=>{car.root.position.set(pos.x+Math.cos(pos.yaw)*(i-1)*3.8,pos.y,pos.z-Math.sin(pos.yaw)*(i-1)*3.8);car.root.rotation.y=pos.yaw;},look));}}
  const initial=overview?(camera as ArcRotateCamera).alpha:0,resize=()=>engine.resize();window.addEventListener('resize',resize);let last=0;
  engine.runRenderLoop(()=>{const now=performance.now();if(now-last<1000/30)return;last=now;if(overview)(camera as ArcRotateCamera).alpha=initial+Math.sin(now/15000)*.12;scene.render();});
- return()=>{window.removeEventListener('resize',resize);scene.dispose();engine.dispose();};
+ return()=>{previews.forEach(p=>p.disposed=true);window.removeEventListener('resize',resize);scene.dispose();engine.dispose();};
 }

@@ -28,9 +28,14 @@ def hex_rgb(h):
     return tuple(int(h[i:i + 2], 16) / 255 for i in (0, 2, 4))
 
 
+# Los carros que generaba el código salían con 0,5 × el color lineal. Con los reflejos del cielo que
+# agrega el juego (paintFinish en src/game/look.ts), 0,62 se ve más vivo sin lavar los colores.
+BASE_FACTOR = 0.62
+
+
 def game_base(h):
-    """Color base como lo exportan hoy los carros del juego: 0,5 × color lineal."""
-    return tuple(0.5 * _lin(c) for c in hex_rgb(h))
+    """Color base para el GLB: BASE_FACTOR × color lineal."""
+    return tuple(BASE_FACTOR * _lin(c) for c in hex_rgb(h))
 
 
 def game_emissive(h):
