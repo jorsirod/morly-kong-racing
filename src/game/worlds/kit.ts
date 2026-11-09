@@ -1,3 +1,4 @@
+import { surfaceMaterial } from './textures';
 import { Color3 } from '@babylonjs/core/Maths/math.color';
 import { Vector3 } from '@babylonjs/core/Maths/math.vector';
 import { MeshBuilder } from '@babylonjs/core/Meshes/meshBuilder';
@@ -81,19 +82,6 @@ export class Kit {
   }
  }
 }
-/** Tileable procedural textures: grass, dirt, sand, asphalt. Cheap and offline. */
-export function surfaceTexture(scene:Scene,kind:'grass'|'dirt'|'sand'|'asphalt'|'rock'|'tile',base:string){
- const name='surface-'+kind+base,cached=scene.getMaterialByName(name) as StandardMaterial|null;if(cached)return cached;
- const m=new StandardMaterial(name,scene);m.specularColor=new Color3(.06,.06,.06);
- if(typeof document==='undefined'){m.diffuseColor=Color3.FromHexString(base);return m;}
- const size=256,tex=new DynamicTexture(name,{width:size,height:size},scene,true),ctx=tex.getContext() as CanvasRenderingContext2D,r=rng(kind.length*977+base.charCodeAt(1));
- ctx.fillStyle=base;ctx.fillRect(0,0,size,size);
- const c=Color3.FromHexString(base),shade=(k:number,a:number)=>`rgba(${Math.round(Math.min(255,c.r*255*k))},${Math.round(Math.min(255,c.g*255*k))},${Math.round(Math.min(255,c.b*255*k))},${a})`;
- const blotch=(n:number,min:number,max:number,k:number,a:number)=>{for(let i=0;i<n;i++){const x=r()*size,y=r()*size,s=min+r()*(max-min);for(const [ox,oy] of [[0,0],[size,0],[-size,0],[0,size],[0,-size]]){ctx.fillStyle=shade(k,a);ctx.beginPath();ctx.ellipse(x+ox,y+oy,s,s*(.6+r()*.5),r()*3,0,Math.PI*2);ctx.fill();}}};
- if(kind==='grass'){blotch(26,10,36,.86,.35);blotch(22,8,26,1.12,.3);for(let i=0;i<900;i++){ctx.fillStyle=shade(r()<.5?.75:1.2,.55);ctx.fillRect(r()*size,r()*size,1.4,3.5);}}
- else if(kind==='asphalt'){blotch(30,6,30,.88,.25);for(let i=0;i<2600;i++){ctx.fillStyle=shade(r()<.5?.7:1.3,.5);ctx.fillRect(r()*size,r()*size,1.5,1.5);}ctx.strokeStyle=shade(.6,.35);ctx.lineWidth=1.5;for(let i=0;i<5;i++){ctx.beginPath();let x=r()*size,y=r()*size;ctx.moveTo(x,y);for(let k=0;k<5;k++){x+=(r()-.5)*40;y+=(r()-.5)*40;ctx.lineTo(x,y);}ctx.stroke();}}
- else if(kind==='tile'){ctx.strokeStyle=shade(.82,.8);ctx.lineWidth=3;for(let i=0;i<=4;i++){ctx.beginPath();ctx.moveTo(i*64,0);ctx.lineTo(i*64,size);ctx.stroke();ctx.beginPath();ctx.moveTo(0,i*64);ctx.lineTo(size,i*64);ctx.stroke();}blotch(10,6,20,.93,.25);}
- else{blotch(30,8,40,.85,.4);blotch(20,6,24,1.15,.3);for(let i=0;i<1600;i++){ctx.fillStyle=shade(r()<.5?.7:1.25,.6);const s=kind==='rock'?2.5:1.6;ctx.fillRect(r()*size,r()*size,s,s);}}
- tex.update();tex.wrapU=tex.wrapV=Texture.WRAP_ADDRESSMODE;tex.anisotropicFilteringLevel=4;m.diffuseTexture=tex;return m;
-}
+/** Tileable surface materials (colour + normal map), painted on the device: see textures.ts. */
+export function surfaceTexture(scene:Scene,kind:'grass'|'dirt'|'sand'|'asphalt'|'rock'|'tile',base:string,u=1,v=u){return surfaceMaterial(scene,kind,base,u,v);}
 export {Vector3,Mesh,MeshBuilder,TransformNode};

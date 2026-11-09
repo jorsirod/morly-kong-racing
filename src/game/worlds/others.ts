@@ -60,7 +60,7 @@ export function dressOriental(k:Kit,route:Route){
 export function managuaLandmarks(k:Kit,route:Route,battle:boolean){
  const dz=battle?160:0;
  // Lago Xolotlán with the Momotombo across the water.
- const lake=k.box('lake',0,-.12,-470-dz*0,1400,.1,560,'#5aa6bd');lake.material=waterMat(k.scene,'#4f9fba');
+ const lake=k.box('lake',0,-.12,-470-dz*0,1400,.1,560,'#5aa6bd');lake.material=waterMat(k.scene,'#4f9fba',110,44);
  k.cyl('momotombo',-330,40,-640,90,320,'#7f8a7b',18);k.cyl('momotombo-cap',-330,86,-640,6,22,'#e9e4d8',14);k.ball('momotombo-smoke',-324,96,-640,22,'#efece4',new Vector3(1,.45,1));
  // Malecón: promenade, lamps, palms and the port sign on the lake side of the start straight.
  const promenade=k.box('malecon',-40,-.05,-178,420,.2,16,'#d8cfb8');promenade.material=surfaceTexture(k.scene,'tile','#d8cfb8');
@@ -82,8 +82,8 @@ export function managuaLandmarks(k:Kit,route:Route,battle:boolean){
  k.box('pal-body',0,6,0,40,12,18,'#ead9b4',0,pal);k.box('pal-cornice',0,12.4,0,42,1,19,'#d9c49a',0,pal);for(let i=0;i<10;i++)k.cyl('pal-column',-16+i*3.55,5,-9.6,10,1,'#f5ecd6',.9,pal);k.label('PALACIO DE LA CULTURA',0,11,-9.8,14,1.2,0,'#5a4b3a','#f5ecd6',pal);
  const plaza=k.box('plaza',-92,.01,-104,60,.06,34,'#cfc6b0');plaza.material=surfaceTexture(k.scene,'tile','#cfc6b0');
  // Loma de Tiscapa: crater lagoon right below the mirador lane, its rim and the silhouette on the hill.
- const lagoon=MeshBuilder.CreateDisc('tiscapa-lagoon',{radius:32,tessellation:40},k.scene);lagoon.parent=k.root;lagoon.rotation.x=Math.PI/2;lagoon.position.set(141,.6,40);lagoon.material=waterMat(k.scene,'#3b8f86');
- const rim=MeshBuilder.CreateCylinder('tiscapa-rim',{height:6.6,diameterTop:78,diameterBottom:118,tessellation:40},k.scene);rim.parent=k.root;rim.position.set(141,3,40);rim.material=surfaceTexture(k.scene,'grass','#7f9a5c');rim.isPickable=false;
+ const lagoon=MeshBuilder.CreateDisc('tiscapa-lagoon',{radius:32,tessellation:40},k.scene);lagoon.parent=k.root;lagoon.rotation.x=Math.PI/2;lagoon.position.set(141,.6,40);lagoon.material=waterMat(k.scene,'#3b8f86',6);
+ const rim=MeshBuilder.CreateCylinder('tiscapa-rim',{height:6.6,diameterTop:78,diameterBottom:118,tessellation:40},k.scene);rim.parent=k.root;rim.position.set(141,3,40);rim.material=surfaceTexture(k.scene,'grass','#7f9a5c',10,1);rim.isPickable=false;
  const pit=MeshBuilder.CreateCylinder('tiscapa-crater',{height:6.4,diameterTop:72,diameterBottom:64,tessellation:40,sideOrientation:2},k.scene);pit.parent=k.root;pit.position.set(141,3.4,40);pit.material=material(k.scene,'#5d6b45');pit.isPickable=false;
  // The famous black silhouette of a hatted figure stands on the crest above the lagoon.
  const sil=new TransformNode('tiscapa-silueta',k.scene);sil.parent=k.root;sil.position.set(118,6.4,76);sil.rotation.y=-.6;
@@ -220,7 +220,7 @@ export function dressSanJuan(k:Kit,route:Route){
  for(let i=0;i<9;i++){const g=new TransformNode('boat',k.scene);g.parent=k.root;g.position.set(-180+i*45+r()*10,-.1,-270-r()*60);g.rotation.y=r()*3;g.metadata={animate:true};k.box('hull',0,.5,0,2.2,1,6,['#f4f0e4','#2f8fd0','#d9473b'][i%3],0,g);k.box('hull-stripe',0,.85,0,2.25,.2,6.05,'#11204a',0,g);if(i%3===0){k.cyl('mast',0,4,0,7,.15,'#ddd',.15,g);k.box('sail',0,4.5,.6,.05,5,3,'#fff8ea',0,g);}
   k.anims.push({node:g,update:t=>{g.position.y=-.1+Math.sin(t*1.3+i)*.18;g.rotation.z=Math.sin(t*1.1+i*2)*.06;}});}
  // The river under the bridge and its sandy banks down to the sea.
- const river=k.box('river',-230,-.12,-52,220,.08,14,'#4aa7c0');river.material=waterMat(k.scene,'#4aa7c0');for(const dz of [-8.5,8.5])k.box('river-bank',-230,-.14,-52+dz,220,.06,3,'#d8c08a');
+ const river=k.box('river',-230,-.12,-52,220,.08,14,'#4aa7c0');river.material=waterMat(k.scene,'#4aa7c0',30,2);for(const dz of [-8.5,8.5])k.box('river-bank',-230,-.14,-52+dz,220,.06,3,'#d8c08a');
  const bridge=beside(route,route.length*.79,route.width*.72+3);k.sign('PUENTE DEL RÍO',bridge.x,bridge.z,bridge.yaw+Math.PI,6,1.2,bridge.y+3,'#fff3d0','#2f6b8f');
  // Beach life: umbrellas, surfboards and a lifeguard tower next to the shore lane.
  const shore=route.lanes.find(l=>l.id==='playa');

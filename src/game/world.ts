@@ -10,6 +10,7 @@ import { track } from '../../shared/content';
 import { routeFor, sample } from '../../shared/track';
 import { cylinder,sphere,material,textLabel } from './models';
 import { Kit,rng,surfaceTexture,type Anim } from './worlds/kit';
+import { lavaMat,waterMat } from './worlds/course';
 import { buildCourse,type TrackStyle } from './worlds/course';
 import { buildLaSalle } from './worlds/lasalle';
 import { dressOriental,dressManagua,dressMasaya,dressSanJuan,managuaLandmarks } from './worlds/others';
@@ -36,7 +37,7 @@ export function buildWorld(scene:Scene,id:string,battle=false) {
  const kit=new Kit(scene,root,route),c=route.course,L=route.length;
  // Tiled procedural ground so the world never looks like a flat-coloured board.
  const groundKind=id==='masaya'?'rock':id==='oriental'?'dirt':id==='hipa-hipa'?'tile':'grass';
- const base=MeshBuilder.CreateGround('ground',{width:1400,height:1400},scene);const groundMat=surfaceTexture(scene,groundKind,id==='la-salle'?'#7fb653':def.ground);const gt=groundMat.diffuseTexture as Texture|null;if(gt){gt.uScale=gt.vScale=id==='hipa-hipa'?160:120;}base.material=groundMat;base.parent=root;base.position.y=-.2;
+ const base=MeshBuilder.CreateGround('ground',{width:1400,height:1400},scene);const tiles=id==='hipa-hipa'?160:120,groundMat=surfaceTexture(scene,groundKind,id==='la-salle'?'#7fb653':def.ground,tiles);base.material=groundMat;base.parent=root;base.position.y=-.2;
  if(battle){box(scene,root,'arena',0,-.03,0,160,.15,130,'#bfaa79');for(const x of [-80,80])box(scene,root,'wall',x,1.2,0,1.2,2.5,132,'#d9bc77');for(const z of [-65,65])box(scene,root,'wall',0,1.2,z,160,2.5,1.2,'#d9bc77');}
  else {
   buildCourse(kit,route,id,STYLES[id]??STYLES['la-salle']);
@@ -62,12 +63,12 @@ export function buildWorld(scene:Scene,id:string,battle=false) {
  } else if(night){
   // Hipa Hipa: the club, the bars, the dance floor and the giant palm live in worlds/hipa.ts.
  } else if(id==='masaya'){
-  cylinder(scene,root,'volcano',0,13,battle?240:0,32,250,'#768273',180);cylinder(scene,root,'crater',0,30,battle?240:0,2,155,'#3e504a',168);cylinder(scene,root,'lava',0,30.1,battle?240:0,.15,105,'#d67b45');const glow=scene.getMaterialByName('mat-#d67b45-false-1');if(glow)(glow as ReturnType<typeof material>).emissiveColor=(glow as ReturnType<typeof material>).diffuseColor.scale(.6);
+  cylinder(scene,root,'volcano',0,13,battle?240:0,32,250,'#768273',180);cylinder(scene,root,'crater',0,30,battle?240:0,2,155,'#3e504a',168);cylinder(scene,root,'lava',0,30.1,battle?240:0,.15,105,'#d67b45').material=lavaMat(scene,6);const glow=scene.getMaterialByName('mat-#d67b45-false-1');if(glow)(glow as ReturnType<typeof material>).emissiveColor=(glow as ReturnType<typeof material>).diffuseColor.scale(.6);
   for(let i=0;i<24;i++){const a=i/24*Math.PI*2;sphere(scene,root,'crater-rock',Math.sin(a)*85,30,Math.cos(a)*85+(battle?240:0),16,'#657368',new Vector3(1,.6,1));}
   for(let i=0;i<35;i++){const a=i*2.4,x=Math.sin(a)*(220+i*3),z=Math.cos(a)*(220+i*3);if(kit.blocked(x,z,8))continue;sphere(scene,root,'rock',x,2,z,6+i%5,'#788678');}
   sign('CRÁTER SANTIAGO',45,181,46);for(let i=0;i<10;i++){const x=-215+i*8,z=-130;if(!kit.blocked(x,z,4))tree(x,z,0);}
  } else {
-  box(scene,root,'ocean',0,-.15,-445,1400,.1,550,'#63b5c4');box(scene,root,'beach',0,-.1,-210,750,.1,75,'#e8cc92');
+  box(scene,root,'ocean',0,-.15,-445,1400,.1,550,'#63b5c4').material=waterMat(scene,'#63b5c4',110,44);box(scene,root,'beach',0,-.1,-210,750,.1,75,'#e8cc92').material=surfaceTexture(scene,'sand','#e8cc92',60,6);
   for(let i=0;i<14;i++){const x=-190+i*29,z=-226;if(!kit.blocked(x,z,4))tree(x,z,0,true);}for(let i=0;i<8;i++){const x=-95+i*26,z=-262;if(!kit.blocked(x,z,8))building(x,z,20,13,['#df9a78','#e4cb8c','#9fbaba'][i%3],6);}
   box(scene,root,'pier',-55,1,-300,8,1,95,'#ad9067');for(let i=0;i<8;i++)box(scene,root,'pier-leg',-55,-2,-260-i*10,.4,7,.4,'#907955');
   const cx=78,cz=208,cy=40;cylinder(scene,root,'christ-hill',cx,15,cz,35,125,'#8ea478',72);cylinder(scene,root,'christ-base',cx,cy+3,cz,6,15,'#d9d5bd');cylinder(scene,root,'christ-robe',cx,cy+13,cz,16,8,'#efebd4',4);sphere(scene,root,'christ-head',cx,cy+24,cz,4.5,'#efebd4');
