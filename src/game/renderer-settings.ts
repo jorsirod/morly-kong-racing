@@ -5,3 +5,7 @@ export type Quality='auto'|'alta'|'media'|'baja';
 export const QUALITY={alta:{scale:1,shadows:1024,lod:48,low:false},media:{scale:1.25,shadows:0,lod:36,low:false},baja:{scale:1.6,shadows:0,lod:26,low:true}} as const;
 export function savedQuality():Quality{try{const q=new URLSearchParams(location.search).get('calidad')??localStorage.getItem('morly-quality');if(q==='alta'||q==='media'||q==='baja'||q==='auto')return q;}catch{/* private mode */}return 'auto';}
 export function reducedMotion(){try{return localStorage.getItem('morly-motion')==='reduced'||matchMedia('(prefers-reduced-motion: reduce)').matches&&localStorage.getItem('morly-motion')!=='full';}catch{return false;}}
+/** «Modo fresco»: the race draws 30 frames a second instead of 60 (the simulation still runs at 60), at a slightly lower
+ * resolution. Halves the GPU work, which is what heats a phone. On by default on touch devices; off on computers. */
+export function batterySaver(){try{const v=localStorage.getItem('morly-saver');if(v==='on')return true;if(v==='off')return false;return matchMedia('(pointer:coarse)').matches;}catch{return false;}}
+export function setBatterySaver(on:boolean){try{localStorage.setItem('morly-saver',on?'on':'off');}catch{/* private mode */}}

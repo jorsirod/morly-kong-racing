@@ -6,3 +6,17 @@
 @media(pointer:coarse) and (orientation:portrait){.rotate-notice{position:fixed;inset:0;background:#153d35f7;z-index:50;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:20px;color:#fff0c8;padding:24px;text-align:center}.rotate-notice>span{font-size:70px;color:#f3c252}.rotate-notice strong{font-size:24px}.rotate-notice p{font-size:13px}}
 
 .rival-labels{position:absolute;inset:0;pointer-events:none;overflow:hidden;z-index:2}.rival-labels span{position:absolute;left:0;top:0;padding:2px 8px 3px;border-radius:4px;background:rgba(14,26,52,.72);border-bottom:3px solid var(--tag);color:#fff7df;font:800 12px/1.1 Nunito,system-ui,sans-serif;letter-spacing:.02em;white-space:nowrap;opacity:0;transition:opacity .15s;will-change:transform}
+/* Race start curtain (RaceIntro). */
+.race-intro{position:fixed;inset:0;z-index:40;pointer-events:none;overflow:hidden}
+.race-intro-flag{position:absolute;top:0;bottom:0;width:51%;background:repeating-conic-gradient(#14062f 0 25%,#fff6dc 0 50%) 0 0/64px 64px;box-shadow:0 0 0 6px #ffd33d inset;animation:intro-open .7s cubic-bezier(.7,0,.3,1) .95s forwards}
+.race-intro-flag.left{left:0;--to:-105%;border-right:10px solid #ff4fa3}
+.race-intro-flag.right{right:0;--to:105%;border-left:10px solid #ff4fa3}
+@keyframes intro-open{to{transform:translateX(var(--to)) skewX(-8deg)}}
+.race-intro-flash{position:absolute;inset:0;background:radial-gradient(circle,#fff 0,#ffd33d 30%,transparent 70%);opacity:0;animation:intro-flash .5s ease-out .9s}
+@keyframes intro-flash{30%{opacity:.85}to{opacity:0}}
+.race-intro-badge{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%) rotate(-4deg);display:flex;flex-direction:column;align-items:center;gap:4px;padding:16px 34px 18px;background:linear-gradient(160deg,#ff4fa3,#7a1a86);border:5px solid #fff6dc;border-radius:18px;box-shadow:8px 9px 0 #14062f,0 0 40px #ffd33d88;color:#fff;text-align:center;animation:intro-badge 1.75s cubic-bezier(.2,1.4,.4,1) forwards}
+.race-intro-badge small{font:900 12px/1 Verdana,sans-serif;letter-spacing:3px;color:#ffe36b}
+.race-intro-badge b{font:900 clamp(26px,6vw,54px)/1 'Arial Black',Impact,sans-serif;text-transform:uppercase;text-shadow:3px 3px 0 #14062f;white-space:nowrap}
+.race-intro-badge span{font:900 14px/1 Verdana,sans-serif;color:#fff6dc;letter-spacing:1px}
+@keyframes intro-badge{0%{transform:translate(-50%,-50%) rotate(-12deg) scale(.2);opacity:0}22%{transform:translate(-50%,-50%) rotate(-4deg) scale(1.08);opacity:1}55%{transform:translate(-50%,-50%) rotate(-4deg) scale(1)}75%{transform:translate(-50%,-50%) rotate(-4deg) scale(1);opacity:1}100%{transform:translate(-50%,-260%) rotate(6deg) scale(.6);opacity:0}}
+@media (prefers-reduced-motion:reduce){.race-intro-flag,.race-intro-badge,.race-intro-flash{animation-duration:.01s}.race-intro{animation:intro-fade .3s 1s forwards}@keyframes intro-fade{to{opacity:0}}}

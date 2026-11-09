@@ -41,7 +41,7 @@ type Actor={model:Car;vehicleId:string;characterId:string;shadow:TransformNode;l
 /** ALF's little routine: what he is doing now and until when. */
 type AlfState={action:'idle'|'wave'|'look'|'cheer'|'hold';until:number;next:number};
 const PLAYER_COLORS=['#f14d53','#459be9','#78ce50','#ffc63c','#bd76e5','#54d5d9'];
-import {savedQuality,reducedMotion,QUALITY,type Quality} from './renderer-settings';
+import {savedQuality,reducedMotion,batterySaver,QUALITY,type Quality} from './renderer-settings';
 export {savedQuality,reducedMotion,type Quality};
 const ease=(t:number)=>1-(1-t)**3;
 /** Converts glTF quaternion nodes to Euler so the race loop can steer, spin and lean them. */
@@ -62,7 +62,8 @@ function unmirror(top:TransformNode){
  }
 }
 export class RaceRenderer{
- engine:Engine;scene:Scene;fps=60;drawCalls=0;quality:Exclude<Quality,'auto'>='alta';reduced=reducedMotion();
+ engine:Engine;scene:Scene;fps=60;
+ /** Frames per second the race loop aims for (30 in «modo fresco»). */ frameCap=60;private saver=false;private observer:ResizeObserver|null=null;drawCalls=0;quality:Exclude<Quality,'auto'>='alta';reduced=reducedMotion();
  private camera:FreeCamera;private world:TransformNode;private trackId:string;private arena:boolean;
  private cars=new Map<string,Actor>();private hazardView:HazardView;private birds:Birds;private attacks:AttackView;private boxes=new Map<number,TransformNode>();private assets=new Map<string,AssetContainer>();
  private effects:RaceEffects;private sun!:DirectionalLight;private shadowMap:ShadowGenerator|null=null;
@@ -75,8 +76,13 @@ export class RaceRenderer{
   const chosen=savedQuality();this.auto=chosen==='auto';
   // Phones start one notch lower; the automatic mode only steps down, quietly.
   this.quality=chosen==='auto'?(matchMedia?.('(pointer:coarse)').matches?'media':'alta'):chosen;
-  this.engine.setHardwareScalingLevel(QUALITY[this.quality].scale);
-  this.scene=new Scene(this.engine);
+  this.saver=batterySaver();this.frameCap=this.saver?30:60;
+  this.engine.setHardwareScalingLevel(this.scale());
+  this.scene=new Scene(this.engine);this.scene.skipPointerMovePicking=true;this.scene.skipPointerDownPicking=true;this.scene.skipPointerUpPicking=true;
+  // The canvas can change size without a window resize (layout settling, rotation, Safari's bars, fullscreen): watch the
+  // element itself so the image is never drawn stretched to an old size.
+  try{this.observer=new ResizeObserver(()=>this.engine.resize());this.observer.observe(canvas);}catch{/* old browsers: window resize below */}
+  window.visualViewport?.addEventListener('resize',this.resize);
   this.trackId=state.trackId;grade(this.scene,lookFor(this.trackId));this.arena=state.mode==='battle';this.light();this.camera=new FreeCamera('race-camera',new Vector3(0,6,-12),this.scene);this.camera.minZ=.15;this.camera.maxZ=650;this.camera.fov=.9;this.post();
   this.world=buildWorld(this.scene,this.trackId,this.arena);this.effects=new RaceEffects(this.scene);this.attacks=new AttackView(this.scene);this.hazardView=new HazardView(this.scene);this.birds=new Birds(this.scene);this.effects.setQuality(QUALITY[this.quality].low);window.addEventListener('resize',this.resize);
  }
@@ -90,7 +96,9 @@ export class RaceRenderer{
   if(!night&&size){this.shadowMap=new ShadowGenerator(size,this.sun);this.shadowMap.usePercentageCloserFiltering=true;this.shadowMap.filteringQuality=ShadowGenerator.QUALITY_LOW;this.shadowMap.bias=.002;this.shadowMap.normalBias=.035;this.shadowMap.setDarkness(.24);}
   if(night)for(let i=0;i<3;i++){const light=new PointLight('club-'+i,new Vector3((i-1)*55,12,0),this.scene);light.diffuse=Color3.FromHexString(['#f262ac','#46dce6','#ffd249'][i]);light.intensity=2.3;light.range=110;}
  }
- async preload(state:GameState){const ids=[...new Set(state.players.map(p=>p.vehicleId))];await Promise.all(ids.map(async id=>{try{this.assets.set(id,await LoadAssetContainerAsync('/models/'+id+'.glb',this.scene));}catch{/* Source geometry is the offline fallback. */}}));}
+ async preload(state:GameState){const ids=[...new Set(state.players.map(p=>p.vehicleId))];await Promise.all(ids.map(async id=>{try{this.assets.set(id,await LoadAssetContainerAsync('/models/'+id+'.glb',this.scene));}catch{/* Source geometry is the offline fallback. */}}));
+  // Compile shaders before the curtain opens, and size the canvas to its final layout.
+  try{await this.scene.whenReadyAsync();}catch{/* render anyway */}this.engine.resize();}
  private car(vehicleId:string,characterId:string):Car{
   const asset=this.assets.get(vehicleId);if(!asset)return buildVehicle(this.scene,vehicleId,characterId);
   const entries=asset.instantiateModelsToScene(name=>name+'-copy',false,{doNotInstantiate:false}),root=new TransformNode('car-instance',this.scene);for(const n of entries.rootNodes){if(n instanceof TransformNode)unmirror(n);n.parent=root;}
@@ -105,6 +113,9 @@ export class RaceRenderer{
   for(const x of [-d.halfWidth,d.halfWidth])for(const z of [-d.halfLength*.6,d.halfLength*.6]){const wheel=cylinder(this.scene,root,'lod-wheel',x,.45,z,.32,.9,'#202a39');wheel.rotation.z=Math.PI/2;}return root;
  }
  resize=()=>this.engine.resize();
+ /** Resolution divisor: the quality level, a notch lower in «modo fresco». */
+ private scale(){return QUALITY[this.quality].scale*(this.saver?1.2:1);}
+ setSaver(on:boolean){if(on===this.saver)return;this.saver=on;this.frameCap=on?30:60;this.engine.setHardwareScalingLevel(this.scale());this.slowWindows=0;}
  private pipeline:DefaultRenderingPipeline|null=null;
  /** Post effects by quality: alta gets a soft glow on lights, neon and turbos plus smooth edges; media only smooth
   * edges; baja nothing. The colour grade (look.ts) runs inside the pipeline so it is applied once. */
@@ -119,7 +130,7 @@ export class RaceRenderer{
   }catch{this.pipeline=null;}
  }
  setQuality(q:Exclude<Quality,'auto'>){
-  if(q===this.quality)return;this.quality=q;const level=QUALITY[q];this.engine.setHardwareScalingLevel(level.scale);this.effects.setQuality(level.low);
+  if(q===this.quality)return;this.quality=q;const level=QUALITY[q];this.engine.setHardwareScalingLevel(this.scale());this.effects.setQuality(level.low);
   if(!level.shadows&&this.shadowMap){this.shadowMap.dispose();this.shadowMap=null;}
   this.post();
  }
@@ -163,7 +174,7 @@ export class RaceRenderer{
   this.effects.update(state,id,dt);this.scene.render();this.frames++;this.seconds+=dt;
   if(this.seconds>2){this.fps=Math.round(this.frames/this.seconds);
    // Automatic quality steps down only after two slow windows, so a hiccup never changes it.
-   if(this.auto&&this.fps<40){if(++this.slowWindows>=2&&this.quality!=='baja'){this.setQuality(this.quality==='alta'?'media':'baja');this.slowWindows=0;}}else this.slowWindows=0;
+   if(this.auto&&this.fps<this.frameCap*.66){if(++this.slowWindows>=2&&this.quality!=='baja'){this.setQuality(this.quality==='alta'?'media':'baja');this.slowWindows=0;}}else this.slowWindows=0;
    this.frames=0;this.seconds=0;}
  }
  /** Translucent gold charge box with a bolt inside: reads as «item» from far away.
@@ -369,10 +380,11 @@ export class RaceRenderer{
   const desired=new Vector3(root.position.x-fx*dist+Math.sin(state.tick*1.7)*shake,this.cam.groundY+height+Math.cos(state.tick*1.9)*shake,root.position.z-fz*dist);
   const look=new Vector3(root.position.x+fx*8,this.cam.groundY+1.25,root.position.z+fz*8);
   if(state.phase==='countdown'&&state.countdown>3&&!this.reduced){
-   // Intro: a low sweep from the front of your car around to the chase view.
-   const t=ease(Math.max(0,Math.min(1,1-(state.countdown-3)/INTRO))),orbit=me.yaw+Math.PI*(1-t)*1.15,radius=lerp(6.2,dist,t);
-   desired.set(root.position.x-Math.sin(orbit)*radius,root.position.y+lerp(1.5,height,t),root.position.z-Math.cos(orbit)*radius);
-   look.set(lerp(root.position.x,look.x,t),root.position.y+lerp(1.5,1.25,t),lerp(root.position.z,look.z,t));
+   // Intro: a sweep from the front of your car around to the chase view, high enough to clear the cars on the grid
+   // beside you (a low orbit used to pass through the neighbour and looked like a glitch).
+   const t=ease(Math.max(0,Math.min(1,1-(state.countdown-3)/INTRO))),orbit=me.yaw+Math.PI*(1-t)*1.15,radius=lerp(7.4,dist,t);
+   desired.set(root.position.x-Math.sin(orbit)*radius,root.position.y+lerp(4.3,height,t),root.position.z-Math.cos(orbit)*radius);
+   look.set(lerp(root.position.x,look.x,t),root.position.y+lerp(1.1,1.25,t),lerp(root.position.z,look.z,t));
    this.cam.pos.copyFrom(desired);this.cam.look.copyFrom(look);this.cam.ready=true;
   }
   else if(me.fall>0){
@@ -386,13 +398,13 @@ export class RaceRenderer{
   const fov=.9+Math.max(0,Math.min(1,(speed-10)/12))*.06+(boost?me.boostLevel>=4?.13:.08:0)+this.cam.air*.05+cine*.06;this.camera.fov=lerp(this.camera.fov,fov,k(boost?7:3));
   this.sun.position.set(me.x-35,me.y+60,me.z-40);
  }
- dispose(){window.removeEventListener('resize',this.resize);this.pipeline?.dispose();this.labelLayer?.remove();this.attacks.dispose();this.hazardView.dispose();this.birds.dispose();this.effects.dispose();this.assets.forEach(a=>a.dispose());this.shadowMap?.dispose();this.scene.dispose();this.engine.dispose();}
+ dispose(){window.removeEventListener('resize',this.resize);window.visualViewport?.removeEventListener('resize',this.resize);this.observer?.disconnect();this.pipeline?.dispose();this.labelLayer?.remove();this.attacks.dispose();this.hazardView.dispose();this.birds.dispose();this.effects.dispose();this.assets.forEach(a=>a.dispose());this.shadowMap?.dispose();this.scene.dispose();this.engine.dispose();}
 }
 export function garagePreview(canvas:HTMLCanvasElement,vehicleId:string,characterId:string){
  const engine=new Engine(canvas,true,{powerPreference:'low-power'},false),scene=new Scene(engine);scene.clearColor=new Color4(0,0,0,0);grade(scene,{...lookFor('la-salle'),saturation:26});scene.imageProcessingConfiguration.vignetteEnabled=false;const camera=new ArcRotateCamera('garage',Math.PI/3,1.12,8.4,new Vector3(0,1.1,0),scene);camera.lowerRadiusLimit=6;camera.upperRadiusLimit=12;camera.lowerBetaLimit=.7;camera.upperBetaLimit=1.4;camera.attachControl(canvas,true);
  const hemi=new HemisphericLight('sky',new Vector3(0,1,.5),scene);hemi.intensity=1.05;hemi.groundColor=Color3.FromHexString('#6583a3').toLinearSpace();const sun=new DirectionalLight('sun',new Vector3(-.4,-1,-.5),scene);sun.intensity=1.4;sun.diffuse=Color3.FromHexString('#fff1c5').toLinearSpace();cylinder(scene,null,'plinth',0,-.1,0,.3,7,'#233d76');const car=buildVehicle(scene,vehicleId,characterId);
  for(let i=0;i<10;i++){const a=i*Math.PI/5;const dash=MeshBuilder.CreateBox('plinth-stripe',{width:.08,height:.02,depth:.35},scene);dash.position.set(Math.sin(a)*3.1,.065,Math.cos(a)*3.1);dash.rotation.y=a;dash.material=material(scene,'#d6cfae');}
- const resize=()=>engine.resize();window.addEventListener('resize',resize);engine.runRenderLoop(()=>{const t=performance.now();car.body.position.y=Math.sin(t/700)*.035;scene.render();});
+ const resize=()=>engine.resize();window.addEventListener('resize',resize);let last=0;engine.runRenderLoop(()=>{const t=performance.now();if(t-last<1000/30-1)return;last=t;car.body.position.y=Math.sin(t/700)*.035;scene.render();});
  return()=>{window.removeEventListener('resize',resize);scene.dispose();engine.dispose();};
 }
 export function arcadeBackdrop(canvas:HTMLCanvasElement,id:string,overview=false){

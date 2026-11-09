@@ -135,9 +135,51 @@
   },
   {
    "id": "semilla",
+   "file": "semilla/fall-2",
+   "text": "¡Me fui de jupa, ideay!",
+   "kind": "fall"
+  },
+  {
+   "id": "semilla",
    "file": "semilla/win-1",
    "text": "¡Gané! La otra ronda la pago yo, pues.",
    "kind": "win"
+  },
+  {
+   "id": "semilla",
+   "file": "semilla/win-2",
+   "text": "¡Salud, chavalos! Gané y yo invito.",
+   "kind": "win"
+  },
+  {
+   "id": "semilla",
+   "file": "semilla/start-1",
+   "text": "¡Arrancamos, que se calienta la birria!",
+   "kind": "start"
+  },
+  {
+   "id": "semilla",
+   "file": "semilla/start-2",
+   "text": "¡Dale, que la pulpería cierra a las diez!",
+   "kind": "start"
+  },
+  {
+   "id": "semilla",
+   "file": "semilla/lastlap-1",
+   "text": "¡Última vuelta y la última helada, chavalos!",
+   "kind": "lastlap"
+  },
+  {
+   "id": "semilla",
+   "file": "semilla/bong-1",
+   "text": "¡Púchica, el bong viene por mí!",
+   "kind": "bong"
+  },
+  {
+   "id": "semilla",
+   "file": "semilla/box-1",
+   "text": "¡Recargado, como hielera llena!",
+   "kind": "box"
   },
   {
    "id": "chete",
@@ -201,9 +243,51 @@
   },
   {
    "id": "chete",
+   "file": "chete/fall-2",
+   "text": "¡Perdí hasta el PlayStation, púchica!",
+   "kind": "fall"
+  },
+  {
+   "id": "chete",
    "file": "chete/win-1",
    "text": "¡Gané! La plata siempre gana, chavalos.",
    "kind": "win"
+  },
+  {
+   "id": "chete",
+   "file": "chete/win-2",
+   "text": "¡Gané! Y si no, nadie juega play.",
+   "kind": "win"
+  },
+  {
+   "id": "chete",
+   "file": "chete/start-1",
+   "text": "¡Arranquen, que el tiempo es plata!",
+   "kind": "start"
+  },
+  {
+   "id": "chete",
+   "file": "chete/start-2",
+   "text": "¡Les invito la salida… y nada más!",
+   "kind": "start"
+  },
+  {
+   "id": "chete",
+   "file": "chete/lastlap-1",
+   "text": "¡Última vuelta, ya huelo el premio!",
+   "kind": "lastlap"
+  },
+  {
+   "id": "chete",
+   "file": "chete/bong-1",
+   "text": "¡Ideay! ¿Hasta el bong me quiere cobrar?",
+   "kind": "bong"
+  },
+  {
+   "id": "chete",
+   "file": "chete/box-1",
+   "text": "¡Cargas! Al portafolio, chavalo.",
+   "kind": "box"
   },
   {
    "id": "morly",
@@ -267,9 +351,51 @@
   },
   {
    "id": "morly",
+   "file": "morly/fall-2",
+   "text": "¡Al agua, como hielo en Toña!",
+   "kind": "fall"
+  },
+  {
+   "id": "morly",
    "file": "morly/win-1",
    "text": "¡Campeón, como los Lakers, chavalos!",
    "kind": "win"
+  },
+  {
+   "id": "morly",
+   "file": "morly/win-2",
+   "text": "¡Chinelazo de campeón, papá!",
+   "kind": "win"
+  },
+  {
+   "id": "morly",
+   "file": "morly/start-1",
+   "text": "¡A darle, que hoy juegan los Lakers!",
+   "kind": "start"
+  },
+  {
+   "id": "morly",
+   "file": "morly/start-2",
+   "text": "¡Voltio encendido, chavalos!",
+   "kind": "start"
+  },
+  {
+   "id": "morly",
+   "file": "morly/lastlap-1",
+   "text": "¡Última vuelta, saquen el Ron Plata!",
+   "kind": "lastlap"
+  },
+  {
+   "id": "morly",
+   "file": "morly/bong-1",
+   "text": "¡Ese bong viene directo a mi camisola!",
+   "kind": "bong"
+  },
+  {
+   "id": "morly",
+   "file": "morly/box-1",
+   "text": "¡Hielo y cargas, va pues!",
+   "kind": "box"
   },
   {
    "id": "coconitas",
@@ -333,9 +459,51 @@
   },
   {
    "id": "coconitas",
+   "file": "coconitas/fall-2",
+   "text": "¡Me fui de la duela, no jodás!",
+   "kind": "fall"
+  },
+  {
+   "id": "coconitas",
    "file": "coconitas/win-1",
    "text": "¡Encestado! Gané, chavalos.",
    "kind": "win"
+  },
+  {
+   "id": "coconitas",
+   "file": "coconitas/win-2",
+   "text": "¡Kokonit gana, Flor de Caña para todos!",
+   "kind": "win"
+  },
+  {
+   "id": "coconitas",
+   "file": "coconitas/start-1",
+   "text": "¡Salto inicial, chavalos!",
+   "kind": "start"
+  },
+  {
+   "id": "coconitas",
+   "file": "coconitas/start-2",
+   "text": "¡A la cancha, que empieza el juego!",
+   "kind": "start"
+  },
+  {
+   "id": "coconitas",
+   "file": "coconitas/lastlap-1",
+   "text": "¡Último cuarto, a meter presión!",
+   "kind": "lastlap"
+  },
+  {
+   "id": "coconitas",
+   "file": "coconitas/bong-1",
+   "text": "¡Me viene el bong como tapón, ideay!",
+   "kind": "bong"
+  },
+  {
+   "id": "coconitas",
+   "file": "coconitas/box-1",
+   "text": "¡Rebote y cargas, maje!",
+   "kind": "box"
   },
   {
    "id": "calin",
@@ -393,8 +561,20 @@
   },
   {
    "id": "calin",
+   "file": "calin/hurt-3",
+   "text": "¡Ayyy, Arnoldo es la Soluuución!",
+   "kind": "hurt"
+  },
+  {
+   "id": "calin",
    "file": "calin/fall-1",
    "text": "¡Me fui volando, jodido!",
+   "kind": "fall"
+  },
+  {
+   "id": "calin",
+   "file": "calin/fall-2",
+   "text": "¡Me perdí en el humo, púchica!",
    "kind": "fall"
   },
   {
@@ -402,6 +582,42 @@
    "file": "calin/win-1",
    "text": "Tranquilo, chavalos… gané.",
    "kind": "win"
+  },
+  {
+   "id": "calin",
+   "file": "calin/win-2",
+   "text": "Gané… y ni me di cuenta, chavalos.",
+   "kind": "win"
+  },
+  {
+   "id": "calin",
+   "file": "calin/start-1",
+   "text": "Suave, suave… ya arrancamos.",
+   "kind": "start"
+  },
+  {
+   "id": "calin",
+   "file": "calin/start-2",
+   "text": "¡Tranquilo, que esto es largo, chavalo!",
+   "kind": "start"
+  },
+  {
+   "id": "calin",
+   "file": "calin/lastlap-1",
+   "text": "¡Ya es la última, qué rápido se fue, vos!",
+   "kind": "lastlap"
+  },
+  {
+   "id": "calin",
+   "file": "calin/bong-1",
+   "text": "¡Uy, el bong! Qué mala onda, maje.",
+   "kind": "bong"
+  },
+  {
+   "id": "calin",
+   "file": "calin/box-1",
+   "text": "¡Hojas nuevas, tuani!",
+   "kind": "box"
   },
   {
    "id": "sap-heinz",
@@ -465,9 +681,51 @@
   },
   {
    "id": "sap-heinz",
+   "file": "sap-heinz/fall-2",
+   "text": "¡Sapo al agua, púchica!",
+   "kind": "fall"
+  },
+  {
+   "id": "sap-heinz",
    "file": "sap-heinz/win-1",
    "text": "¡Pizza de la rotonda para todos! Gané.",
    "kind": "win"
+  },
+  {
+   "id": "sap-heinz",
+   "file": "sap-heinz/win-2",
+   "text": "¡Croac de campeón, chavalos!",
+   "kind": "win"
+  },
+  {
+   "id": "sap-heinz",
+   "file": "sap-heinz/start-1",
+   "text": "¡Croac! ¡Arrancamos, chavalos!",
+   "kind": "start"
+  },
+  {
+   "id": "sap-heinz",
+   "file": "sap-heinz/start-2",
+   "text": "¡A saltar hasta la rotonda!",
+   "kind": "start"
+  },
+  {
+   "id": "sap-heinz",
+   "file": "sap-heinz/lastlap-1",
+   "text": "¡Última vuelta, ya huele a pizza!",
+   "kind": "lastlap"
+  },
+  {
+   "id": "sap-heinz",
+   "file": "sap-heinz/bong-1",
+   "text": "¡El bong me va a aplastar como sapo, ideay!",
+   "kind": "bong"
+  },
+  {
+   "id": "sap-heinz",
+   "file": "sap-heinz/box-1",
+   "text": "¡Más sapitos, va pues!",
+   "kind": "box"
   },
   {
    "id": "enanonitas",
@@ -531,9 +789,51 @@
   },
   {
    "id": "enanonitas",
+   "file": "enanonitas/fall-2",
+   "text": "¡Me caí y nadie me levanta, no jodás!",
+   "kind": "fall"
+  },
+  {
+   "id": "enanonitas",
    "file": "enanonitas/win-1",
    "text": "¡El más chiquito, el primero, chavalos!",
    "kind": "win"
+  },
+  {
+   "id": "enanonitas",
+   "file": "enanonitas/win-2",
+   "text": "¡Chiquito, cebollero y campeón!",
+   "kind": "win"
+  },
+  {
+   "id": "enanonitas",
+   "file": "enanonitas/start-1",
+   "text": "¡Arranquen, que el chiquito ya salió!",
+   "kind": "start"
+  },
+  {
+   "id": "enanonitas",
+   "file": "enanonitas/start-2",
+   "text": "¡A llorar todos, que empezamos!",
+   "kind": "start"
+  },
+  {
+   "id": "enanonitas",
+   "file": "enanonitas/lastlap-1",
+   "text": "¡Última vuelta y yo con hambre, chele!",
+   "kind": "lastlap"
+  },
+  {
+   "id": "enanonitas",
+   "file": "enanonitas/bong-1",
+   "text": "¡Hasta el bong se mete con el chiquito, ideay!",
+   "kind": "bong"
+  },
+  {
+   "id": "enanonitas",
+   "file": "enanonitas/box-1",
+   "text": "¡Cebollas frescas, maje!",
+   "kind": "box"
   },
   {
    "id": "jorsi",
@@ -597,9 +897,51 @@
   },
   {
    "id": "jorsi",
+   "file": "jorsi/fall-2",
+   "text": "¡Me salí del lienzo, púchica!",
+   "kind": "fall"
+  },
+  {
+   "id": "jorsi",
    "file": "jorsi/win-1",
    "text": "Firmado: Jorsi. ¡Qué tuani!",
    "kind": "win"
+  },
+  {
+   "id": "jorsi",
+   "file": "jorsi/win-2",
+   "text": "¡Obra maestra, chavalos, gané!",
+   "kind": "win"
+  },
+  {
+   "id": "jorsi",
+   "file": "jorsi/start-1",
+   "text": "¡Pinceles listos, arrancamos!",
+   "kind": "start"
+  },
+  {
+   "id": "jorsi",
+   "file": "jorsi/start-2",
+   "text": "¡A trazar la raya, chavalos!",
+   "kind": "start"
+  },
+  {
+   "id": "jorsi",
+   "file": "jorsi/lastlap-1",
+   "text": "¡Último trazo, ya casi firmo!",
+   "kind": "lastlap"
+  },
+  {
+   "id": "jorsi",
+   "file": "jorsi/bong-1",
+   "text": "¡Ese bong me va a borrar, ideay!",
+   "kind": "bong"
+  },
+  {
+   "id": "jorsi",
+   "file": "jorsi/box-1",
+   "text": "¡Pintura nueva, qué tuani!",
+   "kind": "box"
   },
   {
    "id": "raulin",
@@ -663,9 +1005,51 @@
   },
   {
    "id": "raulin",
+   "file": "raulin/fall-2",
+   "text": "¡Me fui como balde de leche, púchica!",
+   "kind": "fall"
+  },
+  {
+   "id": "raulin",
    "file": "raulin/win-1",
    "text": "¡Gané, y de postre leche, chavalos!",
    "kind": "win"
+  },
+  {
+   "id": "raulin",
+   "file": "raulin/win-2",
+   "text": "¡Balde de leche pa los perdedores, gané!",
+   "kind": "win"
+  },
+  {
+   "id": "raulin",
+   "file": "raulin/start-1",
+   "text": "¡Arrancamos frescos como pepino!",
+   "kind": "start"
+  },
+  {
+   "id": "raulin",
+   "file": "raulin/start-2",
+   "text": "¡Leche y gasolina, va pues!",
+   "kind": "start"
+  },
+  {
+   "id": "raulin",
+   "file": "raulin/lastlap-1",
+   "text": "¡Última vuelta, se me corta la leche!",
+   "kind": "lastlap"
+  },
+  {
+   "id": "raulin",
+   "file": "raulin/bong-1",
+   "text": "¡El bong viene por el lechero, ideay!",
+   "kind": "bong"
+  },
+  {
+   "id": "raulin",
+   "file": "raulin/box-1",
+   "text": "¡Pepinos frescos, chavalo!",
+   "kind": "box"
   },
   {
    "id": "roman",
@@ -729,9 +1113,51 @@
   },
   {
    "id": "roman",
+   "file": "roman/fall-2",
+   "text": "¡Me caí bailando, no jodás!",
+   "kind": "fall"
+  },
+  {
+   "id": "roman",
    "file": "roman/win-1",
    "text": "¡Gané bailando! Romie no falla.",
    "kind": "win"
+  },
+  {
+   "id": "roman",
+   "file": "roman/win-2",
+   "text": "¡Ji-ji! Romie gana bailando, chavalos.",
+   "kind": "win"
+  },
+  {
+   "id": "roman",
+   "file": "roman/start-1",
+   "text": "¡Ji-ji! ¡A bailar, chavalos!",
+   "kind": "start"
+  },
+  {
+   "id": "roman",
+   "file": "roman/start-2",
+   "text": "¡Tenedor listo, arrancamos!",
+   "kind": "start"
+  },
+  {
+   "id": "roman",
+   "file": "roman/lastlap-1",
+   "text": "¡Última vuelta, como el último nacatamal!",
+   "kind": "lastlap"
+  },
+  {
+   "id": "roman",
+   "file": "roman/bong-1",
+   "text": "¡Viene el bong, toca moonwalk, ideay!",
+   "kind": "bong"
+  },
+  {
+   "id": "roman",
+   "file": "roman/box-1",
+   "text": "¡Cargas nuevas, Romie está listo!",
+   "kind": "box"
   },
   {
    "id": "cucukis",
@@ -795,9 +1221,51 @@
   },
   {
    "id": "cucukis",
+   "file": "cucukis/fall-2",
+   "text": "¡Me hundí como el Titanic, púchica!",
+   "kind": "fall"
+  },
+  {
+   "id": "cucukis",
    "file": "cucukis/win-1",
    "text": "¡Mesa para todos, chavalos, gané yo!",
    "kind": "win"
+  },
+  {
+   "id": "cucukis",
+   "file": "cucukis/win-2",
+   "text": "¡Gané! Bombazo de los Beatles para celebrar.",
+   "kind": "win"
+  },
+  {
+   "id": "cucukis",
+   "file": "cucukis/start-1",
+   "text": "¡Leven anclas, chavalos!",
+   "kind": "start"
+  },
+  {
+   "id": "cucukis",
+   "file": "cucukis/start-2",
+   "text": "¡Midamos mesas y arrancamos!",
+   "kind": "start"
+  },
+  {
+   "id": "cucukis",
+   "file": "cucukis/lastlap-1",
+   "text": "¡Última vuelta, todos a cubierta!",
+   "kind": "lastlap"
+  },
+  {
+   "id": "cucukis",
+   "file": "cucukis/bong-1",
+   "text": "¡Bong a estribor, ideay!",
+   "kind": "bong"
+  },
+  {
+   "id": "cucukis",
+   "file": "cucukis/box-1",
+   "text": "¡Cargas al barco, maje!",
+   "kind": "box"
   }
  ]
 }

@@ -15,7 +15,8 @@ describe('voces de la pandilla',()=>{
  });
  it('cada piloto tiene reacciones con variantes para saltos, rebases, golpes, caídas y victoria',()=>{
   for(const c of CHARACTERS){const r=REACTIONS[c.id];expect(r,c.id).toBeDefined();
-   for(const kind of VOICE_KINDS)if(kind!=='special')expect(r[kind].length,c.id+' '+kind).toBeGreaterThanOrEqual(kind==='fall'||kind==='win'?1:2);}
+   for(const kind of VOICE_KINDS)if(kind!=='special')expect(r[kind].length,c.id+' '+kind).toBeGreaterThanOrEqual(['lastlap','bong','box'].includes(kind)?1:2);}
+  for(const c of CHARACTERS)expect(allLines().filter(l=>l.characterId===c.id).length,c.id).toBeGreaterThanOrEqual(18);
   const keys=allLines().map(l=>l.file);expect(new Set(keys).size).toBe(keys.length);
  });
  it('el README de voces lista cada línea pendiente con su texto exacto',()=>{

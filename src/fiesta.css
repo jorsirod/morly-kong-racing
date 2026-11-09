@@ -74,3 +74,12 @@
 .full-loading{background:radial-gradient(ellipse at 50% 30%,#a01f7a,#2a0f6b);color:#ffe170}
 
 .arcade-world-card>b,.arcade-world-card>span{text-shadow:1px 1px 0 #00000088}
+
+/* Painted art (Qwen Image): title key art that drifts slowly, world cards with the picture filling the top. */
+.title-art{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:68% 50%;pointer-events:none;transform-origin:70% 50%;animation:title-drift 26s ease-in-out infinite alternate}
+@keyframes title-drift{from{transform:scale(1.02)}to{transform:scale(1.1) translateX(-1.5%)}}
+@media (prefers-reduced-motion:reduce){.title-art{animation:none}}
+.arcade-world-card .world-art{display:block;width:100%;height:auto;aspect-ratio:240/130;object-fit:cover;flex:1;min-height:0}
+.arcade-world-card.selected .world-art{filter:saturate(1.15)}
+.driver-portrait.painted{overflow:hidden}
+.driver-portrait.painted img{width:100%;height:100%;object-fit:cover;object-position:50% 22%;transform:none}
