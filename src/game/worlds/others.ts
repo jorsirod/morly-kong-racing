@@ -26,9 +26,10 @@ export function dressOriental(k:Kit,route:Route){
  for(let d=6;d<route.length;d+=9){
   if(special(route,d))continue;
   for(const side of [-1,1]){
-   if(r()<.18)continue;const off=(route.width*.72+3.4+r()*1.6)*side,p=beside(route,d,off);if(k.onLane(p.x,p.z,3))continue;const g=new TransformNode('chinamo',k.scene);g.parent=k.root;g.position.set(p.x,p.y,p.z);g.rotation.y=facing(p.yaw,side);
-   const t=tarps[Math.floor(r()*tarps.length)];k.box('stall-table',0,.9,.6,5.6,.25,2,'#8a6a45',0,g);for(let i=0;i<5;i++)k.box('stall-goods',-2.2+i*1.1,1.25,.6,.8,.45,1.4,goods[Math.floor(r()*goods.length)],0,g);
-   for(const x of [-2.7,2.7])k.cyl('stall-pole',x,1.8,1.6,3.6,.14,'#6b5a45',.14,g);const tarp=k.box('stall-tarp',0,3.7,.2,6.2,.12,4.2,t,0,g);tarp.rotation.x=-.18;
+   if(r()<.18)continue;const off=(route.width*.72+3.4+r()*1.6)*side,p=beside(route,d,off);if(k.onLane(p.x,p.z,3))continue;const Y=facing(p.yaw,side),t=tarps[Math.floor(r()*tarps.length)];
+   k.prop('chinamo',p.x,p.y,p.z,Y,1,g=>{k.box('stall-table',0,.9,.6,5.6,.25,2,'#8a6a45',0,g);for(let i=0;i<5;i++)k.box('stall-goods',-2.2+i*1.1,1.25,.6,.8,.45,1.4,goods[Math.floor(r()*goods.length)],0,g);for(const x of [-2.7,2.7])k.cyl('stall-pole',x,1.8,1.6,3.6,.14,'#6b5a45',.14,g);});
+   // The tarp is its own piece, modelled in white and tinted per stall.
+   k.prop('lona',p.x,p.y,p.z,Y,1,g=>{const tarp=k.box('stall-tarp',0,3.7,.2,6.2,.12,4.2,t,0,g);tarp.rotation.x=-.18;},t);
    if(r()<.35){const Y=facing(p.yaw,side);k.crowd(p.x-Math.sin(Y)*1.6,p.z-Math.cos(Y)*1.6,Y,2,p.y,1.3);}
   }
  }
@@ -71,12 +72,15 @@ export function managuaLandmarks(k:Kit,route:Route,battle:boolean){
  k.box('concha-stage',0,.6,0,16,1.2,8,'#e7e1d1',0,shell);for(let i=0;i<7;i++){const a=-Math.PI/2+i*Math.PI/6;const rib=k.box('concha-rib',Math.sin(a)*8,5,Math.cos(a)*3-1,.9,9,.7,'#fbf8ef',a,shell);rib.rotation.x=-.35;}k.label('CONCHA ACÚSTICA',0,1.4,4.05,7,.8,0,'#1f5fae','#fbf8ef',shell);
  if(battle)return;
  // Antigua Catedral: neoclassical façade, two towers (clock on one), dome, weathered stone.
- const cat=new TransformNode('catedral',k.scene);cat.parent=k.root;cat.position.set(-72,0,-108);cat.rotation.y=Math.PI;
+ // The Blender model has its façade at the origin facing +z; the code version keeps its old layout (façade at z=-7.5, turned).
+ k.prop('catedral',-72,0,-100.5,0,1,p=>{const cat=new TransformNode('catedral-code',k.scene);cat.parent=p;cat.position.z=-7.5;cat.rotation.y=Math.PI;
+
  const stone='#d6ccb6',dark='#a39a86';k.box('cat-nave',0,8,8,22,16,30,stone,0,cat);k.box('cat-facade',0,10,-7.5,24,20,2,stone,0,cat);
  for(let i=0;i<6;i++)k.cyl('cat-column',-8.75+i*3.5,5,-9,10,1,'#e8e1cf',.9,cat);k.box('cat-pediment',0,15.5,-9,22,3,1.6,'#e8e1cf',0,cat);
  for(const x of [-9,9]){k.box('cat-tower',x,15,-6,6,30,6,stone,0,cat);k.box('cat-tower-top',x,31,-6,4.4,4,4.4,dark,0,cat);k.cyl('cat-tower-cap',x,34.2,-6,2.6,3.8,dark,.6,cat);for(let j=0;j<3;j++)k.box('cat-window',x,9+j*7,-9.05,1.4,3,.1,'#3c4a55',0,cat);}
  k.cyl('cat-clock',9,23,-9.1,.2,2.6,'#f4efe2',2.6,cat).rotation.x=Math.PI/2;k.cyl('cat-dome',0,18,14,6,12,stone,9,cat);k.ball('cat-dome-cap',0,21,14,10,dark,new Vector3(1,.6,1),cat);
- k.label('ANTIGUA CATEDRAL',0,2.6,-10.2,9,1.1,0,'#fff3d0','#5a4b3a',cat);
+ });
+ k.label('ANTIGUA CATEDRAL',-72,2.6,-97.8,9,1.1,0,'#fff3d0','#5a4b3a');
  // Palacio Nacional de la Cultura across the plaza: columns and a long cornice.
  const pal=new TransformNode('palacio',k.scene);pal.parent=k.root;pal.position.set(-108,0,-94);pal.rotation.y=Math.PI*.9;
  k.box('pal-body',0,6,0,40,12,18,'#ead9b4',0,pal);k.box('pal-cornice',0,12.4,0,42,1,19,'#d9c49a',0,pal);for(let i=0;i<10;i++)k.cyl('pal-column',-16+i*3.55,5,-9.6,10,1,'#f5ecd6',.9,pal);k.label('PALACIO DE LA CULTURA',0,11,-9.8,14,1.2,0,'#5a4b3a','#f5ecd6',pal);
@@ -132,12 +136,14 @@ function rotondaGalerias(k:Kit,route:Route){
 }
 /** «Árbol de la Vida»: tall metal tree of coloured curling branches studded with lights. */
 function lifeTree(k:Kit,x:number,y:number,z:number,color:string,seed:number){
- const g=new TransformNode('arbol-vida',k.scene);g.parent=k.root;g.position.set(x,y,z);g.rotation.y=seed;
+ // Modelled in white in Blender; each tree gets its colour as the instance tint (props.ts).
+ k.prop('arbol-vida',x,y,z,seed,1,g=>{
  k.cyl('arbol-trunk',0,5,0,10,.55,color,.35,g);
  for(let i=0;i<7;i++){const a=i/7*Math.PI*2,h=6+(i%3)*2.4;const path:Vector3[]=[];for(let t=0;t<=10;t++){const u=t/10,r=1+u*3.4;path.push(new Vector3(Math.cos(a+u*2.6)*r*.9,h+u*4.5-u*u*2.6,Math.sin(a+u*2.6)*r*.9));}
   const tube=MeshBuilder.CreateTube('arbol-branch',{path,radius:.13,tessellation:6},k.scene);tube.parent=g;tube.material=material(k.scene,color);tube.isPickable=false;
   for(let t=2;t<=10;t+=3){const p=path[t];k.glow('arbol-light',p.x,p.y,p.z,.32,.32,.32,'#fff6c2',0,g);}}
  const crown=MeshBuilder.CreateTorus('arbol-crown',{diameter:4.2,thickness:.16,tessellation:20},k.scene);crown.parent=g;crown.position.y=12.6;crown.material=material(k.scene,color);crown.isPickable=false;
+ },color);
 }
 /* Managua — barrios a los lados, postes, Árboles de la Vida y el paso a desnivel. */
 export function dressManagua(k:Kit,route:Route){
@@ -187,11 +193,16 @@ function parkEntrance(k:Kit,route:Route){
  k.label('VOLCÁN MASAYA · PARQUE NACIONAL',0,3.6,-.12,6,.6,Math.PI,'#ffffff','#2f5a3a',board);k.label('NO SE DETENGA · GASES · MÁX. 15 MIN',0,2.7,-.12,6,.5,Math.PI,'#ffd33d','#2f5a3a',board);
  for(let i=0;i<3;i++)k.tree(-(half+16)-i*7,-4-i*5,'bush',0,1.2);
 }
+/** A volcanic rock (Blender model «rock», modelled in white, stretched by `shape` and tinted with `color`). */
+export function lavaRock(k:Kit,x:number,y:number,z:number,size:number,shape:Vector3,yaw:number,color:string){
+ const sx=size*.8*shape.x,sy=size*shape.y,sz=size*.8*shape.z;
+ k.prop('rock',x,y,z,yaw,[sx,sy,sz],g=>{const f=new TransformNode('rock-code',k.scene);f.parent=g;f.scaling.set(1/sx,1/sy,1/sz);k.ball('lava-rock',0,size*.35,0,size*1.6,color,shape,f);},Color3.FromHexString(color).scale(1.45).toHexString());
+}
 /* Volcán Masaya — roca volcánica, fumarolas, miradores y avisos de peligro. */
 export function dressMasaya(k:Kit,route:Route){
  parkEntrance(k,route);
  const r=rng(1529),rocks=['#4f4a45','#5e5750','#3f3b38','#6b625a'];
- for(let d=4;d<route.length;d+=7){if(special(route,d))continue;for(const side of [-1,1]){if(r()<.45)continue;const p=beside(route,d,(route.width*.72+2.5+r()*9)*side),s=1+r()*2.6;if(k.onLane(p.x,p.z,3))continue;const rock=k.ball('lava-rock',p.x,p.y+s*.35,p.z,s*1.6,rocks[Math.floor(r()*4)],new Vector3(1+r()*.6,.55+r()*.4,1+r()*.6));rock.rotation.y=r()*3;}}
+ for(let d=4;d<route.length;d+=7){if(special(route,d))continue;for(const side of [-1,1]){if(r()<.45)continue;const p=beside(route,d,(route.width*.72+2.5+r()*9)*side),s=1+r()*2.6;if(k.onLane(p.x,p.z,3))continue;const col=rocks[Math.floor(r()*4)],sc=new Vector3(1+r()*.6,.55+r()*.4,1+r()*.6),yaw=r()*3;lavaRock(k,p.x,p.y,p.z,s,sc,yaw,col);}}
  // Fumaroles: puffs that rise and fade from the crater and from cracks near the road.
  const vents=[{x:0,y:30,z:0,big:true},...[200,520,860,1100].filter(d=>!special(route,d)).map(d=>{const p=beside(route,d,route.width*.72+8);return{x:p.x,y:p.y,z:p.z,big:false};})];
  for(const v of vents){const g=new TransformNode('fumarole',k.scene);g.parent=k.root;g.position.set(v.x,v.y,v.z);g.metadata={animate:true};const puffs=[0,1,2,3].map(i=>{const m=MeshBuilder.CreateSphere('smoke-puff',{diameter:v.big?26:5,segments:6},k.scene);m.parent=g;const mm=material(k.scene,'#d9d3c9',false,.35);mm.disableDepthWrite=true;m.material=mm;m.metadata=i;return m;});
