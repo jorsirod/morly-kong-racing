@@ -2,7 +2,9 @@
 export const PROP_FILES:Record<string,string>={
  palm:'vegetation',mango:'vegetation',malinche:'vegetation',ceiba:'vegetation',pine:'vegetation',bush:'vegetation',rock:'vegetation',
  cristo:'cristo',catedral:'managua','arbol-vida':'managua',chinamo:'oriental',lona:'oriental',volcano:'masaya',
+ 'aula-pb':'lasalle','aula-pa':'lasalle','aula-techo':'lasalle',capilla:'lasalle','porton-lasalle':'lasalle','bus-escolar':'lasalle',
+ barra:'hipa','palmera-tronco':'hipa','palmera-copa':'hipa',
 };
 /** Triangle budget per type: vegetation is repeated dozens of times, landmarks appear once. */
-export const PROP_TRIANGLES:Record<string,number>={palm:2500,mango:2500,malinche:3000,ceiba:3000,pine:1500,bush:1200,rock:600,'arbol-vida':3500,chinamo:1500,lona:400};
+export const PROP_TRIANGLES:Record<string,number>={palm:2500,mango:2500,malinche:3000,ceiba:3000,pine:1500,bush:1200,rock:600,'arbol-vida':3500,chinamo:1500,lona:400,'aula-pb':1500,'aula-pa':1500,'aula-techo':800};
 export const LANDMARK_TRIANGLES=16000;

@@ -9,6 +9,7 @@ import { Color3 } from '@babylonjs/core/Maths/math.color';
 import '@babylonjs/core/Meshes/thinInstanceMesh';
 import '@babylonjs/loaders/glTF';
 import type { Scene } from '@babylonjs/core/scene';
+import type { TransformNode } from '@babylonjs/core/Meshes/transformNode';
 import type { Kit } from './kit';
 import { surfaceMaterial } from './textures';
 
@@ -26,7 +27,7 @@ import { surfaceMaterial } from './textures';
 export { PROP_FILES } from './propFiles';
 import { PROP_FILES } from './propFiles';
 /** tint: brightness (1 = as modelled) or a hex colour for pieces modelled in white (tarps, Árboles de la Vida, rocks). */
-export type PropSpot={type:string;x:number;y:number;z:number;yaw:number;scale:number|[number,number,number];tint?:number|string};
+export type PropSpot={type:string;x:number;y:number;z:number;yaw:number;scale:number|[number,number,number];tint?:number|string;parent?:TransformNode};
 
 /**
  * The rest of the world uses StandardMaterial with the colours as written (see models.ts material()), so props get the
@@ -85,8 +86,10 @@ export function upgradeProps(kit:Kit){
    spots.forEach((s,i)=>{const k=typeof s.scale==='number'?new Vector3(s.scale,s.scale,s.scale):new Vector3(...s.scale);Matrix.ComposeToRef(k,Quaternion.RotationYawPitchRoll(s.yaw,0,0),new Vector3(s.x,s.y,s.z),m);m.copyToArray(matrices,i*16);
     const t=s.tint??1,c=typeof t==='string'?Color3.FromHexString(t):new Color3(t,t,t);colors.set([c.r,c.g,c.b,1],i*4);});
    const tinted=spots.some(s=>s.tint!==undefined&&s.tint!==1);
-   for(const p of parts){p.parent=kit.root;p.isPickable=false;p.receiveShadows=true;p.thinInstanceSetBuffer('matrix',matrices,16,true);if(tinted)p.thinInstanceSetBuffer('color',colors,4,true);p.thinInstanceRefreshBoundingInfo(false);p.freezeWorldMatrix();p.metadata={keep:true};}
-   kit.propGroups.get(type)?.dispose(false,false);kit.propGroups.delete(type);
+   // Pieces hung from an animated node (the swaying crown of the giant palm) follow it: matrices are relative to it.
+   const parent=spots[0].parent;
+   for(const p of parts){p.parent=parent??kit.root;p.isPickable=false;p.receiveShadows=true;p.thinInstanceSetBuffer('matrix',matrices,16,true);if(tinted)p.thinInstanceSetBuffer('color',colors,4,true);p.thinInstanceRefreshBoundingInfo(false);if(!parent)p.freezeWorldMatrix();p.metadata={keep:true};}
+   for(const n of kit.propGroups.get(type)??[])n.dispose(false,false);kit.propGroups.delete(type);
   });
  }
 }

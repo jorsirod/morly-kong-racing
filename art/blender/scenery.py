@@ -672,12 +672,387 @@ def volcano(seed=101):
     return out
 
 
+# --------------------------------------------------------------------------- utilidades de arquitectura
+
+def rot_y(bm, angle, center=(0, 0, 0)):
+    """Gira como rotation.y del juego (Babylon, mano izquierda) alrededor de un punto del juego."""
+    bmesh.ops.rotate(bm, verts=bm.verts, cent=G(*center), matrix=Matrix.Rotation(-angle, 3, "Z"))
+    return bm
+
+
+def tile_roof(w, z_front, z_back, y_eave, y_ridge, z_ridge=0.0, period=0.36, amp=0.06, gables=True):
+    """Techo de teja de barro a dos aguas (cumbrera a lo largo de x), con las ondas de las tejas."""
+    bm = bmesh.new()
+    n = max(2, int(round(w / (period / 2))))
+    for z_e in (z_front, z_back):
+        rows = []
+        for zz, yy in ((z_e, y_eave), (z_ridge, y_ridge)):
+            rows.append([gv(bm, Vector((-w / 2 + w * i / n, yy + amp * (1 if i % 2 else -1), zz))) for i in range(n + 1)])
+        a, b = rows
+        for i in range(n):
+            bm.faces.new((a[i], a[i + 1], b[i + 1], b[i]))
+    if gables:
+        for sx in (-1, 1):
+            vs = [gv(bm, Vector((sx * w / 2, y, z))) for y, z in ((y_eave, z_front), (y_eave, z_back), (y_ridge, z_ridge))]
+            bm.faces.new(vs)
+    return bm
+
+
+def arch_window(w, h, x, y, z, seg=8, depth=0.08):
+    """Ventana o puerta con arco de medio punto, plana hacia +z (y = base)."""
+    bm = gbox(w, h - w / 2, depth, x, y + (h - w / 2) / 2, z)
+    half = L.cylinder(w / 2, depth, "Y", seg=seg * 2, center=G(x, y + h - w / 2, z))
+    bmesh.ops.delete(half, geom=[v for v in half.verts if v.co.z < y + h - w / 2 - 1e-4], context="VERTS")
+    return L.merge(bm, half)
+
+
+SCHOOL = dict(wall="#e8d6a8", cream="#efe2bf", trim="#2f6b4f", gate="#2f7a4e", roof="#b4644c", glass="#3e7f8f",
+              wood="#8a5a3a", concrete="#cfc8b6", base="#a99a7c")
+
+
+def _school_mats():
+    c = SCHOOL
+    return dict(wall=L.mat("ls-wall", c["wall"], 0.9), cream=L.mat("ls-cream", c["cream"], 0.8),
+                trim=L.mat("ls-trim", c["trim"], 0.6), roof=L.mat("ls-roof", c["roof"], 0.85, double=True),
+                glass=L.mat("ls-glass", c["glass"], 0.25), wood=L.mat("ls-wood", c["wood"], 0.8),
+                concrete=L.mat("ls-concrete", c["concrete"], 0.95), base=L.mat("ls-base", c["base"], 0.95),
+                louver=L.mat("ls-louver", "#a8d0d6", 0.3))
+
+
+def _facade(parts, top=4.2):
+    """Ventanas con persianas de vidrio, puerta de madera con tablero y marco verde: tres vanos de 4,2 m."""
+    for i, x in enumerate((-4.2, 0.0, 4.2)):
+        if i == 1:
+            parts["wood"] += [gbox(1.4, 2.6, 0.1, x, 1.3, 8.03)]
+            parts["base"] += [gbox(0.5, 0.9, 0.04, x + dx, y, 8.09) for dx in (-0.33, 0.33) for y in (0.7, 1.85)]
+            parts["trim"] += [gbox(1.8, 0.2, 0.12, x, 2.72, 8.06), gbox(0.15, 2.7, 0.12, x - 0.85, 1.35, 8.06),
+                              gbox(0.15, 2.7, 0.12, x + 0.85, 1.35, 8.06)]
+        else:
+            parts["glass"].append(gbox(2.4, 1.6, 0.06, x, 2.2, 8.02))
+            parts["louver"] += [gbox(2.3, 0.07, 0.05, x, 1.6 + k * 0.3, 8.07) for k in range(5)]
+            parts["cream"] += [gbox(2.7, 0.14, 0.2, x, 1.33, 8.1), gbox(2.7, 0.14, 0.12, x, 3.07, 8.06),
+                               gbox(0.14, 1.8, 0.12, x - 1.28, 2.2, 8.06), gbox(0.14, 1.8, 0.12, x + 1.28, 2.2, 8.06),
+                               gbox(0.08, 1.6, 0.06, x, 2.2, 8.09)]
+
+
+def _begin_parts(kind):
+    B, root = _begin(kind)
+    return B, root, _school_mats(), {k: [] for k in ("wall", "cream", "trim", "roof", "glass", "wood", "concrete", "base", "louver")}
+
+
+def _flush(B, root, M, parts, smooth=20):
+    for k, bms in parts.items():
+        if bms:
+            _part(B, root, M[k].name, bms, M[k], smooth)
+
+
+# --------------------------------------------------------------------------- La Salle
+
+def aula_pb():
+    """Planta baja de un módulo de aulas (3 vanos, 12,6 × 16 m): pared, ventanas, puerta, corredor con columnas y losa.
+    El juego repite el módulo a lo largo del bloque y lo estira a su largo (block() en lasalle.ts)."""
+    B, root, M, P = _begin_parts("aula-pb")
+    P["wall"].append(gbox(12.6, 4.2, 16, 0, 2.1, 0))
+    P["base"].append(gbox(12.6, 0.7, 0.16, 0, 0.35, 8.06))
+    _facade(P)
+    for x in (-6.05, -2.1, 2.1, 6.05):
+        P["cream"] += [gbox(0.5, 3.6, 0.5, x, 2.05, 10.1), gbox(0.72, 0.22, 0.72, x, 3.95, 10.1), gbox(0.72, 0.25, 0.72, x, 0.13, 10.1)]
+    P["concrete"] += [gbox(12.6, 0.25, 2.6, 0, 4.32, 9.25), gbox(12.6, 0.14, 2.5, 0, 0.07, 9.2)]
+    P["trim"].append(gbox(12.6, 0.32, 0.1, 0, 4.3, 10.58))
+    _flush(B, root, M, P)
+    return _finish(B, root, 0.5, 2.5, 16)
+
+
+def aula_pa():
+    """Piso alto del módulo de aulas: pared, ventanas, puerta, balcón con baranda verde y postes hasta el alero."""
+    B, root, M, P = _begin_parts("aula-pa")
+    P["wall"].append(gbox(12.6, 4.2, 16, 0, 2.1, 0))
+    _facade(P)
+    P["trim"] += [gbox(12.6, 0.1, 0.12, 0, 1.1, 10.3), gbox(12.6, 0.08, 0.1, 0, 0.35, 10.3)]
+    P["trim"] += [gbox(0.06, 0.8, 0.06, -6.15 + i * 0.6, 0.72, 10.3) for i in range(21)]
+    for x in (-6.05, -2.1, 2.1, 6.05):
+        P["cream"].append(gbox(0.32, 4.0, 0.32, x, 2.2, 10.3))
+    P["concrete"].append(gbox(12.6, 0.25, 2.6, 0, 4.32, 9.25))
+    P["trim"].append(gbox(12.6, 0.32, 0.1, 0, 4.3, 10.58))
+    _flush(B, root, M, P)
+    return _finish(B, root, 0.5, 2.5, 16)
+
+
+def aula_techo():
+    """Techo de teja del módulo: alero largo al frente (cubre el corredor), cumbrera, fascia verde."""
+    B, root, M, P = _begin_parts("aula-techo")
+    P["roof"].append(tile_roof(12.6, 10.9, -8.8, 0.5, 3.0, z_ridge=1.0))
+    P["trim"] += [gbox(12.6, 0.28, 0.1, 0, 0.45, 10.95), gbox(12.6, 0.28, 0.1, 0, 0.45, -8.85)]
+    P["cream"].append(gbox(12.6, 0.42, 16.2, 0, 0.21, 0))
+    P["roof"].append(gbox(12.6, 0.22, 0.4, 0, 3.08, 1.0))
+    _flush(B, root, M, P)
+    return _finish(B, root, 0.45, 2.5, 16)
+
+
+def capilla():
+    """Capilla del colegio: nave con techo de teja, contrafuertes, ventanas de arco con vitral, torre del campanario
+    al frente (+z) con techo piramidal y cruz, puerta de arco y gradas."""
+    B, root, M, P = _begin_parts("capilla")
+    stone = L.mat("ls-chapel", "#f4ead0", 0.85)
+    stained = {c: L.mat("ls-vitral-" + c[1:], c, 0.2, emissive=True) for c in ("#3f6fd0", "#d0453f", "#e8b83a")}
+    chapel = [gbox(18, 10, 26, 0, 5, 0), gbox(6, 18, 6, 0, 9, 14)]
+    for sx in (-1, 1):
+        for z in (-10, -4, 2, 8):
+            chapel.append(gbox(0.9, 6, 1.2, sx * 9.35, 3, z))
+    roof = tile_roof(27, 10.2, -10.2, 9.8, 14.6, period=0.42)
+    rot_y(roof, math.pi / 2)
+    P["roof"] += [roof, prism(4.4, 4.2, 18.2, seg=4, radius_top=0.05, center=(0, 14))]
+    rot_y(P["roof"][-1], math.pi / 4, (0, 0, 14))
+    P["cream"] += [gbox(6.8, 0.6, 6.8, 0, 18.1, 14), gbox(6.6, 0.4, 6.6, 0, 10.3, 14), gbox(18.6, 0.5, 26.6, 0, 0.25, 0),
+                   gbox(0.45, 3.6, 0.45, 0, 23.9, 14), gbox(2.0, 0.45, 0.45, 0, 24.6, 14),
+                   gbox(5.0, 0.3, 2.0, 0, 0.15, 18.0), gbox(4.2, 0.3, 1.2, 0, 0.45, 17.6)]
+    P["wood"].append(arch_window(2.6, 4.4, 0, 0.6, 17.05, depth=0.12))
+    P["trim"].append(arch_window(3.2, 4.9, 0, 0.6, 17.0, depth=0.08))
+    P["glass"] += [arch_window(1.0, 2.6, 0, 13.0, 17.03) for _ in (0,)]
+    for fx, fz in ((0, 1), (0, -1), (1, 0), (-1, 0)):  # vanos del campanario
+        b = arch_window(1.6, 3.0, 0, 13.6, 0, depth=0.12)
+        rot_y(b, {(0, 1): 0, (0, -1): math.pi, (1, 0): math.pi / 2, (-1, 0): -math.pi / 2}[(fx, fz)])
+        bmesh.ops.translate(b, vec=G(fx * 3.02, 0, 14 + fz * 3.02), verts=b.verts)
+        P["glass"].append(b)
+    vitrals = {c: [] for c in stained}
+    cols = list(stained)
+    for i, z in enumerate((-7, -1, 5)):
+        for sx in (-1, 1):
+            w = arch_window(1.4, 3.6, 0, 3.6, 0, depth=0.1)
+            rot_y(w, sx * math.pi / 2)
+            bmesh.ops.translate(w, vec=G(sx * 9.03, 0, z), verts=w.verts)
+            vitrals[cols[(i + (sx > 0)) % 3]].append(w)
+    _part(B, root, "ls-chapel", chapel, stone, 20)
+    for c, bms in vitrals.items():
+        _part(B, root, stained[c].name, bms, stained[c], 20)
+    _flush(B, root, M, P)
+    return _finish(B, root, 0.5, 4.0, 16)
+
+
+def porton_lasalle():
+    """Entrada del colegio en la largada: pilares con capitel, arco con cornisa verde y estrella, portones verdes de
+    barrotes con puntas abiertos contra el muro, muros con pilastras y la portería. Medidas para la pista de 15 m."""
+    B, root, M, P = _begin_parts("porton-lasalle")
+    half = 10.7
+    star_m = L.mat("ls-star", "#f2d14c", 0.4)
+    gate_m = L.mat("ls-gate", SCHOOL["gate"], 0.5)
+    gates = []
+    for s in (-1, 1):
+        x = s * half
+        P["cream"] += [gbox(1.6, 6.4, 1.6, x, 3.4, 0), gbox(1.9, 0.5, 1.9, x, 0.25, 0)]
+        P["trim"] += [gbox(2.1, 0.4, 2.1, x, 6.75, 0), gbox(1.7, 0.25, 1.7, x, 6.45, 0),
+                      gbox(0.9, 3.2, 0.06, x, 3.4, 0.82), gbox(0.9, 3.2, 0.06, x, 3.4, -0.82)]
+        # Portón de barrotes, abierto contra el muro.
+        leaf = [gbox(6.0, 0.16, 0.12, 0, 0.35, 0), gbox(6.0, 0.16, 0.12, 0, 4.1, 0), gbox(6.0, 0.12, 0.1, 0, 2.2, 0)]
+        for i in range(16):
+            bx = -2.9 + i * 0.387
+            leaf += [gbox(0.07, 4.3, 0.07, bx, 2.25, 0), prism(0.07, 0.3, 4.4, seg=4, radius_top=0.0, center=(bx, 0))]
+        lb = L.merge(*leaf)
+        rot_y(lb, s * 0.12)
+        bmesh.ops.translate(lb, vec=G(s * (half + 3.6), 0, -0.9), verts=lb.verts)
+        gates.append(lb)
+        # Muros con pilastras y remate.
+        P["cream"].append(gbox(32, 3, 0.8, s * (half + 17), 1.5, -0.2))
+        P["trim"].append(gbox(32, 0.3, 1.0, s * (half + 17), 3.1, -0.2))
+        for i in range(9):
+            P["cream"].append(gbox(0.7, 3.3, 1.1, s * (half + 1.5 + i * 3.9), 1.65, -0.2))
+    P["cream"] += [gbox(half * 2 + 2.4, 1.9, 1.4, 0, 7.8, 0)]
+    P["trim"] += [gbox(half * 2 + 2.4, 0.25, 1.5, 0, 6.8, 0), gbox(half * 2 + 3.0, 0.35, 1.7, 0, 8.9, 0),
+                  gbox(6.0, 0.9, 1.2, 0, 9.5, 0)]
+    # Estrella lasallista sobre el arco.
+    bm = bmesh.new()
+    pts = []
+    for k in range(10):
+        a = math.pi / 2 + k * math.pi / 5
+        r = 1.0 if k % 2 == 0 else 0.42
+        pts.append(Vector((r * math.cos(a), 11.1 + r * math.sin(a), 0)))
+    face = bm.faces.new([gv(bm, p + Vector((0, 0, 0.12))) for p in pts])
+    ext = bmesh.ops.extrude_face_region(bm, geom=[face])
+    bmesh.ops.translate(bm, vec=(0, 0.24, 0), verts=[v for v in ext["geom"] if isinstance(v, bmesh.types.BMVert)])
+    bmesh.ops.recalc_face_normals(bm, faces=bm.faces)
+    # Portería.
+    gx, gz = -(half + 7), -6
+    P["cream"] += [gbox(4, 3.2, 4, gx, 1.6, gz)]
+    booth_roof = tile_roof(5.2, gz + 2.7, gz - 2.7, 3.2, 4.4, z_ridge=gz, period=0.4)
+    bmesh.ops.translate(booth_roof, vec=(-gx, 0, 0), verts=booth_roof.verts)  # G(): x del juego = -x de Blender
+    P["roof"].append(booth_roof)
+    P["glass"] += [gbox(2.2, 1.0, 0.08, gx, 2.0, gz + 2.03)]
+    P["wood"].append(gbox(0.08, 2.2, 1.0, gx + 2.03, 1.1, gz))
+    _part(B, root, "ls-gate", gates, gate_m, 20)
+    _part(B, root, "ls-star", bm, star_m, 20)
+    _flush(B, root, M, P)
+    return _finish(B, root, 0.5, 3.0, 16)
+
+
+def bus_escolar():
+    """Bus escolar amarillo (frente hacia +z, 11 m): carrocería con techo curvo, ventanas con parales, franjas
+    negras, cofre con parrilla, defensas, llantas, luces y espejos."""
+    B, root = _begin("bus-escolar")
+    yellow = L.mat("bus-yellow", "#f2b81f", 0.45)
+    black = L.mat("bus-black", "#1b1b1b", 0.7)
+    glass = L.mat("bus-glass", "#3e6f80", 0.15)
+    chrome = L.mat("bus-chrome", "#c9ced2", 0.3)
+    red = L.mat("bus-red", "#e0352b", 0.4, emissive=True)
+    white = L.mat("bus-light", "#fff4cc", 0.3, emissive=True)
+    body = [gbox(2.9, 2.3, 9.4, 0, 2.1, -0.7)]
+    top = L.cylinder(1.45, 9.4, "Y", seg=16, center=G(0, 3.25, -0.7))
+    bmesh.ops.scale(top, vec=(1, 1, 0.32), space=Matrix.Translation(-Vector(G(0, 3.25, -0.7))), verts=top.verts)
+    bmesh.ops.delete(top, geom=[v for v in top.verts if v.co.z < 3.25 - 1e-4], context="VERTS")
+    body += [top, gbox(2.6, 1.15, 1.7, 0, 1.45, 4.85), gbox(2.4, 0.3, 1.5, 0, 2.1, 4.75)]
+    wins, posts = [], []
+    for sx in (-1, 1):
+        for i in range(8):
+            z = -4.6 + i * 1.08
+            wins.append(gbox(0.06, 0.85, 0.92, sx * 1.46, 2.85, z))
+    wins += [gbox(2.5, 1.0, 0.06, 0, 2.75, 4.02), gbox(0.06, 1.9, 0.75, 1.46, 2.25, 3.4)]
+    blk = [gbox(2.96, 0.12, 9.4, 0, 1.55, -0.7), gbox(2.96, 0.12, 9.4, 0, 2.3, -0.7),
+           gbox(3.0, 0.35, 0.3, 0, 0.75, 5.75), gbox(3.0, 0.35, 0.3, 0, 0.75, -5.45), gbox(1.8, 0.7, 0.06, 0, 1.4, 5.71)]
+    wheels, hubs = [], []
+    for sx in (-1, 1):
+        for z in (-3.6, 4.2):
+            wheels.append(L.cylinder(0.55, 0.42, "X", seg=14, center=G(sx * 1.3, 0.55, z)))
+            hubs.append(L.cylinder(0.26, 0.44, "X", seg=10, center=G(sx * 1.3, 0.55, z)))
+        posts.append(L.bar(G(sx * 1.5, 2.6, 3.9), G(sx * 1.85, 2.9, 4.1), 0.06))
+        hubs.append(gbox(0.12, 0.3, 0.22, sx * 1.9, 2.95, 4.15))
+    lights_r = [gbox(0.25, 0.25, 0.06, sx * 1.1, y, -5.42) for sx in (-1, 1) for y in (1.4, 3.3)]
+    lights_w = [L.cylinder(0.16, 0.06, "Y", seg=10, center=G(sx * 0.95, 1.6, 5.72)) for sx in (-1, 1)]
+    lights_r += [gbox(0.3, 0.18, 0.06, sx * 0.9, 3.45, 4.07) for sx in (-1, 1)]
+    _part(B, root, "bus-yellow", body, yellow, 35)
+    _part(B, root, "bus-glass", wins, glass, 20)
+    _part(B, root, "bus-black", blk + wheels, black, 35)
+    _part(B, root, "bus-chrome", hubs + posts, chrome, 35)
+    _part(B, root, "bus-red", lights_r, red, 20)
+    _part(B, root, "bus-light", lights_w, white, 20)
+    return _finish(B, root, 0.5, 1.6, 16)
+
+
+# --------------------------------------------------------------------------- Hipa Hipa
+
+NEON = ("#ff5fb0", "#45e0ff", "#ffd33d", "#8bff6a", "#b77bff")
+
+
+def barra():
+    """Barra de la disco (sin los neones de color, que pone el juego y laten con la música): piso, mostrador con
+    paneles, pared del fondo con tres repisas de botellas encendidas, techo, columnas, siete bancos y el bartender."""
+    rnd = random.Random(7)
+    B, root = _begin("barra")
+    dark = L.mat("club-dark", "#1a1630", 0.6)
+    purple = L.mat("club-purple", "#3a2a4a", 0.5)
+    floor = L.mat("club-floor", "#2a2440", 0.35)
+    shelf = L.mat("club-shelf", "#5a4a6a", 0.5)
+    metal = L.mat("club-metal", "#9aa0b4", 0.3)
+    skin = L.mat("club-skin", "#c48a64", 0.6)
+    bowtie = L.mat("club-bowtie", "#e53b35", 0.5)
+    neon = {c: L.mat("club-glow-" + c[1:], c, 0.2, emissive=True) for c in NEON}
+    _part(B, root, "club-floor", gbox(20, 0.12, 12, 0, 0.06, 1), floor, 20)
+    _part(B, root, "club-purple", [gbox(16, 1.2, 1.3, 0, 0.6, 2.2)] + [gbox(0.12, 1.0, 0.06, -7.5 + i * 1.5, 0.6, 2.88) for i in range(11)] +
+          [prism(0.18, 5.4, 0, seg=8, center=(sx * 9.4, 4.2)) for sx in (-1, 1)], purple, 20)
+    _part(B, root, "club-dark", [gbox(17, 5.2, 0.6, 0, 2.6, -1.6), gbox(20, 0.3, 7.5, 0, 5.4, 0.8), gbox(1.1, 1.5, 0.75, -2, 1.35, 0.8)], dark, 20)
+    _part(B, root, "club-shelf", [gbox(15, 0.1, 0.5, 0, 1.6 + r * 1.1, -1.15) for r in range(3)], shelf, 20)
+    bottles = {c: [] for c in NEON}
+    for r in range(3):
+        for i in range(14):
+            c = NEON[rnd.randrange(len(NEON))]
+            x, y = -6.5 + i, 1.65 + r * 1.1
+            bottles[c] += [prism(0.14, 0.5, y, seg=6, center=(x, -1.15)), prism(0.05, 0.26, y + 0.5, seg=5, center=(x, -1.15))]
+    for c, bms in bottles.items():
+        _part(B, root, neon[c].name, bms, neon[c], 30)
+    stools = {c: [] for c in NEON}
+    legs = []
+    for i in range(7):
+        sx = -6 + i * 2
+        legs += [prism(0.06, 0.9, 0, seg=6, center=(sx, 3.6)), prism(0.3, 0.05, 0, seg=10, center=(sx, 3.6)),
+                 vtube([Vector((sx + 0.25 * math.cos(a), 0.4, 3.6 + 0.25 * math.sin(a))) for a in [k / 10 * 2 * math.pi for k in range(11)]], [0.025] * 11, seg=4, cap_end=False)]
+        stools[NEON[i % len(NEON)]].append(prism(0.38, 0.14, 0.9, seg=12, center=(sx, 3.6)))
+    _part(B, root, "club-metal", legs, metal, 30)
+    for c, bms in stools.items():
+        if bms:
+            _part(B, root, neon[c].name + "-seat", bms, L.mat("club-seat-" + c[1:], c, 0.4), 30)
+    _part(B, root, "club-skin", [blob(0.32, (-2, 2.45, 0.8), subdiv=2, amp=0.0), vtube([Vector((-2.45, 2.0, 0.8)), Vector((-2.55, 1.45, 1.2))], [0.1, 0.09], seg=6),
+                                  vtube([Vector((-1.55, 2.0, 0.8)), Vector((-1.4, 1.5, 1.25))], [0.1, 0.09], seg=6)], skin, 40)
+    _part(B, root, "club-bowtie", [gbox(0.42, 0.14, 0.08, -2, 2.08, 1.2)], bowtie, 20)
+    return _finish(B, root, 0.45, 2.0, 16)
+
+
+def palmera_tronco():
+    """Tronco de la palmera gigante de la pista de baile (34 m): curva suave, anillos de cicatrices de hojas y base
+    ensanchada. Cabe dentro de los aros de neón del juego (radio un 3 % menor que el del código)."""
+    B, root = _begin("palmera-tronco")
+    bark = L.mat("giant-bark", "#8a6a46", 0.85)
+    pts, radii = [], []
+    n = 70
+    for i in range(n + 1):
+        y = 34.6 * i / n
+        seg = min(10, max(0.0, (y - 1.6 + 1.6) / 3.0))
+        x = math.sin(seg * 0.3) * 0.25
+        r_code = (3.8 - seg * 0.18) / 2 if y > 0.5 else 2.3
+        pts.append(Vector((x, y, 0)))
+        radii.append(r_code * 0.95 if y > 0.5 else r_code)
+    def wob(i, k):
+        y = 34.6 * i / n
+        return 1.0 - 0.06 * (1 - abs(math.sin(math.pi * (y % 1.5) / 1.5))) + 0.015 * math.sin(k * 2.1 + i)
+    _part(B, root, "giant-bark", vtube(pts, radii, seg=14, wobble=wob), bark, 60)
+    return _finish(B, root, 0.4, 3.0, 16)
+
+
+def palmera_copa(seed=5):
+    """Copa de la palmera gigante: once hojas enormes con folíolos y seis cocos encendidos. El origen es el punto de la
+    copa del juego (el nodo que se mece con la música)."""
+    rnd = random.Random(seed)
+    B, root = _begin("palmera-copa")
+    leaf = L.mat("giant-leaf", "#3f9a4f", 0.6, double=True)
+    leaf2 = L.mat("giant-leaf-light", "#5cbf5a", 0.6, double=True)
+    nut = L.mat("giant-coconut", "#ffd33d", 0.3, emissive=True)
+    top = Vector((0, 0.4, 0))
+    fronds = {leaf: [], leaf2: []}
+    for f in range(11):
+        a = f / 11 * 2 * math.pi + rnd.uniform(-.1, .1)
+        d = Vector((math.sin(a), 0, math.cos(a)))
+        length, rise, droop = rnd.uniform(11.5, 13), rnd.uniform(2.0, 3.0), rnd.uniform(6.5, 8.5)
+        side = d.cross(UP).normalized()
+        bm = bmesh.new()
+        at = lambda s: top + d * (length * s) + UP * (rise * s - droop * s * s)
+        prev = None
+        steps = 14
+        for i in range(steps + 1):
+            s = i / steps
+            p = at(s)
+            w = 0.28 * (1 - s) + 0.05
+            pair = (gv(bm, p - side * w), gv(bm, p + side * w))
+            if prev:
+                bm.faces.new((prev[0], prev[1], pair[1], pair[0]))
+            prev = pair
+            if i < 1 or i == steps:
+                continue
+            t = (at(min(1, s + 0.04)) - at(max(0, s - 0.04))).normalized()
+            sd = t.cross(UP).normalized()
+            lf = 3.2 * (0.3 + 0.7 * math.sin(math.pi * min(1, s * 1.1)))
+            for sg in (-1, 1):
+                dirv = (sd * sg * 0.9 + t * 0.45 - UP * 0.35).normalized()
+                tip, mid, ww = p + dirv * lf, p + dirv * lf * 0.5 - UP * lf * 0.12, 0.38
+                b1, b2 = gv(bm, p - t * ww), gv(bm, p + t * ww)
+                m1, m2 = gv(bm, mid - t * ww * 0.8), gv(bm, mid + t * ww * 0.8)
+                tv = gv(bm, tip)
+                bm.faces.new((b1, b2, m2, m1))
+                bm.faces.new((m1, m2, tv))
+        fronds[leaf2 if f % 2 else leaf].append(bm)
+    for m, bms in fronds.items():
+        _part(B, root, m.name, bms, m, None)
+    nuts = [blob(0.6, (1.3 * math.sin(i / 6 * 2 * math.pi), -1.6, 1.3 * math.cos(i / 6 * 2 * math.pi)), subdiv=2, amp=0.03) for i in range(6)]
+    _part(B, root, "giant-coconut", nuts, nut, 40)
+    return _finish(B, root, 0.35, 3.0, 16)
+
+
 VEGETATION = {"palm": palm, "mango": mango, "malinche": malinche, "ceiba": ceiba, "pine": pine, "bush": bush,
               "rock": rock}
 LANDMARKS = {"cristo": cristo, "catedral": catedral, "arbol-vida": arbol_vida, "chinamo": chinamo, "lona": lona,
-             "volcano": volcano}
+             "volcano": volcano, "aula-pb": aula_pb, "aula-pa": aula_pa, "aula-techo": aula_techo, "capilla": capilla,
+             "porton-lasalle": porton_lasalle, "bus-escolar": bus_escolar, "barra": barra,
+             "palmera-tronco": palmera_tronco, "palmera-copa": palmera_copa}
 FILES = {"vegetation": list(VEGETATION), "cristo": ["cristo"], "managua": ["catedral", "arbol-vida"],
-         "oriental": ["chinamo", "lona"], "masaya": ["volcano"]}
+         "oriental": ["chinamo", "lona"], "masaya": ["volcano"],
+         "lasalle": ["aula-pb", "aula-pa", "aula-techo", "capilla", "porton-lasalle", "bus-escolar"],
+         "hipa": ["barra", "palmera-tronco", "palmera-copa"]}
 
 
 def build(kind):

@@ -26,8 +26,8 @@ export function rng(seed:number){let s=seed>>>0||1;return()=>{s^=s<<13;s^=s>>>17
 export type LaneGate={node:TransformNode;lane:string;laps:number[]};
 export class Kit {
  anims:Anim[]=[];gates:LaneGate[]=[];
- /** Pieces a Blender model can replace (see props.ts), and the group holding each type's code version. */
- props:PropSpot[]=[];propGroups=new Map<string,TransformNode>();
+ /** Pieces a Blender model can replace (see props.ts), and the nodes holding each type's code version. */
+ props:PropSpot[]=[];propGroups=new Map<string,TransformNode[]>();
  constructor(readonly scene:Scene,readonly root:TransformNode,readonly route?:Route){}
  /** True when (x,z) is within `margin` of an alternative lane's surface. */
  onLane(x:number,z:number,margin=2){const r=this.route;if(!r)return false;for(const l of r.lanes)for(const p of l.points)if(Math.hypot(p.x-x,p.z-z)<l.width*.5+margin)return true;return false;}
@@ -46,11 +46,18 @@ export class Kit {
  label(text:string,x:number,y:number,z:number,w:number,h:number,yaw:number,color='#fff5d8',bg='#163e3b',parent:TransformNode=this.root){const m=textLabel(this.scene,parent,text,x,y,z,w,h,color,bg);if(m)m.rotation.y=yaw+Math.PI;return m;}
  /** Free-standing signboard on two posts. */
  sign(text:string,x:number,z:number,yaw:number,w=8,h=1.8,y=3.2,color='#fff5d8',bg='#1d4d43'){for(const s of [-1,1])this.cyl('sign-post',x+Math.cos(yaw)*s*w*.42,y/2,z-Math.sin(yaw)*s*w*.42,y,.18,'#5d6b70');this.box('sign-board',x,y+h/2-.1,z,w+.3,h+.3,.12,'#e9dfc2',yaw);this.label(text,x+Math.sin(yaw)*.08,y+h/2-.1,z+Math.cos(yaw)*.08,w,h,yaw,color,bg);}
- /** Scenery piece with a Blender model (props.ts). `build` draws the code version around (0,0,0), front toward +z. */
- prop(type:string,x:number,y:number,z:number,yaw:number,scale:number|[number,number,number],build:(g:TransformNode)=>void,tint?:number|string){
-  let group=this.propGroups.get(type);if(!group){group=new TransformNode('props-'+type,this.scene);group.parent=this.root;group.metadata={propType:type};this.propGroups.set(type,group);}
-  const g=new TransformNode('prop-'+type,this.scene);g.parent=group;g.position.set(x,y,z);g.rotation.y=yaw;if(typeof scale==='number')g.scaling.setAll(scale);else g.scaling.set(...scale);build(g);
-  this.props.push({type,x,y,z,yaw,scale,tint});return g;
+ /** Holder (identity, under the root) for code that a type's Blender model replaces; removed when the model arrives. */
+ propFallback(type:string){const n=new TransformNode('props-'+type,this.scene);n.parent=this.root;n.metadata={propType:type};const l=this.propGroups.get(type)??[];l.push(n);this.propGroups.set(type,l);return n;}
+ /**
+  * Scenery piece with a Blender model (props.ts). `build` draws the code version around (0,0,0), front toward +z.
+  * With `parent` (an animated node) the piece moves with it; otherwise it is static and merged.
+  */
+ prop(type:string,x:number,y:number,z:number,yaw:number,scale:number|[number,number,number],build:(g:TransformNode)=>void,tint?:number|string,parent?:TransformNode){
+  const g=new TransformNode('prop-'+type,this.scene);
+  if(parent){g.parent=parent;g.metadata={animate:true};const l=this.propGroups.get(type)??[];l.push(g);this.propGroups.set(type,l);}
+  else g.parent=this.propGroups.get(type)?.[0]??this.propFallback(type);
+  g.position.set(x,y,z);g.rotation.y=yaw;if(typeof scale==='number')g.scaling.setAll(scale);else g.scaling.set(...scale);build(g);
+  this.props.push({type,x,y,z,yaw,scale,tint,parent});return g;
  }
  tree(x:number,z:number,kind:'mango'|'malinche'|'palm'|'pine'|'bush'|'ceiba'='mango',y=0,scale=1){
   // Same spot, same tree for everyone: yaw and a slight shade change come from the position.

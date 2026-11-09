@@ -67,6 +67,8 @@ El script revisa la escena antes de exportar (nombres, jerarquía, ruedas, orien
 | `public/models/scenery/managua.glb` | `catedral`, `arbol-vida` |
 | `public/models/scenery/oriental.glb` | `chinamo`, `lona` |
 | `public/models/scenery/masaya.glb` | `volcano` |
+| `public/models/scenery/lasalle.glb` | `aula-pb`, `aula-pa`, `aula-techo` (módulos de aulas que se repiten y estiran), `capilla`, `porton-lasalle`, `bus-escolar` |
+| `public/models/scenery/hipa.glb` | `barra`, `palmera-tronco`, `palmera-copa` (cuelga del nodo que se mece) |
 
 ```python
 import sys; sys.path[:0] = ["<repo>/scripts/blender", "<repo>/art/blender"]
@@ -80,4 +82,6 @@ En el juego, `kit.prop(tipo, x, y, z, yaw, escala, códigoDeRespaldo, tinte)` co
 - **Materiales:** se convierten a `StandardMaterial`, como el resto del mundo, con la misma regla de color que los carros (base 0,62 × color lineal). Si el nombre empieza con `tex-<tipo>`, el material usa la textura procedural del juego; la pieza debe llevar UV en metros (`planar_uv`).
 - **Piezas blancas:** las lonas, los Árboles de la Vida y las rocas se modelan en blanco y el juego les da el color de cada ejemplar.
 - **Oclusión ambiental:** va horneada en el atributo `AO`, como en los carros.
+- **Piezas animadas:** `kit.prop(…, parent)` cuelga el modelo de un nodo que se mueve, como la copa de la palmera gigante.
+- **Varias piezas por bloque:** `kit.propFallback(tipo)` guarda el código de respaldo de un bloque entero mientras sus módulos llegan como varias piezas.
 - **Contrato y presupuesto:** `tests/scenery.test.ts` revisa el contrato y el presupuesto de triángulos por tipo (`src/game/worlds/propFiles.ts`).

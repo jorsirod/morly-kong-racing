@@ -17,15 +17,20 @@ const CREAM='#efe2bf',WALL='#e8d6a8',TRIM='#2f6b4f',GATE='#2f7a4e',ROOF='#b4644c
 /** Two-storey block with arcade columns, balcony rail, windows and doors on the side facing `face`. */
 function block(k:Kit,x:number,z:number,w:number,d:number,face:number,opts:{floors?:number;color?:string;signs?:string[]}={}){
  const floors=opts.floors??2,h=4.2*floors,color=opts.color??WALL,g=new TransformNode('aula-block',k.scene);g.parent=k.root;g.position.set(x,0,z);g.rotation.y=face;
- k.box('block-body',0,h/2,0,w,h,d,color,0,g);k.box('block-roof',0,h+.35,0,w+1.4,.7,d+1.4,ROOF,0,g);k.box('block-base',0,.35,d/2+.05,w+.1,.7,.15,'#a99a7c',0,g);
+ // Blender modules (props.ts): one 12.6 m module per three bays, stretched to the block's length and depth, a floor
+ // at a time, with its tiled roof on top. The code version below is drawn until they arrive.
+ const n=Math.max(1,Math.round(w/12.6)),sx=w/(n*12.6),sz=d/16,cos=Math.cos(face),sin=Math.sin(face);
+ for(let i=0;i<n;i++){const lx=-w/2+(i+.5)*w/n,wx=x+lx*cos,wz=z-lx*sin;for(let f=0;f<floors;f++)k.prop(f?'aula-pa':'aula-pb',wx,f*4.2,wz,face,[sx,1,sz],()=>{});k.prop('aula-techo',wx,floors*4.2,wz,face,[sx,1,sz],()=>{});}
+ const c=new TransformNode('aula-block-code',k.scene);c.parent=k.propFallback('aula-pb');c.position.set(x,0,z);c.rotation.y=face;
+ k.box('block-body',0,h/2,0,w,h,d,color,0,c);k.box('block-roof',0,h+.35,0,w+1.4,.7,d+1.4,ROOF,0,c);k.box('block-base',0,.35,d/2+.05,w+.1,.7,.15,'#a99a7c',0,c);
  for(let f=0;f<floors;f++){
   const y=f*4.2;
-  if(f>0){k.box('balcony-slab',0,y+.1,d/2+1.1,w,.2,2.2,CONCRETE,0,g);k.box('balcony-rail',0,y+1.1,d/2+2.15,w,.1,.1,TRIM,0,g);for(let i=0;i<=w/2.4;i++)k.box('rail-bar',-w/2+i*2.4,y+.6,d/2+2.15,.08,1,.08,TRIM,0,g);}
-  for(let i=0;i<Math.floor(w/4.2);i++){const wx=-w/2+2.6+i*4.2;if(i%3===1){k.box('door',wx,y+1.3,d/2+.03,1.4,2.6,.08,WOOD,0,g);k.box('door-frame',wx,y+2.7,d/2+.05,1.7,.18,.08,TRIM,0,g);}else{k.box('window',wx,y+2.2,d/2+.03,2.4,1.6,.08,WINDOW,0,g);k.box('window-sill',wx,y+1.35,d/2+.08,2.6,.12,.18,CREAM,0,g);k.box('window-bar',wx,y+2.2,d/2+.08,.07,1.6,.05,CREAM,0,g);}}
+  if(f>0){k.box('balcony-slab',0,y+.1,d/2+1.1,w,.2,2.2,CONCRETE,0,c);k.box('balcony-rail',0,y+1.1,d/2+2.15,w,.1,.1,TRIM,0,c);for(let i=0;i<=w/2.4;i++)k.box('rail-bar',-w/2+i*2.4,y+.6,d/2+2.15,.08,1,.08,TRIM,0,c);}
+  for(let i=0;i<Math.floor(w/4.2);i++){const wx=-w/2+2.6+i*4.2;if(i%3===1){k.box('door',wx,y+1.3,d/2+.03,1.4,2.6,.08,WOOD,0,c);k.box('door-frame',wx,y+2.7,d/2+.05,1.7,.18,.08,TRIM,0,c);}else{k.box('window',wx,y+2.2,d/2+.03,2.4,1.6,.08,WINDOW,0,c);k.box('window-sill',wx,y+1.35,d/2+.08,2.6,.12,.18,CREAM,0,c);k.box('window-bar',wx,y+2.2,d/2+.08,.07,1.6,.05,CREAM,0,c);}}
  }
  // Arcade columns along the front, the classic covered walkway.
- for(let i=0;i<=Math.floor(w/4.2);i++)k.box('column',-w/2+.4+i*4.2*(w-.8)/(Math.floor(w/4.2)*4.2),2.1,d/2+2.1,.55,4.2,.55,CREAM,0,g);
- k.box('walkway-roof',0,4.3,d/2+1.1,w,.25,2.4,CREAM,0,g);
+ for(let i=0;i<=Math.floor(w/4.2);i++)k.box('column',-w/2+.4+i*4.2*(w-.8)/(Math.floor(w/4.2)*4.2),2.1,d/2+2.1,.55,4.2,.55,CREAM,0,c);
+ k.box('walkway-roof',0,4.3,d/2+1.1,w,.25,2.4,CREAM,0,c);
  (opts.signs??[]).forEach((s,i)=>k.label(s,-w/2+4+i*(w-8)/Math.max(1,(opts.signs!.length-1)),3.25,d/2+.1,3,.7,0,'#fff7df',TRIM,g));
  return g;
 }
@@ -57,18 +62,21 @@ export function buildLaSalle(k:Kit,route:Route,battle:boolean){
  // ── La entrada: portón verde, pilares y rótulo, con banderas y la portería ──
  const start=sample(route,0),gate=new TransformNode('school-gate',k.scene);gate.parent=k.root;gate.position.set(start.x,0,start.z);gate.rotation.y=start.yaw;
  const half=route.width/2+3.2;
- for(const s of [-1,1]){k.box('gate-pillar',s*half,3.4,0,1.6,6.8,1.6,CREAM,0,gate);k.box('gate-pillar-cap',s*half,6.95,0,2,.4,2,TRIM,0,gate);
+ // Pillars, arch, gate leaves, walls and the guard booth: Blender model «porton-lasalle» (made for this 15 m road).
+ k.prop('porton-lasalle',start.x,0,start.z,start.yaw,1,pg=>{
+ for(const s of [-1,1]){k.box('gate-pillar',s*half,3.4,0,1.6,6.8,1.6,CREAM,0,pg);k.box('gate-pillar-cap',s*half,6.95,0,2,.4,2,TRIM,0,pg);
   // The two green gate leaves stand open against the wall.
-  const leaf=k.box('gate-leaf',s*(half+3.6),2.2,-.9,6,4.2,.18,GATE,0,gate);leaf.rotation.y=s*.12;for(let i=0;i<7;i++)k.box('gate-bar',s*(half+1.1+i*.8),2.2,-.75,.12,4.2,.1,'#245e3c',0,gate);
-  k.box('front-wall',s*(half+22),1.5,-.2,32,3,.8,CREAM,0,gate);k.box('front-wall-top',s*(half+22),3.1,-.2,32,.3,1,TRIM,0,gate);}
- k.box('gate-arch',0,7.8,0,half*2+2.4,1.9,1.4,CREAM,0,gate);k.box('gate-arch-trim',0,6.8,0,half*2+2.4,.25,1.5,TRIM,0,gate);
+  const leaf=k.box('gate-leaf',s*(half+3.6),2.2,-.9,6,4.2,.18,GATE,0,pg);leaf.rotation.y=s*.12;for(let i=0;i<7;i++)k.box('gate-bar',s*(half+1.1+i*.8),2.2,-.75,.12,4.2,.1,'#245e3c',0,pg);
+  k.box('front-wall',s*(half+22),1.5,-.2,32,3,.8,CREAM,0,pg);k.box('front-wall-top',s*(half+22),3.1,-.2,32,.3,1,TRIM,0,pg);}
+ k.box('gate-arch',0,7.8,0,half*2+2.4,1.9,1.4,CREAM,0,pg);k.box('gate-arch-trim',0,6.8,0,half*2+2.4,.25,1.5,TRIM,0,pg);
+ });
  k.label('COLEGIO LA SALLE',0,7.85,-.75,half*2-2,1.3,Math.PI,'#fff3d0',TRIM,gate);k.label('INDIVISA MANENT',0,7.85,.75,half*2-6,1,0,'#fff3d0',TRIM,gate);
- k.box('guard-booth',-(half+7),1.6,-6,4,3.2,4,CREAM,0,gate);k.box('guard-roof',-(half+7),3.4,-6,5,.4,5,ROOF,0,gate);k.label('PORTERÍA',-(half+7),2.3,-3.95,3,.6,Math.PI,'#fff3d0',TRIM,gate);
+ {const pg=new TransformNode('booth-code',k.scene);pg.parent=k.propFallback('porton-lasalle');pg.position.set(start.x,0,start.z);pg.rotation.y=start.yaw;k.box('guard-booth',-(half+7),1.6,-6,4,3.2,4,CREAM,0,pg);k.box('guard-roof',-(half+7),3.4,-6,5,.4,5,ROOF,0,pg);}k.label('PORTERÍA',-(half+7),2.3,-3.95,3,.6,Math.PI,'#fff3d0',TRIM,gate);
  for(const s of [-1,1])k.flag(start.x+s*14,start.z-26,s<0?['#1f5fae','#ffffff','#1f5fae']:['#1a3f7a','#f2d14c','#1a3f7a'],11);
  // ── Edificio principal y capilla, del otro lado de la calle de entrada ──
  block(k,0,-206,150,16,0,{signs:['DIRECCIÓN','SECRETARÍA','PRIMARIA','SECUNDARIA']});
- const chapel=new TransformNode('chapel',k.scene);chapel.parent=k.root;chapel.position.set(-104,0,-204);
- k.box('chapel-nave',0,5,0,18,10,26,'#f4ead0',0,chapel);k.box('chapel-roof',0,10.6,0,19,1.2,27,ROOF,0,chapel);k.box('bell-tower',0,9,14,6,18,6,'#f4ead0',0,chapel);k.box('tower-cap',0,18.6,14,7,1.2,7,ROOF,0,chapel);k.box('cross-v',0,21.3,14,.5,4.2,.5,'#f7f1dc',0,chapel);k.box('cross-h',0,21.9,14,2.4,.5,.5,'#f7f1dc',0,chapel);k.box('chapel-door',0,2.2,13.05+3,2.6,4.4,.1,WOOD,0,chapel);k.label('CAPILLA',0,5.4,17.1,4.5,.9,0,'#fff3d0',TRIM,chapel);
+ k.prop('capilla',-104,0,-204,0,1,chapel=>{
+ k.box('chapel-nave',0,5,0,18,10,26,'#f4ead0',0,chapel);k.box('chapel-roof',0,10.6,0,19,1.2,27,ROOF,0,chapel);k.box('bell-tower',0,9,14,6,18,6,'#f4ead0',0,chapel);k.box('tower-cap',0,18.6,14,7,1.2,7,ROOF,0,chapel);k.box('cross-v',0,21.3,14,.5,4.2,.5,'#f7f1dc',0,chapel);k.box('cross-h',0,21.9,14,2.4,.5,.5,'#f7f1dc',0,chapel);k.box('chapel-door',0,2.2,13.05+3,2.6,4.4,.1,WOOD,0,chapel);});k.label('CAPILLA',-104,7.4,-204+17.1,4.5,.9,0,'#fff3d0',TRIM);
  // Front lawn: palms, benches, sidewalk and the students cheering on the sidewalk.
  const walk=k.box('sidewalk',0,.02,-178,260,.1,7,CONCRETE);walk.material=surfaceTexture(k.scene,'tile',CONCRETE);
  for(let i=0;i<9;i++){k.tree(-120+i*30,-190,'palm',0,.95);if(i%2)k.box('bench',-105+i*30,.55,-182,3,.25,1,WOOD);}
@@ -76,8 +84,8 @@ export function buildLaSalle(k:Kit,route:Route,battle:boolean){
  // ── Parqueo con el bus escolar, dentro del circuito junto a la recta ──
  const lot=k.box('parking',55,.03,-122,64,.1,22,'#7d8186');lot.material=surfaceTexture(k.scene,'asphalt','#6f747a');
  for(let i=0;i<8;i++)k.box('parking-line',27+i*8,.1,-122,.25,.03,8,'#f1ecd8');
- const bus=new TransformNode('school-bus',k.scene);bus.parent=k.root;bus.position.set(40,0,-115);bus.rotation.y=Math.PI/2;
- k.box('bus-body',0,2.1,0,2.9,2.8,11,'#f2b81f',0,bus);k.box('bus-stripe',0,1.6,0,2.95,.25,11.05,'#1b1b1b',0,bus);k.box('bus-windows',0,2.9,0,2.96,.9,9,'#3e6f80',0,bus);k.box('bus-hood',0,1.35,6.1,2.7,1.5,1.4,'#f2b81f',0,bus);k.label('ESCOLAR',0,2.1,-5.53,2.4,.6,Math.PI,'#1b1b1b','#f2b81f',bus);for(const x of [-1.3,1.3])for(const z of [-3.6,4.2])k.cyl('bus-wheel',x,.55,z,.5,1.1,'#222b33',1.1,bus).rotation.z=Math.PI/2;
+ k.prop('bus-escolar',40,0,-115,Math.PI/2,1,bus=>{
+ k.box('bus-body',0,2.1,0,2.9,2.8,11,'#f2b81f',0,bus);k.box('bus-stripe',0,1.6,0,2.95,.25,11.05,'#1b1b1b',0,bus);k.box('bus-windows',0,2.9,0,2.96,.9,9,'#3e6f80',0,bus);k.box('bus-hood',0,1.35,6.1,2.7,1.5,1.4,'#f2b81f',0,bus);for(const x of [-1.3,1.3])for(const z of [-3.6,4.2])k.cyl('bus-wheel',x,.55,z,.5,1.1,'#222b33',1.1,bus).rotation.z=Math.PI/2;});k.label('ESCOLAR',34.47,2.1,-115,2.4,.6,-Math.PI/2,'#1b1b1b','#f2b81f');
  for(let i=0;i<4;i++){const c=k.box('parked-car',63+i*8,.95,-126,2.2,1.4,4.4,['#c23b3b','#e8e4d8','#3866a6','#7c8a92'][i]);c.position.y=.95;k.box('parked-roof',63+i*8,1.95,-126.4,2,.7,2.4,'#2f3f4a');}
  // ── Corredor de aulas: la recta este pasa techada entre dos bloques de dos pisos ──
  const corridor=(d:number)=>sample(route,d);
