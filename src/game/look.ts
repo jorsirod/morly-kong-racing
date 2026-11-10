@@ -20,12 +20,12 @@ import '@babylonjs/core/Materials/Textures/rawCubeTexture';
  */
 export interface Look { top:string; mid:string; horizon:string; hemiSky:string; hemiGround:string; sun:string; sunPower:number; hemiPower:number; saturation:number; contrast:number; exposure:number; stars?:boolean; sunDisc?:string; fogStart:number; fogEnd:number }
 export const LOOKS:Record<string,Look>={
- 'la-salle':{top:'#1f7fe6',mid:'#58b6f5',horizon:'#c9f1ff',hemiSky:'#e3f6ff',hemiGround:'#c9cbb4',sun:'#fff0c4',sunPower:1.35,hemiPower:.9,saturation:34,contrast:1.1,exposure:1.04,sunDisc:'#fff6c9',fogStart:240,fogEnd:600},
- oriental:{top:'#2a7fe0',mid:'#6fb9f0',horizon:'#f6ecd2',hemiSky:'#fff1d8',hemiGround:'#cdc2a8',sun:'#fff0d2',sunPower:1.34,hemiPower:.9,saturation:24,contrast:1.12,exposure:1.04,sunDisc:'#fff0bf',fogStart:220,fogEnd:560},
- managua:{top:'#1b78e2',mid:'#4fb0f2',horizon:'#bff0ff',hemiSky:'#e6f7ff',hemiGround:'#cccdb8',sun:'#fff1c9',sunPower:1.38,hemiPower:.9,saturation:34,contrast:1.1,exposure:1.04,sunDisc:'#fff6cf',fogStart:240,fogEnd:600},
+ 'la-salle':{top:'#1f7fe6',mid:'#58b6f5',horizon:'#c9f1ff',hemiSky:'#d3ecff',hemiGround:'#c9cbb4',sun:'#ffe6a8',sunPower:1.49,hemiPower:0.81,saturation:34,contrast:1.15,exposure:1.04,sunDisc:'#fff6c9',fogStart:290,fogEnd:630},
+ oriental:{top:'#2a7fe0',mid:'#6fb9f0',horizon:'#f6ecd2',hemiSky:'#fff1d8',hemiGround:'#cdc2a8',sun:'#ffe4b0',sunPower:1.48,hemiPower:0.81,saturation:24,contrast:1.17,exposure:1.04,sunDisc:'#fff0bf',fogStart:270,fogEnd:590},
+ managua:{top:'#1b78e2',mid:'#4fb0f2',horizon:'#bff0ff',hemiSky:'#d5edff',hemiGround:'#cccdb8',sun:'#ffe7ac',sunPower:1.52,hemiPower:0.81,saturation:34,contrast:1.15,exposure:1.04,sunDisc:'#fff6cf',fogStart:290,fogEnd:630},
  'hipa-hipa':{top:'#05041a',mid:'#140a38',horizon:'#3a1a5e',hemiSky:'#c2b8ff',hemiGround:'#2b2048',sun:'#c9bcff',sunPower:.55,hemiPower:.85,saturation:30,contrast:1.12,exposure:1.08,stars:true,fogStart:240,fogEnd:620},
- masaya:{top:'#2b6fd0',mid:'#7ab0e6',horizon:'#ffd7ae',hemiSky:'#ffe9d2',hemiGround:'#bfae9b',sun:'#ffd7a0',sunPower:1.42,hemiPower:.86,saturation:32,contrast:1.12,exposure:1.04,sunDisc:'#ffe2a6',fogStart:220,fogEnd:580},
- 'san-juan':{top:'#0f7ee0',mid:'#3fc0f2',horizon:'#b6fbff',hemiSky:'#e2fbff',hemiGround:'#d6d6bc',sun:'#fff3cc',sunPower:1.42,hemiPower:.92,saturation:38,contrast:1.1,exposure:1.05,sunDisc:'#fff8d6',fogStart:260,fogEnd:640},
+ masaya:{top:'#2b6fd0',mid:'#7ab0e6',horizon:'#ffd7ae',hemiSky:'#ffe9d2',hemiGround:'#bfae9b',sun:'#ffd7a0',sunPower:1.56,hemiPower:0.77,saturation:32,contrast:1.17,exposure:1.04,sunDisc:'#ffe2a6',fogStart:270,fogEnd:610},
+ 'san-juan':{top:'#0f7ee0',mid:'#3fc0f2',horizon:'#b6fbff',hemiSky:'#d2f2ff',hemiGround:'#d6d6bc',sun:'#ffe9b0',sunPower:1.56,hemiPower:0.83,saturation:38,contrast:1.15,exposure:1.05,sunDisc:'#fff8d6',fogStart:310,fogEnd:670},
 };
 export const lookFor=(id:string)=>LOOKS[id]??LOOKS['la-salle'];
 const lin=(hex:string)=>Color3.FromHexString(hex).toLinearSpace();
@@ -34,7 +34,7 @@ const lin=(hex:string)=>Color3.FromHexString(hex).toLinearSpace();
 export function grade(scene:Scene,look:Look){
  const ip=scene.imageProcessingConfiguration;
  ip.toneMappingEnabled=false;ip.exposure=look.exposure;ip.contrast=look.contrast;
- const curves=new ColorCurves();curves.globalSaturation=look.saturation;curves.highlightsSaturation=look.saturation*.4;curves.shadowsHue=220;curves.shadowsDensity=12;curves.shadowsSaturation=30;
+ const curves=new ColorCurves();curves.globalSaturation=look.saturation;curves.highlightsSaturation=look.saturation*.4;curves.shadowsHue=222;curves.shadowsDensity=24;curves.shadowsSaturation=36;curves.highlightsHue=42;curves.highlightsDensity=14;
  ip.colorCurves=curves;ip.colorCurvesEnabled=true;
  ip.vignetteEnabled=true;ip.vignetteWeight=1.6;ip.vignetteStretch=.6;ip.vignetteCameraFov=.9;
 }
