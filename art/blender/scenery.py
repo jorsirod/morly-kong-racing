@@ -1304,7 +1304,24 @@ LANDMARKS = {"cristo": cristo, "catedral": catedral, "arbol-vida": arbol_vida, "
              "casa-playa-1": lambda: casa_playa(1, "casa-playa-1"), "casa-playa-2": lambda: casa_playa(2, "casa-playa-2"),
              "teja-playa": teja_playa, "palacio": palacio, "concha": concha, "cafeteria": cafeteria,
              "bar-lasalle": bar_lasalle}
-FILES = {"vegetation": list(VEGETATION), "cristo": ["cristo"],
+def poste():
+    """Poste de alumbrado de calle: fuste gris que se afina, brazo curvo con la luminaria (su lente brilla), cruceta con
+    aisladores y un transformador, como los de cualquier calle de Managua. El brazo sale hacia -x: con yaw = el rumbo
+    de la pista queda sobre la calle cuando el poste está a la derecha."""
+    B, root = _begin("poste")
+    grey, dark = L.mat("poste-fuste", "#66727a", 0.7), L.mat("poste-herraje", "#3d474e", 0.5)
+    _part(B, root, "poste-fuste", [prism(0.15, 7.4, 0, seg=10, radius_top=0.09), gbox(0.55, 0.35, 0.55, 0, 0.17, 0),
+                                    vtube([(0, 6.5, 0), (-0.55, 7.1, 0), (-1.5, 7.22, 0)], [0.06, 0.055, 0.045], seg=8)], grey)
+    _part(B, root, "poste-herraje", [gbox(0.85, 0.15, 0.36, -1.75, 7.2, 0), gbox(0.12, 0.12, 1.7, 0, 6.2, 0),
+                                      *[prism(0.05, 0.16, 6.26, seg=6, center=(0, z)) for z in (-0.72, 0, 0.72)],
+                                      prism(0.24, 0.7, 4.9, seg=10, center=(0.3, 0)), gbox(0.2, 0.08, 0.1, 0.12, 5.3, 0)], dark)
+    _part(B, root, "poste-luz", gbox(0.66, 0.05, 0.26, -1.78, 7.11, 0), L.mat("poste-luz", "#fff2c2", 0.2, emissive=True))
+    return _finish(B, root, 0.5, 1.0)
+
+
+LANDMARKS["poste"] = poste
+
+FILES = {"vegetation": list(VEGETATION), "cristo": ["cristo"], "calle": ["poste"],
          "managua": ["catedral", "arbol-vida", "palacio", "concha", "casa-m1", "casa-m2", "casa-m3", "casa-techo"],
          "oriental": ["chinamo", "lona"], "masaya": ["volcano"],
          "lasalle": ["aula-pb", "aula-pa", "aula-techo", "capilla", "porton-lasalle", "bus-escolar", "cafeteria", "bar-lasalle"],
