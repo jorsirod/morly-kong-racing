@@ -116,6 +116,22 @@ def add_details(vid, ao=True):
         cal.append(gbox(.09, r * .42, r * .3, x - s * .07, y + r * .32, z - r * .34, bevel=.02))
     emit("brake-discs", merge(*brakes), disc, smooth=30)
     emit("calipers", merge(*cal), caliper)
+    if vid == "el-tiburon":
+        # El Tiburón es un Yaris sedán (Echo) de 2000: defensas grandes de plástico negro sin pintar, estribo negro,
+        # calaveras redondeadas en las esquinas y la tapa de la valijera plana, donde va pegado el tiburón.
+        black = mat(f"{prefix}bumper", "#22252a", rough=0.75)
+        paint = mat(f"{prefix}paint", "#f2f0e8", rough=0.26)
+        emit("yaris-defensas", merge(
+            rounded_bar(1.98, 0.38, 0.46, 0.12, "X", center=G(0, 0.64, -1.99)), rounded_bar(1.94, 0.38, 0.44, 0.12, "X", center=G(0, 0.62, 1.93)),
+            *[gbox(0.1, 0.42, 0.46, s * 0.975, 0.64, z, bevel=0.04) for s in (-1, 1) for z in (-1.74, 1.68)],
+            *[gbox(0.05, 0.13, 2.3, s * 0.995, 0.5, 0.0, bevel=0.02) for s in (-1, 1)],
+            gbox(1.1, 0.12, 0.05, 0, 0.5, 2.12, bevel=0.02)), black, smooth=50)
+        emit("yaris-tapa", gbox(1.0, 0.52, 0.04, 0, 1.17, -2.05, bevel=0.012), paint)
+        emit("yaris-calaveras", merge(*[gsphere(0.46, s * 0.72, 1.14, -1.99, (1, 0.9, 0.36), seg=16, rings=9) for s in (-1, 1)]),
+             mat(f"{prefix}tail", "#d72f3c", rough=0.2, emissive=True))
+        emit("yaris-reversa", merge(*[gsphere(0.15, s * 0.6, 1.0, -2.055, (1, 1, 0.4), seg=10, rings=6) for s in (-1, 1)],
+                                    *[gsphere(0.2, s * 0.8, 0.98, 1.9, (1, 0.8, 0.5), seg=10, rings=6) for s in (-1, 1)]),
+             mat(f"{prefix}tail-white", "#f3eee6", rough=0.2))
     if ao:
         bake_ao(made, samples=32, strength=0.6, distance=0.9, ground=False)
     return {"id": vid, "new": len(made), "triangles": triangles([o for o in [root, *root.children_recursive] if o.type == "MESH"]), "belt": round(belt, 2), "hw": round(hw, 2), "S": round(S, 2), "rear": round(rear, 2), "r": round(r, 2)}
