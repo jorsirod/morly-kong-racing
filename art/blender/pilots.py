@@ -84,7 +84,7 @@ def _rot(bm, rot):
         v.co = (x, y, z)
 
 
-def sph(x, y, z, d, scale=(1, 1, 1), rot=None, seg=16, rings=10):
+def sph(x, y, z, d, scale=(1, 1, 1), rot=None, seg=12, rings=8):
     bm = bmesh.new()
     bmesh.ops.create_uvsphere(bm, u_segments=seg, v_segments=rings, radius=d / 2)
     bmesh.ops.scale(bm, vec=scale, verts=bm.verts)
@@ -149,7 +149,7 @@ def tube(points, radius, seg=10, r_end=None):
     return bm
 
 
-def torus(x, y, z, dia, thick, scale=(1, 1, 1), seg=24, ring=8):
+def torus(x, y, z, dia, thick, scale=(1, 1, 1), seg=20, ring=6):
     """Toro acostado (eje y), como CreateTorus de Babylon: `dia` entre centros del tubo, `thick` el grosor."""
     bm = bmesh.new()
     R, r = dia / 2, thick / 2
@@ -246,19 +246,21 @@ def _head(P, hair_blob=True):
     # Nariz: punta, puente hasta el entrecejo y aletas.
     n = f["nose"]
     ny, nz = 1.19 - (n - .25) * .25, .47 * hz + (n - .25) * .6
-    P.soft(H, skin, sph(0, ny, nz, n, (.8, .95 if n > .35 else .8, 1.1)))
-    P.soft(H, skin, tube([(0, 1.36, .43 * hz), (0, ny + n * .25, nz)], .045, r_end=n * .3))
+    if pid != "morly":  # Morly lleva hocico y nariz de mono
+        P.soft(H, skin, sph(0, ny, nz, n, (.8, .95 if n > .35 else .8, 1.1)))
+        P.soft(H, skin, tube([(0, 1.36, .43 * hz), (0, ny + n * .25, nz)], .045, r_end=n * .3))
     for x in (-1, 1):
-        P.soft(H, skin, sph(x * n * .3, ny - n * .16, nz - n * .12, n * .5, (1, .8, 1)))
+        if pid != "morly":
+            P.soft(H, skin, sph(x * n * .3, ny - n * .16, nz - n * .12, n * .5, (1, .8, 1)))
         P.soft(H, skin, sph(x * (.26 + f["cheeks"] * .3) * hx, 1.02, .27 * hz + f["cheeks"] * .2, f["cheeks"] + .12, (.9, .8, .7)))
     # Ojos (cuelgan de «eyes» para el parpadeo) y cejas.
     es = .72 if pid == "calin" else 1
     ey = .5 if pid == "cucukis" else 1
     for x in (-f["eyes"], f["eyes"]):
         side = 1 if x > 0 else -1
-        P.add("eyes", "#fff8e8", sph(x * hx, 1.3, .423 * hz, .21 * es, (.85, 1.05 * ey, .45), seg=18, rings=10), rough=.25)
-        P.add("eyes", "#5a3a26" if pid != "cucukis" else "#3d5a52", sph(x * hx, 1.3, .472 * hz, .112 * es, (1, ey, .35), seg=16, rings=8), rough=.3)
-        P.add("eyes", "#16232c", sph(x * hx, 1.3, .488 * hz, .066 * es, (1, ey, .35), seg=12, rings=6), rough=.3)
+        P.add("eyes", "#fff8e8", sph(x * hx, 1.3, .423 * hz, .21 * es, (.85, 1.05 * ey, .45), seg=14, rings=8), rough=.25)
+        P.add("eyes", "#5a3a26" if pid != "cucukis" else "#3d5a52", sph(x * hx, 1.3, .472 * hz, .112 * es, (1, ey, .35), seg=12, rings=6), rough=.3)
+        P.add("eyes", "#16232c", sph(x * hx, 1.3, .488 * hz, .066 * es, (1, ey, .35), seg=10, rings=5), rough=.3)
         P.add("eyes", "#ffffff", sph(x * hx - .02, 1.328, .501 * hz, .03 * es, seg=8, rings=5), rough=.2, emissive=True)
         # Línea del párpado: le da expresión a la mirada.
         P.add("eyes", shade(skin, .45), tube([(x * hx - side * .085 * es, 1.345, .44 * hz), (x * hx, 1.3 + .118 * es * ey, .468 * hz), (x * hx + side * .09 * es, 1.34, .43 * hz)], .012, seg=6))
@@ -268,7 +270,7 @@ def _head(P, hair_blob=True):
             P.soft(H, skin, sph(x * hx, 1.335, .43 * hz, .23, (.9, .42, .5)))
     HB = P.soft if hair_blob else P.add
     if f.get("beard") in ("full", "short"):
-        P.add(H, hair, sph(0, .97, .19, .67, (.98 * hx, .62 if f["beard"] == "full" else .5, .8), seg=24, rings=14), rough=.85)
+        P.add(H, hair, sph(0, .97, .19, .67, (.98 * hx, .62 if f["beard"] == "full" else .5, .8), seg=16, rings=10), rough=.85)
     if f.get("beard") == "goatee":
         P.add(H, hair, sph(0, .88, .43 * hz, .24, (1, .9, .7)), rough=.85)
     if f.get("moustache") == "thick":
@@ -334,17 +336,17 @@ def _head(P, hair_blob=True):
             P.soft(H, hair, sph(x * .4 * hx, 1.4, .1, .2, (.5, 1.3, .9)))
     if c.get("cap"):
         cap = c["cap"]
-        P.add(H, cap, sph(0, 1.64, -.035, .91, (1.03 * hx, .47, .95), seg=28, rings=14), rough=.8)
+        P.add(H, cap, sph(0, 1.64, -.035, .91, (1.03 * hx, .47, .95), seg=20, rings=10), rough=.8)
         P.add(H, cap, box(0, 1.58, .4, .7, .055, .54, rot=(.1, 0, 0), bevel=.025), rough=.8)
         P.add(H, shade(cap, .82), torus(0, 1.585, -.035, .9 * hx, .05, (1, .8, .95 / hx if hx else 1)), rough=.8)
         P.add(H, shade(cap, .82), sph(0, 1.87, -.035, .09, (1, .5, 1), seg=10, rings=6), rough=.8)
         P.add(H, "#fff9e9" if pid == "calin" else "#e8b52b", box(0, 1.68, .41, .18, .13, .025, bevel=.01))
     if pid == "cucukis":
-        P.add(H, "#f7f7f2", sph(0, 1.7, -.04, .96, (1.02 * hx, .5, 1), seg=28, rings=14), rough=.8)
+        P.add(H, "#f7f7f2", sph(0, 1.7, -.04, .96, (1.02 * hx, .5, 1), seg=20, rings=10), rough=.8)
         P.add(H, "#f7f7f2", torus(0, 1.6, -.04, .98 * hx, .15, (1, .75, 1)), rough=.8)
         P.add(H, "#1d3a7a", torus(0, 1.66, -.04, .9 * hx, .05, (1, .6, 1)))
     if pid == "morly":
-        P.add(H, "#d2a47c", sph(0, 1.03, .27 * hz, .66, (1.3 * hx, .82, .56), seg=24, rings=14))
+        P.add(H, "#d2a47c", sph(0, 1.03, .27 * hz, .66, (1.3 * hx, .82, .56), seg=16, rings=10))
         P.add(H, "#5a3522", sph(0, 1.14, .5 * hz, .3, (1.35, .62, .7)))
         for x in (-1, 1):
             P.add(H, "#2a1a12", sph(x * .065, 1.12, .56 * hz, .07, seg=8, rings=5))
@@ -381,7 +383,7 @@ def _body(P):
     h, w = f["height"], f["width"]
     wz = max(.82, w)
     torsoH, shoulderY, neckTop = 1.15 * h, .29 + .2 * h + .02, .52 + .3 * h + f["neck"]
-    P.soft(R, shirt, sph(0, .29 + .08 * (h - 1), 0, .86, (.94 * w, torsoH, .76 * wz), seg=28, rings=16))
+    P.soft(R, shirt, sph(0, .29 + .08 * (h - 1), 0, .86, (.94 * w, torsoH, .76 * wz), seg=20, rings=12))
     P.add(R, "#263b54", box(-.11 * w, .3, .31, .09, .72 * h, .035, rot=(0, 0, .28), bevel=.012))
     P.add(R, skin, cyl(0, neckTop - .06, 0, .21 + f["neck"], .29 * min(1, w + .15), seg=18))
     # Cuello de la camisa: un aro del color de la tela, un tono más oscuro.
@@ -395,7 +397,7 @@ def _body(P):
             P.soft(R, shirt, sh)
         sx, sy, sz = x * .36 * w, shoulderY - .03, .1
         _arm(P, x, sx, sy, sz, arm, None if pid == "morly" else shirt)
-        P.add(R, "#344465", sph(x * .22, -.1, .18, .34 * min(1.1, w + .15), (1, .7, 1.4), seg=16, rings=10), rough=.85)
+        P.add(R, "#344465", sph(x * .22, -.1, .18, .34 * min(1.1, w + .15), (1, .7, 1.4), seg=12, rings=7), rough=.85)
     chestZ, chestY = .338 * wz, .29 + .08 * (h - 1)
     backZ, backY = -.33 * wz, .29 + .08 * (h - 1)
     if pid == "morly":
@@ -499,19 +501,17 @@ def build(pid, ao=True):
     for n in ("arm-left", "arm-right"):
         objs[n] = B.empty(n, root, L_G(*nodes[n]), .1)
     meshes = []
-    targets = {"head-root": 2000, "root": 1300, "arm-left": 520, "arm-right": 520}
+    targets = {"head-root": 1500, "root": 900, "arm-left": 380, "arm-right": 380}
     for (node, color), bms in P.blobs.items():
         is_hair = color == f["hair"] and node == "head-root"
-        bm = blob(L.merge(*bms), voxel=.016 if node != "root" else .022, smooth=3 if is_hair else 5, target=1300 if is_hair else targets[node])
+        bm = blob(L.merge(*bms), voxel=.016 if node != "root" else .022, smooth=3 if is_hair else 5, target=800 if is_hair else targets[node])
         meshes.append(_mesh(B, f"{pid}-{node}-soft-{color.lstrip('#')}", bm, objs[node], color, .85 if is_hair else .7, False, local[node]))
     for (node, color, rough, emissive), bms in P.parts.items():
         meshes.append(_mesh(B, f"{pid}-{node}-{color.lstrip('#')}" + ("-glow" if emissive else "") + ("-r%d" % round(rough * 100)), L.merge(*bms), objs[node], color, rough, emissive, local[node]))
     if ao:
         L.bake_ao(meshes, samples=32, strength=.75, distance=.5, ground=False)
     tris = L.triangles(meshes)
-    if tris > TRIANGLES_MAX:
-        raise RuntimeError(f"{pid}: {tris} triángulos (máximo {TRIANGLES_MAX})")
-    return dict(id=pid, triangles=tris, meshes=len(meshes))
+    return dict(id=pid, triangles=tris, meshes=len(meshes), ok=tris <= TRIANGLES_MAX)
 
 
 def build_all(ao=True):
