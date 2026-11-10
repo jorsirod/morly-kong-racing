@@ -86,3 +86,24 @@ En el juego, `kit.prop(tipo, x, y, z, yaw, escala, códigoDeRespaldo, tinte)` co
 - **Piezas animadas:** `kit.prop(…, parent)` cuelga el modelo de un nodo que se mueve, como la copa de la palmera gigante.
 - **Varias piezas por bloque:** `kit.propFallback(tipo)` guarda el código de respaldo de un bloque entero mientras sus módulos llegan como varias piezas.
 - **Contrato y presupuesto:** `tests/scenery.test.ts` revisa el contrato y el presupuesto de triángulos por tipo (`src/game/worlds/propFiles.ts`).
+
+## Pilotos
+
+Los once pilotos están modelados en `art/blender/pilots.py` (escenas `pilot-<id>` dentro de `cars.blend`) y se exportan a `public/models/pilots/<id>.glb`. Se modelan con las mismas medidas que `buildCharacter()` (`src/game/models.ts`), así que las etiquetas de texto del juego calzan igual. La piel, el pelo y el torso se unen con un remallado por vóxeles y se suavizan; la oclusión va horneada.
+
+```python
+import sys; sys.path[:0] = ["<repo>/scripts/blender", "<repo>/art/blender"]
+import pilots
+pilots.build("morly")                      # o pilots.build_all()
+pilots.export("morly", repo_root="<repo>")
+```
+
+En el juego (`src/game/pilots.ts`), el piloto de código se dibuja primero y es el respaldo; cuando el GLB está cargado, sus mallas reemplazan a las del código dentro de los mismos nodos (`head-root`, `arm-left`, `arm-right`), más un nodo `eyes` para el parpadeo. Cada nodo queda en una sola malla (el color va en los vértices): cinco llamadas de dibujo por piloto. Contrato: `tests/pilots.test.ts`.
+
+## Segunda pasada de los carros
+
+`art/blender/car_details.py` agrega piezas a los carros ya modelados sin reconstruirlos: cojines y cabecera, consola con palanca, tablero con relojes, limpiaparabrisas, antena, escape, loderas y frenos de disco. Se puede correr varias veces (borra las piezas `detail-*` anteriores).
+
+## Calle
+
+`public/models/scenery/calle.glb` trae `poste`, el poste de alumbrado (`scenery.poste()`), que se coloca a la derecha de la pista en La Salle, el Oriental, Managua y San Juan.
