@@ -2,7 +2,7 @@
 """
 Pilotos de Morly Kong Racing modelados en Blender.
 
-Cada piloto vive en su escena `pilot-<id>` (colección del mismo nombre) dentro de art/blender/pilots.blend y se
+Cada piloto vive en su escena `pilot-<id>` (colección del mismo nombre) dentro de art/blender/cars.blend (junto a los carros) y se
 exporta a public/models/pilots/<id>.glb. Se modela en las coordenadas del juego (x a la derecha del piloto, y arriba,
 +z hacia donde mira), con las mismas medidas que buildCharacter() en src/game/models.ts, y al final se pasa a Blender
 (blender = (-x, -z, y)). Así las etiquetas de texto del juego (nombre en la espalda, «LAKERS»…) calzan sin tocar nada.
