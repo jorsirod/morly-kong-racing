@@ -20,7 +20,7 @@ import {track,vehicle} from '../../shared/content';
 import {angle,clamp,lerp,routeFor,sample} from '../../shared/track';
 import {resolveVehicleCollision,vehicleDynamics,vehicleVelocity as vehicleVelocityOf} from '../../shared/dynamics';
 import type {GameState,PlayerState} from '../../shared/types';
-import {buildVehicle,buildCharacter,buildProjectile,addVehicleDecals,material,cylinder,sphere,box,textLabel,aimArm,pilotArms,type VehicleModel} from './models';
+import {preloadPilots,buildVehicle,buildCharacter,buildProjectile,addVehicleDecals,material,cylinder,sphere,box,textLabel,aimArm,pilotArms,type VehicleModel} from './models';
 import {buildWorld} from './world';
 import {INTRO} from '../../shared/simulation';
 import {stuntAt,stuntPose} from '../../shared/stunts';
@@ -39,9 +39,11 @@ type Car=VehicleModel;
 type Actor={model:Car;vehicleId:string;characterId:string;shadow:TransformNode;lod:TransformNode;steer:number;spin:number;label?:HTMLElement|null;
  driftYaw:number;hop:number;lastDrift:number;lastStun:number;spinStart:number;stunTotal:number;faded:boolean;meshes:AbstractMesh[];lastImpact:number;wobble:number;decals?:TransformNode|null;
  /** Race time of this pilot's last special (pose) and of the last landing (squash). */ cast:number;landed:number;lastAir:number;shield?:Mesh|null;roll:number;suspension:number;alf:AlfState;arms?:{l?:TransformNode;r?:TransformNode};
- /** Face life: eye meshes for blinking, the head node, last cheer (a hit landed) and last flinch (got hit). */ face?:{eyes:AbstractMesh[];head?:TransformNode;nextBlink:number};cheer?:number;hurt?:number};
+ /** Face life: eye meshes for blinking, the head node, last cheer (a hit landed) and last flinch (got hit). */ face?:{eyes:TransformNode[];head?:TransformNode;nextBlink:number;blender:boolean};cheer?:number;hurt?:number};
 /** ALF's little routine: what he is doing now and until when. */
 type AlfState={action:'idle'|'wave'|'look'|'cheer'|'hold';until:number;next:number};
+/** Side of the square of world the sun's shadow map covers, in metres. */
+const SHADOW_SPAN=130;
 const PLAYER_COLORS=['#f14d53','#459be9','#78ce50','#ffc63c','#bd76e5','#54d5d9'];
 import {savedQuality,reducedMotion,batterySaver,QUALITY,type Quality} from './renderer-settings';
 export {savedQuality,reducedMotion,type Quality};
@@ -63,6 +65,24 @@ function unmirror(top:TransformNode){
   if('getTotalVertices' in n&&(n as AbstractMesh).getTotalVertices()>0)n.scaling.x*=-1;
  }
 }
+/** A Blender car arrives as some forty separate pieces under `body` (hood, doors, trims…). They never move apart, so
+ * the pieces that share a material are merged once, when the file loads: each car then costs about half the draw calls
+ * (and half the shadow-map draws). Wheels, ALF and the sockets are left alone. */
+export function compactCar(scene:Scene,asset:AssetContainer){
+ const body=asset.transformNodes.find(n=>n.name==='body');if(!body)return;
+ const groups=new Map<unknown,Mesh[]>();
+ for(const n of body.getChildren()){if(!(n instanceof Mesh)||!n.material||n.getChildren().length||!n.getTotalVertices())continue;const kinds=n.getVerticesDataKinds().sort().join(),key=n.material.uniqueId+'|'+kinds,l=groups.get(key)??[];l.push(n);groups.set(key,l);}
+ for(const list of groups.values()){
+  if(list.length<2)continue;
+  try{
+   const material=list[0].material;
+   for(const m of list){const local=Matrix.Compose(m.scaling,m.rotationQuaternion??Quaternion.FromEulerVector(m.rotation),m.position);m.parent=null;m.position.setAll(0);m.rotationQuaternion=null;m.rotation.setAll(0);m.scaling.setAll(1);m.bakeTransformIntoVertices(local);}
+   const merged=Mesh.MergeMeshes(list,true,true,undefined,false,false);if(!merged)continue;
+   scene.removeMesh(merged);merged.name=(material?.name??'part')+'-merged';merged.material=material;merged.parent=body;merged.isPickable=false;
+   for(const m of list){const i=asset.meshes.indexOf(m);if(i>=0)asset.meshes.splice(i,1);}asset.meshes.push(merged);
+  }catch{/* keep the separate pieces */}
+ }
+}
 /** A car instance from its GLB (public/models/<id>.glb), wired like buildVehicle(): pilot, decals, wheels, ALF. */
 export function carFromAsset(scene:Scene,asset:AssetContainer,vehicleId:string,characterId:string):Car{
  const entries=asset.instantiateModelsToScene(name=>name+'-copy',false,{doNotInstantiate:false}),root=new TransformNode('car-instance',scene);for(const n of entries.rootNodes){if(n instanceof TransformNode)unmirror(n);n.parent=root;}
@@ -76,7 +96,7 @@ export function carFromAsset(scene:Scene,asset:AssetContainer,vehicleId:string,c
 function previewCar(scene:Scene,vehicleId:string,characterId:string,place:(car:Car)=>void,look=lookFor('la-salle')){
  const holder={car:buildVehicle(scene,vehicleId,characterId),disposed:false};place(holder.car);
  LoadAssetContainerAsync('/models/'+vehicleId+'.glb',scene).then(asset=>{if(holder.disposed||scene.isDisposed){asset.dispose();return;}
-  paintFinish(scene,look,asset.materials);const glb=carFromAsset(scene,asset,vehicleId,characterId);holder.car.root.dispose(false,false);holder.car=glb;place(glb);}).catch(()=>{/* keep the code-built car */});
+  paintFinish(scene,look,asset.materials);compactCar(scene,asset);const glb=carFromAsset(scene,asset,vehicleId,characterId);holder.car.root.dispose(false,false);holder.car=glb;place(glb);}).catch(()=>{/* keep the code-built car */});
  return holder;
 }
 export class RaceRenderer{
@@ -110,12 +130,14 @@ export class RaceRenderer{
   this.scene.clearColor=Color4.FromHexString(look.horizon+'ff');this.scene.fogMode=Scene.FOGMODE_LINEAR;this.scene.fogStart=look.fogStart;this.scene.fogEnd=look.fogEnd;this.scene.fogColor=Color3.FromHexString(look.horizon);this.baseFog={start:look.fogStart,end:look.fogEnd,color:this.scene.fogColor.clone()};this.tunnelLight=null;
   skyDome(this.scene,look);
   const hemi=new HemisphericLight('sky',new Vector3(0,1,0),this.scene);hemi.intensity=look.hemiPower;hemi.groundColor=colors.hemiGround;hemi.diffuse=colors.hemiSky;
-  this.sun=new DirectionalLight('sun',new Vector3(-.45,-1,.4),this.scene);this.sun.position.set(-40,60,-40);this.sun.intensity=look.sunPower;this.sun.diffuse=colors.sun;this.sun.shadowMinZ=1;this.sun.shadowMaxZ=190;this.sun.shadowFrustumSize=75;
+  this.sun=new DirectionalLight('sun',new Vector3(-.72,-1,.34),this.scene);this.sun.position.set(-40,60,-40);this.sun.intensity=look.sunPower;this.sun.diffuse=colors.sun;this.sun.shadowMinZ=1;this.sun.shadowMaxZ=230;this.sun.shadowFrustumSize=SHADOW_SPAN;this.sun.direction.normalize();
   const size=QUALITY[this.quality].shadows;
-  if(!night&&size){this.shadowMap=new ShadowGenerator(size,this.sun);this.shadowMap.usePercentageCloserFiltering=true;this.shadowMap.filteringQuality=ShadowGenerator.QUALITY_LOW;this.shadowMap.bias=.002;this.shadowMap.normalBias=.035;this.shadowMap.setDarkness(.24);}
+  if(!night&&size){this.shadowMap=new ShadowGenerator(size,this.sun);this.shadowMap.usePercentageCloserFiltering=true;this.shadowMap.filteringQuality=ShadowGenerator.QUALITY_MEDIUM;this.shadowMap.bias=.0016;this.shadowMap.normalBias=.03;this.shadowMap.setDarkness(.42);this.casters=new WeakSet();
+   // The whole scenery is drawn again into the shadow map: every other frame is enough (the map moves in whole texels).
+   const map=this.shadowMap.getShadowMap();if(map)map.refreshRate=2;}
   if(night)for(let i=0;i<3;i++){const light=new PointLight('club-'+i,new Vector3((i-1)*55,12,0),this.scene);light.diffuse=Color3.FromHexString(['#f262ac','#46dce6','#ffd249'][i]);light.intensity=2.3;light.range=110;}
  }
- async preload(state:GameState){const ids=[...new Set(state.players.map(p=>p.vehicleId))];await Promise.all(ids.map(async id=>{try{const asset=await LoadAssetContainerAsync('/models/'+id+'.glb',this.scene);paintFinish(this.scene,lookFor(this.trackId),asset.materials,this.quality!=='baja');this.assets.set(id,asset);}catch{/* Source geometry is the offline fallback. */}}));
+ async preload(state:GameState){const ids=[...new Set(state.players.map(p=>p.vehicleId))];await Promise.all([preloadPilots(this.scene,state.players.map(p=>p.characterId)),...ids.map(async id=>{try{const asset=await LoadAssetContainerAsync('/models/'+id+'.glb',this.scene);paintFinish(this.scene,lookFor(this.trackId),asset.materials,this.quality!=='baja');compactCar(this.scene,asset);this.assets.set(id,asset);}catch{/* Source geometry is the offline fallback. */}})]);
   // Compile shaders before the curtain opens, and size the canvas to its final layout.
   try{await this.scene.whenReadyAsync();}catch{/* render anyway */}this.engine.resize();}
  private car(vehicleId:string,characterId:string):Car{
@@ -125,6 +147,14 @@ export class RaceRenderer{
  private lod(parent:TransformNode,vehicleId:string,characterId:string){
   const root=new TransformNode('distant-car',this.scene);root.parent=parent;const v=vehicle(vehicleId),d=vehicleDynamics(vehicleId);box(this.scene,root,'lod-body',0,.92,0,d.halfWidth*2,.8,d.halfLength*2,v.color);box(this.scene,root,'lod-rear',0,1.7,-.6,d.halfWidth*1.7,.55,1.35,v.color);sphere(this.scene,root,'lod-driver',-.4,2.3,.2,.8,'#c38c6b');
   for(const x of [-d.halfWidth,d.halfWidth])for(const z of [-d.halfLength*.6,d.halfLength*.6]){const wheel=cylinder(this.scene,root,'lod-wheel',x,.45,z,.32,.9,'#202a39');wheel.rotation.z=Math.PI/2;}return root;
+ }
+ private casters=new WeakSet<AbstractMesh>();private casterScan=0;
+ /** Trees, buildings and monuments (the Blender pieces, which arrive after the world is built) cast shadows too. */
+ private castScenery(){
+  if(!this.shadowMap||this.casterScan++%45)return;
+  // Cars too: the pilot's Blender model can replace the code one after the car was created.
+  for(const c of this.cars.values()){const meshes=c.model.body.getChildMeshes();if(meshes.length!==c.meshes.length||meshes.some(m=>!this.casters.has(m))){c.meshes=meshes;for(const m of meshes)if(!this.casters.has(m)){this.casters.add(m);this.shadowMap.addShadowCaster(m,false);}}}
+  for(const m of this.world.getChildMeshes(false)){if(this.casters.has(m))continue;this.casters.add(m);if(!m.name.startsWith('prop-')||(m.material&&m.material.alpha<1))continue;this.shadowMap.addShadowCaster(m,false);}
  }
  resize=()=>this.engine.resize();
  /** Resolution divisor: the quality level, a notch lower in «modo fresco». */
@@ -279,7 +309,7 @@ export class RaceRenderer{
   const label=p.id===id?null:this.makeLabel(p.nickname,color);
   const shadow=cylinder(this.scene,null,'contact-shadow',0,.01,0,.02,2.5,'#13263a');shadow.scaling.z=1.8;shadow.material=material(this.scene,'#13263a',false,.25);
   const lod=this.lod(model.root,p.vehicleId,p.characterId);lod.setEnabled(false);
-  for(const mesh of model.body.getChildMeshes())this.shadowMap?.addShadowCaster(mesh,false);
+  for(const mesh of model.body.getChildMeshes()){this.shadowMap?.addShadowCaster(mesh,false);this.casters.add(mesh);}
   return{model,vehicleId:p.vehicleId,characterId:p.characterId,shadow,lod,steer:0,spin:0,label,driftYaw:0,hop:1,lastDrift:0,lastStun:0,spinStart:-9,stunTotal:0,faded:false,meshes:model.body.getChildMeshes(),lastImpact:0,wobble:0,cast:-9,landed:-9,lastAir:0,shield:null,roll:0,suspension:0,alf:{action:'idle',until:0,next:4+p.color%3}};
  }
  /** Suspension, drift angle, hop, spin-outs, jumps, falls and pilot reactions. Purely visual. */
@@ -326,7 +356,9 @@ export class RaceRenderer{
    driver.position.y=lerp(driver.position.y,1.02+(celebrate?Math.abs(Math.sin(t*7))*.22:0)+(p.vy>0?.06:0)+pose*.55,k(14));
    driver.scaling.setAll(lerp(driver.scaling.x,1+pose*.22,k(14)));
    // Face: blinks every few seconds, squeezes the eyes when hit, looks at the closest rival nearby or back at whoever just got hit.
-   const face=c.face??(c.face={eyes:driver.getChildMeshes(false).filter(m=>/^(eye-white|iris|pupil|eye-glint)/.test(m.name)),head:driver.getChildTransformNodes(false).find(n=>n.name==='head-root'),nextBlink:t+1+Math.random()*3});
+   // (The Blender pilot hangs its eyes from one «eyes» node; it may arrive after the code-built pilot.)
+   const blender=!!driver.metadata?.blender;if(c.face&&c.face.blender!==blender){c.face=undefined;c.arms=undefined;}
+   const face=c.face??(c.face={eyes:blender?driver.getChildTransformNodes(false).filter(n=>n.name==='eyes'):driver.getChildMeshes(false).filter(m=>/^(eye-white|iris|pupil|eye-glint)/.test(m.name)),head:driver.getChildTransformNodes(false).find(n=>n.name==='head-root'),nextBlink:t+1+Math.random()*3,blender});
    const hurt=c.hurt!==undefined&&t-c.hurt<.9,cheer=c.cheer!==undefined&&t-c.cheer<.95&&!hurt;
    if(t>face.nextBlink+.12)face.nextBlink=t+2.2+((p.color*7.3+t*3.1)%1)*3.2;
    const closed=hurt||(t>face.nextBlink&&t<face.nextBlink+.12);for(const e of face.eyes)e.scaling.y=lerp(e.scaling.y,closed?.12:1,k(30));
@@ -426,7 +458,11 @@ export class RaceRenderer{
   else{if(this.camera.rotationQuaternion){this.camera.rotationQuaternion=null;this.camUp.set(0,1,0);}this.camera.setTarget(this.cam.look);}
   if(!tilted)this.camera.rotation.z=this.reduced?0:-me.turnRate*.01-me.driftDir*.018+Math.sin(state.tick)*shake*.12;
   const fov=.9+Math.max(0,Math.min(1,(speed-10)/12))*.06+(boost?me.boostLevel>=4?.13:.08:0)+this.cam.air*.05+cine*.06;this.camera.fov=lerp(this.camera.fov,fov,k(boost?7:3));
-  this.sun.position.set(me.x-35,me.y+60,me.z-40);
+  // The shadow map covers a square around the point the camera looks at (a bit ahead of the car), and moves in whole
+  // texels so the edges of the shadows do not crawl while driving.
+  {const d=this.sun.direction,ahead=18,cx=me.x+Math.sin(me.yaw)*ahead,cz=me.z+Math.cos(me.yaw)*ahead,step=SHADOW_SPAN/(QUALITY[this.quality].shadows||1024)*4;
+   this.sun.position.set(Math.round((cx-d.x*110)/step)*step,Math.round((me.y-d.y*110)/step)*step,Math.round((cz-d.z*110)/step)*step);}
+  this.castScenery();
  }
  dispose(){window.removeEventListener('resize',this.resize);window.visualViewport?.removeEventListener('resize',this.resize);this.observer?.disconnect();this.pipeline?.dispose();this.labelLayer?.remove();this.attacks.dispose();this.hazardView.dispose();this.birds.dispose();this.effects.dispose();this.assets.forEach(a=>a.dispose());this.shadowMap?.dispose();this.scene.dispose();this.engine.dispose();}
 }

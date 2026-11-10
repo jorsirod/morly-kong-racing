@@ -8,6 +8,7 @@ import './overhaul.css';
 import './hud.css';
 import './menus.css';
 import './fiesta.css';
+import './pulido.css';
 createRoot(document.getElementById('root')!).render(<App/>);
 startGamepadNav();
 armSpeechUnlock();

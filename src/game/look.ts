@@ -20,12 +20,15 @@ import '@babylonjs/core/Materials/Textures/rawCubeTexture';
  */
 export interface Look { top:string; mid:string; horizon:string; hemiSky:string; hemiGround:string; sun:string; sunPower:number; hemiPower:number; saturation:number; contrast:number; exposure:number; stars?:boolean; sunDisc?:string; fogStart:number; fogEnd:number }
 export const LOOKS:Record<string,Look>={
- 'la-salle':{top:'#1f7fe6',mid:'#58b6f5',horizon:'#c9f1ff',hemiSky:'#e3f6ff',hemiGround:'#6f9a3c',sun:'#fff0c4',sunPower:1.35,hemiPower:.9,saturation:34,contrast:1.1,exposure:1.04,sunDisc:'#fff6c9',fogStart:240,fogEnd:600},
- oriental:{top:'#2a7fe0',mid:'#6fb9f0',horizon:'#f6ecd2',hemiSky:'#fff1d8',hemiGround:'#8a7a52',sun:'#fff0d2',sunPower:1.34,hemiPower:.9,saturation:24,contrast:1.12,exposure:1.04,sunDisc:'#fff0bf',fogStart:220,fogEnd:560},
- managua:{top:'#1b78e2',mid:'#4fb0f2',horizon:'#bff0ff',hemiSky:'#e6f7ff',hemiGround:'#7a9a45',sun:'#fff1c9',sunPower:1.38,hemiPower:.9,saturation:34,contrast:1.1,exposure:1.04,sunDisc:'#fff6cf',fogStart:240,fogEnd:600},
+ 'la-salle':{top:'#1f7fe6',mid:'#58b6f5',horizon:'#c9f1ff',hemiSky:'#d3ecff',hemiGround:'#c9cbb4',sun:'#ffe6a8',sunPower:1.49,hemiPower:0.81,saturation:34,contrast:1.15,exposure:1.04,sunDisc:'#fff6c9',fogStart:290,fogEnd:630},
+ oriental:{top:'#2a7fe0',mid:'#6fb9f0',horizon:'#f6ecd2',hemiSky:'#fff1d8',hemiGround:'#cdc2a8',sun:'#ffe4b0',sunPower:1.48,hemiPower:0.81,saturation:24,contrast:1.17,exposure:1.04,sunDisc:'#fff0bf',fogStart:270,fogEnd:590},
+ managua:{top:'#1b78e2',mid:'#4fb0f2',horizon:'#bff0ff',hemiSky:'#d5edff',hemiGround:'#cccdb8',sun:'#ffe7ac',sunPower:1.52,hemiPower:0.81,saturation:34,contrast:1.15,exposure:1.04,sunDisc:'#fff6cf',fogStart:290,fogEnd:630},
  'hipa-hipa':{top:'#05041a',mid:'#140a38',horizon:'#3a1a5e',hemiSky:'#c2b8ff',hemiGround:'#2b2048',sun:'#c9bcff',sunPower:.55,hemiPower:.85,saturation:30,contrast:1.12,exposure:1.08,stars:true,fogStart:240,fogEnd:620},
- masaya:{top:'#2b6fd0',mid:'#7ab0e6',horizon:'#ffd7ae',hemiSky:'#ffe9d2',hemiGround:'#6b5640',sun:'#ffd7a0',sunPower:1.42,hemiPower:.86,saturation:32,contrast:1.12,exposure:1.04,sunDisc:'#ffe2a6',fogStart:220,fogEnd:580},
- 'san-juan':{top:'#0f7ee0',mid:'#3fc0f2',horizon:'#b6fbff',hemiSky:'#e2fbff',hemiGround:'#8aa64b',sun:'#fff3cc',sunPower:1.42,hemiPower:.92,saturation:38,contrast:1.1,exposure:1.05,sunDisc:'#fff8d6',fogStart:260,fogEnd:640},
+ masaya:{top:'#2b6fd0',mid:'#7ab0e6',horizon:'#ffd7ae',hemiSky:'#ffe9d2',hemiGround:'#bfae9b',sun:'#ffd7a0',sunPower:1.56,hemiPower:0.77,saturation:32,contrast:1.17,exposure:1.04,sunDisc:'#ffe2a6',fogStart:270,fogEnd:610},
+ 'san-juan':{top:'#0f7ee0',mid:'#3fc0f2',horizon:'#b6fbff',hemiSky:'#d2f2ff',hemiGround:'#d6d6bc',sun:'#ffe9b0',sunPower:1.56,hemiPower:0.83,saturation:38,contrast:1.15,exposure:1.05,sunDisc:'#fff8d6',fogStart:310,fogEnd:670},
+ isletas:{top:'#0c7fe2',mid:'#45c1f4',horizon:'#c4f6ff',hemiSky:'#d2f1ff',hemiGround:'#bfd6c6',sun:'#ffe9b0',sunPower:1.56,hemiPower:.83,saturation:40,contrast:1.15,exposure:1.05,sunDisc:'#fff8d6',fogStart:320,fogEnd:690},
+ // Play Land Park: the fair opens at dusk — violet sky, orange horizon, a low warm sun and the lights already on.
+ playland:{top:'#231553',mid:'#7a3f9a',horizon:'#ff9f6e',hemiSky:'#cdb8ff',hemiGround:'#a58a9a',sun:'#ffb37a',sunPower:1.25,hemiPower:.8,saturation:36,contrast:1.14,exposure:1.08,sunDisc:'#ffd9a0',fogStart:280,fogEnd:640},
 };
 export const lookFor=(id:string)=>LOOKS[id]??LOOKS['la-salle'];
 const lin=(hex:string)=>Color3.FromHexString(hex).toLinearSpace();
@@ -34,23 +37,39 @@ const lin=(hex:string)=>Color3.FromHexString(hex).toLinearSpace();
 export function grade(scene:Scene,look:Look){
  const ip=scene.imageProcessingConfiguration;
  ip.toneMappingEnabled=false;ip.exposure=look.exposure;ip.contrast=look.contrast;
- const curves=new ColorCurves();curves.globalSaturation=look.saturation;curves.highlightsSaturation=look.saturation*.4;curves.shadowsHue=220;curves.shadowsDensity=12;curves.shadowsSaturation=30;
+ const curves=new ColorCurves();curves.globalSaturation=look.saturation;curves.highlightsSaturation=look.saturation*.4;curves.shadowsHue=222;curves.shadowsDensity=24;curves.shadowsSaturation=36;curves.highlightsHue=42;curves.highlightsDensity=14;
  ip.colorCurves=curves;ip.colorCurvesEnabled=true;
  ip.vignetteEnabled=true;ip.vignetteWeight=1.6;ip.vignetteStretch=.6;ip.vignetteCameraFov=.9;
 }
 export function lightColors(look:Look){return{hemiSky:lin(look.hemiSky),hemiGround:lin(look.hemiGround),sun:lin(look.sun)};}
 
+/** Cumulus clouds painted on the sky texture: lit tops, shaded flat bases, smaller and paler towards the horizon.
+ * Drawn three times across the seam so the texture wraps around the dome. Deterministic: same sky for everyone. */
+function paintClouds(ctx:CanvasRenderingContext2D,W:number,H:number,look:Look){
+ let s=look.top.charCodeAt(1)*977+look.horizon.charCodeAt(3)*131+11;const r=()=>{s=(s*1664525+1013904223)>>>0;return s/4294967296;};
+ const puff=(x:number,y:number,rad:number,color:string,alpha:number)=>{for(const dx of [-W,0,W]){const g=ctx.createRadialGradient(x+dx,y,rad*.1,x+dx,y,rad);g.addColorStop(0,color+alpha+')');g.addColorStop(.55,color+alpha*.7+')');g.addColorStop(1,color+'0)');ctx.fillStyle=g;ctx.beginPath();ctx.arc(x+dx,y,rad,0,Math.PI*2);ctx.fill();}};
+ const shade=Color3.FromHexString(look.mid),sr=Math.round(140+shade.r*80),sg=Math.round(150+shade.g*80),sb=Math.round(170+shade.b*80);
+ for(let i=0;i<22;i++){
+  // depth 0 = overhead and big, 1 = far, small, low over the horizon.
+  const depth=r(),x=r()*W,y=H*(.3+depth*.165),size=(30-depth*19)*(.7+r()*.7),n=4+Math.floor(r()*4),alpha=.95-depth*.4;
+  ctx.save();ctx.beginPath();ctx.rect(0,0,W,y+size*.32);ctx.clip(); // flat base
+  for(let k=0;k<n;k++){const ox=(k-(n-1)/2)*size*.62+(r()-.5)*size*.3,rad=size*(.55+r()*.5)*(1-Math.abs(k-(n-1)/2)/n*.7);puff(x+ox,y+size*.22,rad*1.05,`rgba(${sr},${sg},${sb},`,alpha*.8);}
+  for(let k=0;k<n;k++){const ox=(k-(n-1)/2)*size*.62+(r()-.5)*size*.3,rad=size*(.5+r()*.5)*(1-Math.abs(k-(n-1)/2)/n*.7);puff(x+ox-size*.06,y-size*.08-rad*.25,rad,'rgba(255,253,246,',alpha);}
+  ctx.restore();
+ }
+}
 /** Painted sky dome: gradient, a soft sun glow, or stars at night. Never fogged, follows the camera. */
 export function skyDome(scene:Scene,look:Look){
  const dome=MeshBuilder.CreateSphere('sky-dome',{diameter:1250,segments:16,sideOrientation:1},scene);
  dome.isPickable=false;dome.infiniteDistance=true;dome.applyFog=false;
  const m=new StandardMaterial('sky-dome',scene);m.disableLighting=true;m.backFaceCulling=false;m.fogEnabled=false;
  if(typeof document!=='undefined'){
-  const W=64,H=512,tex=new DynamicTexture('sky-dome',{width:W,height:H},scene,false),ctx=tex.getContext() as CanvasRenderingContext2D;
+  const W=look.stars?64:1024,H=512,tex=new DynamicTexture('sky-dome',{width:W,height:H},scene,false),ctx=tex.getContext() as CanvasRenderingContext2D;
   // V runs from the bottom pole (0) to the top pole (1): the horizon sits at the middle.
   const g=ctx.createLinearGradient(0,0,0,H);g.addColorStop(0,look.top);g.addColorStop(.3,look.mid);g.addColorStop(.47,look.horizon);g.addColorStop(.53,look.horizon);g.addColorStop(1,look.horizon);
   ctx.fillStyle=g;ctx.fillRect(0,0,W,H);
   if(look.stars){let s=7;const r=()=>{s^=s<<13;s^=s>>>17;s^=s<<5;return((s>>>0)%1000)/1000;};for(let i=0;i<160;i++){const y=r()*H*.42,a=.35+r()*.65;ctx.fillStyle=`rgba(255,255,255,${a})`;ctx.fillRect(r()*W,y,r()<.15?2:1,1);}}
+  if(!look.stars)paintClouds(ctx,W,H,look);
   tex.update(false);tex.hasAlpha=false;m.emissiveTexture=tex;m.diffuseColor=new Color3(0,0,0);m.specularColor=new Color3(0,0,0);
  }else m.emissiveColor=Color3.FromHexString(look.mid);
  dome.material=m;dome.renderingGroupId=0;
@@ -99,5 +118,7 @@ export function paintFinish(scene:Scene,look:Look,materials:Material[],clearCoat
   if(!/paint|chrome|glass|rim|cover|mirror|windscreen/.test(m.name))continue;
   m.reflectionTexture=tex;
   // Paint keeps its colour: a full sky reflection turned orange pink and black blue.
-  if(/paint/.test(m.name)){m.environmentIntensity=.45;if(clearCoat){m.clearCoat.isEnabled=true;m.clearCoat.intensity=.2;m.clearCoat.roughness=.1;}}}
+  if(/paint/.test(m.name)){m.environmentIntensity=.45;
+   // A little fill light of its own colour: the side in shade stays the car's colour instead of going grey-green.
+   m.emissiveColor=m.albedoColor.scale(.2);if(clearCoat){m.clearCoat.isEnabled=true;m.clearCoat.intensity=.2;m.clearCoat.roughness=.1;}}}
 }

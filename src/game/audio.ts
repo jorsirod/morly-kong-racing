@@ -57,7 +57,18 @@ export class GameAudio {
   this.master=c.createGain();this.musicBus=c.createGain();this.sfxBus=c.createGain();this.musicDuck=c.createGain();this.voiceBus=c.createGain();
   this.compressor=c.createDynamicsCompressor();
   this.compressor.threshold.value=-14;this.compressor.knee.value=10;this.compressor.ratio.value=4;this.compressor.attack.value=.004;this.compressor.release.value=.14;
-  this.musicBus.connect(this.musicDuck);this.musicDuck.connect(this.master);this.sfxBus.connect(this.master);this.voiceBus.connect(this.master);this.master.connect(this.compressor);this.compressor.connect(c.destination);
+  // The band's room: every song goes through a gentle EQ (warmer lows, a little air) and sends part of itself to a
+  // short reverb made on the device (a decaying noise burst: nothing to download). Bass stays out of the reverb.
+  const low=c.createBiquadFilter();low.type='lowshelf';low.frequency.value=120;low.gain.value=2.5;
+  const air=c.createBiquadFilter();air.type='highshelf';air.frequency.value=6500;air.gain.value=2;
+  this.musicBus.connect(low);low.connect(air);air.connect(this.musicDuck);
+  try{
+   const room=c.createConvolver(),len=Math.floor(c.sampleRate*1.5),ir=c.createBuffer(2,len,c.sampleRate),fade=c.sampleRate*.012;
+   for(let ch=0;ch<2;ch++){const d=ir.getChannelData(ch);for(let i=0;i<len;i++)d[i]=(Math.random()*2-1)*Math.pow(1-i/len,2.8)*Math.min(1,i/fade);}
+   room.buffer=ir;const send=c.createBiquadFilter();send.type='highpass';send.frequency.value=280;const wet=c.createGain();wet.gain.value=.22;
+   this.musicBus.connect(send);send.connect(room);room.connect(wet);wet.connect(this.musicDuck);
+  }catch{/* no reverb on this browser: the dry mix still plays */}
+  this.musicDuck.connect(this.master);this.sfxBus.connect(this.master);this.voiceBus.connect(this.master);this.master.connect(this.compressor);this.compressor.connect(c.destination);
   this.noiseBuffer=c.createBuffer(1,c.sampleRate,c.sampleRate);
   const data=this.noiseBuffer.getChannelData(0);for(let i=0;i<data.length;i++)data[i]=Math.random()*2-1;
   // Engine: two detuned oscillators through a low-pass, pitch follows simulated gears.

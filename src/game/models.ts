@@ -1,3 +1,4 @@
+import { dressPilot } from './pilots';
 import { Color3 } from '@babylonjs/core/Maths/math.color';
 import { Quaternion, Vector3 } from '@babylonjs/core/Maths/math.vector';
 import { MeshBuilder } from '@babylonjs/core/Meshes/meshBuilder';
@@ -110,6 +111,7 @@ export function pilotArms(driver:TransformNode){const n=driver.getChildTransform
 export function characterLook(id:string){return LOOKS[id]??LOOKS.semilla;}
 /** Height of the head centre above the driver socket, used to frame portraits. */
 export function headCenter(id:string){const f=characterLook(id);return 1.02+(.52+.3*f.height+f.neck-.8)+1.17;}
+export { preloadPilots } from './pilots';
 export function buildCharacter(scene:Scene,id:string,parent:TransformNode){
  const c=character(id),f=characterLook(c.id),root=new TransformNode('driver-'+id,scene);root.parent=parent;root.position.set(-.43,1.02,.2);
  const torsoH=1.15*f.height,shoulderY=.29+.2*f.height+.02,neckTop=.52+.3*f.height+f.neck;
@@ -216,7 +218,9 @@ export function buildCharacter(scene:Scene,id:string,parent:TransformNode){
   for(const [x,y,z,r] of [[-.18,.42,-1,.2],[.16,.12,-1,.24],[-.08,-.02,-1,.14],[.22,.5,1,.16],[-.2,.18,1,.18]] as number[][])sphere(scene,root,'cow-spot',x*f.width,backY+y-.1,z*.335*Math.max(.82,f.width),r,'#fbf6ea',new Vector3(1,.8,.25));
   textLabel(scene,root,'RAULÍN',0,backY+.38,backZ-.02,.42,.12,'#fbf6ea',c.shirt);
  }
- for(const a of [...arms,steering])mergeParts(a);mergeParts(root,true,[...arms,steering]);return root;
+ for(const a of [...arms,steering])mergeParts(a);mergeParts(root,true,[...arms,steering]);
+ // The Blender model (public/models/pilots) takes over when it is available; this code version is the fallback.
+ dressPilot(scene,c.id,root);return root;
 }
 export type AlfParts={head:TransformNode;armL:TransformNode;armR:TransformNode};
 export type VehicleModel={root:TransformNode;body:TransformNode;driverSocket:TransformNode;passengerSocket:TransformNode;alf?:TransformNode;alfParts?:AlfParts;wheels?:TransformNode[];frontWheels?:TransformNode[];driver?:TransformNode};
@@ -226,7 +230,7 @@ export { buildVehicle, buildAlf } from './vehicles';
 /** Runtime-only decals (canvas text cannot live in the GLB): rear name plates the chase camera
  * reads, a Nicaraguan plate, and each car's signature sticker. */
 /** Where the rear name plate and the licence plate go on each body (z, y, width; plate z, y). */
-const REAR:Record<string,{z:number;y:number;w:number;pz:number;py:number}>={suv:{z:-2.41,y:1.32,w:.66,pz:-2.11,py:.72},'pickup-double':{z:-2.43,y:1.0,w:1.55,pz:-2.58,py:.54},'pickup-single':{z:-2.43,y:.92,w:1.55,pz:-2.58,py:.48},golf:{z:-2.04,y:1.36,w:1.2,pz:-2.11,py:.92},mazda:{z:-2.12,y:1.42,w:1.2,pz:-2.07,py:.95},matiz:{z:-1.75,y:1.36,w:1.1,pz:-1.755,py:.9},sedan:{z:-2.04,y:1.36,w:1.1,pz:-2.06,py:.92}};
+const REAR:Record<string,{z:number;y:number;w:number;pz:number;py:number}>={suv:{z:-2.41,y:1.32,w:.66,pz:-2.11,py:.72},'pickup-double':{z:-2.43,y:1.0,w:1.55,pz:-2.58,py:.54},'pickup-single':{z:-2.43,y:.92,w:1.55,pz:-2.58,py:.48},golf:{z:-2.04,y:1.36,w:1.2,pz:-2.11,py:.92},mazda:{z:-2.12,y:1.42,w:1.2,pz:-2.07,py:.95},matiz:{z:-1.75,y:1.36,w:1.1,pz:-1.755,py:.9},sedan:{z:-2.185,y:.58,w:.9,pz:-2.09,py:.9}};
 export function addVehicleDecals(scene:Scene,body:TransformNode,id:string):TransformNode|null{
  if(typeof document==='undefined')return null;
  const v=vehicle(id),r=REAR[v.kind]??REAR.golf,dark=v.id==='black-diamond',group=new TransformNode('decals',scene);group.parent=body;body=group;
@@ -234,15 +238,16 @@ export function addVehicleDecals(scene:Scene,body:TransformNode,id:string):Trans
  textLabel(scene,body,v.name.toUpperCase(),0,r.y+(v.kind==='suv'?.08:.06),r.z,r.w,r.w*.2,dark?'#ffd33d':'#13234d',dark?'#27353c':v.color);
  if(v.kind==='suv'){textLabel(scene,body,'EL MÁS CULITO',0,r.y-.12,r.z,.62,.12,'#2fa5cd','#e9eef1');}
  textLabel(scene,body,v.id==='el-tiburon'?'M 2000':v.id==='la-raulina'?'M 2003':v.id==='white-empanade'?'M 1999':v.id==='black-diamond'?'M 2009':'M 2008',0,r.py,r.pz,.56,.18,'#163a7a','#f7f4ea');
- // El Tiburón: a big cartoon shark sticker across the trunk lid, mouth open.
- if(v.id==='el-tiburon'){const d=decal(scene,body,'shark-sticker',0,1.66,-1.43,1.45,.72,ctx=>{ctx.clearRect(0,0,512,256);ctx.lineJoin='round';ctx.lineWidth=10;ctx.strokeStyle='#1b2a3a';
+ // El Tiburón: a cartoon shark sticker on the back of the trunk lid, mouth open (its name goes on the black bumper).
+ if(v.id==='el-tiburon'){const d=decal(scene,body,'shark-sticker',0,1.21,-2.085,.84,.42,ctx=>{ctx.clearRect(0,0,512,256);ctx.lineJoin='round';ctx.lineWidth=10;ctx.strokeStyle='#1b2a3a';
   ctx.fillStyle='#6f8fa8';ctx.beginPath();ctx.moveTo(40,140);ctx.quadraticCurveTo(170,40,330,90);ctx.lineTo(380,30);ctx.lineTo(395,100);ctx.quadraticCurveTo(450,110,490,70);ctx.lineTo(470,140);ctx.lineTo(495,205);ctx.quadraticCurveTo(450,170,400,180);ctx.quadraticCurveTo(230,230,40,140);ctx.closePath();ctx.fill();ctx.stroke();
   ctx.fillStyle='#f4f1e8';ctx.beginPath();ctx.moveTo(52,148);ctx.quadraticCurveTo(200,215,360,175);ctx.quadraticCurveTo(220,160,120,130);ctx.closePath();ctx.fill();
   ctx.fillStyle='#c43a3a';ctx.beginPath();ctx.moveTo(48,140);ctx.lineTo(140,118);ctx.lineTo(150,160);ctx.closePath();ctx.fill();ctx.stroke();
   ctx.fillStyle='#fff';for(let i=0;i<4;i++){ctx.beginPath();ctx.moveTo(70+i*20,133-i*5);ctx.lineTo(80+i*20,147-i*4);ctx.lineTo(90+i*20,129-i*5);ctx.fill();}
   ctx.beginPath();ctx.arc(150,100,15,0,7);ctx.fill();ctx.fillStyle='#111';ctx.beginPath();ctx.arc(154,102,7,0,7);ctx.fill();
   for(let i=0;i<3;i++){ctx.beginPath();ctx.moveTo(230+i*18,110);ctx.lineTo(225+i*18,140);ctx.stroke();}});
-  if(d)d.rotation.x=-.42;}
+  // Stuck flat on the back of the trunk lid, between the tail lights: seen straight on from the chase camera.
+  void d;}
  if(dark)for(const x of [-1,1]){const gem=textLabel(scene,body,'◆',x*.97,1.12,-.2,.34,.34,'#7ef3ff','#27353c');if(gem)gem.rotation.y=x>0?-Math.PI/2:Math.PI/2;}
  return group;
 }

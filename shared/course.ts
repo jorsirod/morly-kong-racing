@@ -113,6 +113,32 @@ export const COURSES:Record<string,CourseDef>={
  },
  // San Juan del Sur: malecón, pueblo, subida al Cristo, el salto de la quebrada, el puente y la playa: el salto del
  // estero junto al mar, rampas de arena entre las palmeras y la orilla con dunas.
+ // Las Isletas de Granada: de isla en isla por puentes de madera, el muelle como atajo sobre el agua, el gran salto
+ // entre dos isletas y el vado donde cruzan las lanchas (semáforo en ámbar primero).
+ isletas:{
+  stunts:[{kind:'loop',at:.503,len:40,dir:1}],
+  ramps:[{at:.03,lift:3,height:.3,len:3},{at:.345,lift:3.6,height:.4,len:3},{at:.70,lift:3.4,height:.36,len:3},{at:.9103,len:11,height:2,lift:9.25,minSpeed:18.5,big:true},
+   {lane:'muelle',at:.45,len:5,height:.8,lift:4.8,minSpeed:14,width:6}],
+  pads:[{at:.012,offset:-4,power:.8},{at:.18,offset:3.5,power:.9},{at:.482,power:1.2,width:8},{at:.66,offset:4,power:.8},{at:.893,power:1.5,super:true,width:10},{lane:'muelle',at:.15,power:1.2,super:true,width:5}],
+  gaps:[{from:.9205,to:.934,kind:'water'},{lane:'muelle',from:.55,to:.63,kind:'water'}],
+  edges:[{lane:'muelle',from:.1,to:.9,side:1,kind:'water'}],
+  alts:[{id:'muelle',name:'POR EL MUELLE',from:.225,to:.33,via:[[152,5],[150,38],[153,72]],width:9,lift:.5,sign:'⛵ POR EL MUELLE →'}],
+  bridges:[[.085,.135],[.25,.30],[.44,.48],[.62,.665],[.80,.845]],
+  charges:[{at:.05},{at:.15},{at:.3},{at:.42},{at:.58},{at:.76},{at:.96}],items:[{at:.2},{at:.56},{at:.86}],
+ },
+ // El Play Land Park: la feria de Managua. Foso de pelotas tras la entrada, la loma de la montaña rusa, el tirabuzón,
+ // el trencito que cruza la pista, el atajo por los carros chocones y el loop frente a las luces.
+ playland:{
+  stunts:[{kind:'loop',at:.915,len:40,dir:1},{kind:'roll',at:.545,len:50,dir:1}],
+  elev:[{from:.20,to:.24,height:5,ramp:22},{from:.605,to:.635,height:3.5,ramp:16},{from:.12,to:.126,height:2.8,ramp:11},{from:.40,to:.406,height:2.8,ramp:11}],
+  ramps:[{at:.03,len:12,height:2.2,lift:10,minSpeed:19,big:true},{at:.10,lift:3,height:.3,len:3},{at:.34,lift:3.6,height:.4,len:3},{at:.67,lift:3.4,height:.36,len:3},{at:.86,lift:3.2,height:.35,len:3},
+   {lane:'chocones',at:.3,len:4,height:.6,lift:4.4,minSpeed:14,width:6},{lane:'chocones',at:.7,len:4,height:.6,lift:4.4,minSpeed:14,width:6}],
+  pads:[{at:.012,power:1.5,super:true,width:10},{at:.16,offset:-4,power:.8},{at:.30,offset:3.5,power:.9},{at:.52,power:1.2,width:8},{at:.89,power:1.2,width:8},{lane:'chocones',at:.1,power:1.2,super:true,width:5}],
+  gaps:[{from:.0398,to:.0525,kind:'pit'}],
+  alts:[{id:'chocones',name:'POR LOS CARROS CHOCONES',from:.715,to:.81,via:[[-197,40],[-201,5],[-197,-30]],width:9,sign:'🎪 POR LOS CHOCONES →'}],
+  bridges:[[.205,.235]],
+  charges:[{at:.07},{at:.18},{at:.28},{at:.44},{at:.6},{at:.75},{at:.97}],items:[{at:.22},{at:.5},{at:.84}],
+ },
  'san-juan':{
   stunts:[{kind:'loop',at:.315,len:40,dir:1},{kind:'roll',at:.689,len:50,dir:-1}],
   elev:[{from:.585,to:.655,height:3.6,ramp:24},{from:.768,to:.812,height:2.6,ramp:16},{from:.22,to:.226,height:2.8,ramp:11},{from:.45,to:.456,height:2.8,ramp:11}],

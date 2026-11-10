@@ -52,6 +52,23 @@ export class HazardView{
   }
   else if(h.kind==='rock'){const shadow=MeshBuilder.CreateDisc('rock-shadow',{radius:h.radius+.4,tessellation:20},s);shadow.parent=node;shadow.rotation.x=Math.PI/2;shadow.position.y=.1;shadow.material=material(s,'#140c0a',false,.55);parts.shadow=shadow;const boulder=sphere(s,node,'boulder',0,1.1,0,2.4,'#4a3c35',new Vector3(1,.85,1.1));parts.boulder=boulder;const glow=sphere(s,node,'boulder-crack',.4,1.4,.6,.6,'#ff7a2e');glow.material=this.lavaMat;glow.parent=boulder;}
   else if(h.kind==='wave'){const wall=box(s,node,'wave-wall',0,1.2,0,.9,2.4,h.radius*2.4,'#4fb3d9');wall.material=material(s,'#4fb3d9',false,.78);parts.wall=wall;const foam=box(s,node,'wave-foam',0,2.45,0,1.2,.5,h.radius*2.5,'#f4fbff');foam.material=this.foamMat;parts.foam=foam;}
+  else if(h.kind==='bus'&&h.variant>=10){
+   // Same crossing behaviour as the buses, another vehicle: a lake «lancha» (Las Isletas) or the fair's little train.
+   const bus=new TransformNode(h.variant>=20?'trencito':'lancha',s);bus.parent=node;parts.bus=bus;
+   if(h.variant>=20){
+    const cars=['#e53b6e','#ffd33d','#3fb6e0'];box(s,bus,'train-loco',0,1.25,3.6,2.3,1.9,3,'#d7352e');cylinder(s,bus,'train-boiler',0,1.9,4.2,2.2,1.5,'#2b2f3a').rotation.x=Math.PI/2;cylinder(s,bus,'train-chimney',0,3.1,4.8,1.1,.5,'#2b2f3a',.75);box(s,bus,'train-cab',0,2.6,2.6,2.3,1.3,1.2,'#ffd33d');
+    for(let i=0;i<2;i++){box(s,bus,'train-wagon',0,1.05,-.2-i*3.3,2.2,1.3,2.8,cars[i+1]);box(s,bus,'train-roof',0,2.6,-.2-i*3.3,2.5,.14,3,cars[i]);for(const x of [-1,1])for(const z of [-1.2,1.2])cylinder(s,bus,'train-pole',x,1.95,-.2-i*3.3+z,1.3,.1,'#f2efe6');}
+    for(const x of [-1.15,1.15])for(const z of [-4.3,-2.4,-1,.9,2.8,4.4]){const w=cylinder(s,bus,'train-wheel',x,.45,z,.3,.9,'#1f2530');w.rotation.z=Math.PI/2;}
+    sphere(s,bus,'train-light',0,1.9,5.35,.45,'#fff6c2').material=material(s,'#fff6c2',true);
+    const tag=textLabel(s,bus,'TRENCITO',1.17,1.1,-1.8,3.2,.5,'#ffffff','#e53b6e');if(tag)tag.rotation.y=-Math.PI/2;
+   }else{
+    const paint=['#2f8fd0','#d9473b'][h.variant%2];box(s,bus,'boat-hull',0,.55,-.4,2.6,1.1,8.6,'#f4f0e4');box(s,bus,'boat-stripe',0,.95,-.4,2.66,.28,8.66,paint);
+    const bow=box(s,bus,'boat-bow',0,.6,4.5,1.85,1.05,1.85,'#f4f0e4');bow.rotation.y=Math.PI/4;box(s,bus,'boat-deck',0,1.12,-.4,2.3,.06,8.2,'#b08a5a');
+    for(const x of [-1.1,1.1])for(const z of [-3.2,2.2])cylinder(s,bus,'boat-post',x,2.1,z,2,.1,'#e9e4d6');box(s,bus,'boat-canopy',0,3.15,-.5,2.7,.12,6.2,paint);
+    for(let i=0;i<3;i++)box(s,bus,'boat-bench',0,1.4,-2.4+i*1.9,2.1,.14,.5,'#8a6a45');box(s,bus,'boat-motor',0,1.2,-4.95,.6,1.3,.7,'#2b2f3a');
+    const tag=textLabel(s,bus,h.variant%2?'LA COCIBOLCA':'LA NIÑA BONITA',1.34,.6,-.4,4.4,.5,'#ffffff',paint);if(tag)tag.rotation.y=-Math.PI/2;
+   }
+  }
   else if(h.kind==='bus'){
    // Managua's rutas: white-and-blue city bus, the repainted yellow school bus and the red «interlocal».
    const look=[{body:'#f2efe6',s1:'#1f5fae',s2:'#e53b35',route:'RUTA 119',side:'MANAGUA'},{body:'#f2b81f',s1:'#1b1b1b',s2:'#e53b35',route:'RUTA 110',side:'ORIENTAL'},{body:'#d93b30',s1:'#f2efe6',s2:'#1f5fae',route:'RUTA 104',side:'MERCADO'}][h.variant%3];

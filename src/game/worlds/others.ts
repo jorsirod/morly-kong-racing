@@ -166,7 +166,7 @@ export function dressManagua(k:Kit,route:Route){
  const tones=['#f4c430','#f4c430','#f4c430','#ff6fae','#4fc3f7','#8ee36a'];let n=0;
  for(const [a,b] of [[.19,.32],[.64,.76],[.04,.1]] as const)for(let f=a;f<=b;f+=.022)for(const side of [-1,1]){const d=f*route.length;if(special(route,d))continue;const p=beside(route,d,side*(route.width*.72+4.5));if(k.blocked(p.x,p.z,1)||Math.hypot(p.x-141,p.z-40)<46)continue;lifeTree(k,p.x,p.y,p.z,tones[n%tones.length],n);n++;}
  // Street lamps every 30 m on the outside, lit at the head.
- for(let d=0;d<route.length;d+=30){if(special(route,d))continue;const p=beside(route,d,route.width*.72+1.6);if(k.onLane(p.x,p.z,2))continue;k.cyl('lamp-post',p.x,p.y+3.6,p.z,7.2,.22,'#4c5a63');k.glow('lamp-head',p.x-Math.cos(p.yaw)*1.2,p.y+7.1,p.z+Math.sin(p.yaw)*1.2,1.6,.25,.6,'#fff2c2',p.yaw);}
+ for(let d=0;d<route.length;d+=30){if(special(route,d))continue;const p=beside(route,d,route.width*.72+1.6);if(k.onLane(p.x,p.z,2))continue;k.prop('poste',p.x,p.y,p.z,p.yaw,1,g=>{k.cyl('lamp-post',0,3.6,0,7.2,.22,'#4c5a63',undefined,g);k.glow('lamp-head',-1.2,7.1,0,1.6,.25,.6,'#fff2c2',0,g);});}
  // The overpass: signs on both levels and a painted «PASO A DESNIVEL» on the deck.
  for(const [f,text,side] of [[.16,'PASO A DESNIVEL ↓',1],[.53,'PASO A DESNIVEL ↑',1],[.79,'CALLE ROTA · CAUCE',-1]] as const){const p=beside(route,f*route.length,side*(route.width*.72+3));k.sign(text,p.x,p.z,p.yaw+Math.PI,7.5,1.4,p.y+3.2,'#fff3d0',f>.7?'#b5332a':'#1f5fae');}
  for(const f of [.6,.62]){const p=beside(route,f*route.length,0);const paint=k.label('PASO A DESNIVEL',p.x,p.y+.08,p.z,10,1.4,p.yaw+Math.PI,'#fff4d2','#3a4658');if(paint)paint.rotation.x=Math.PI/2;}

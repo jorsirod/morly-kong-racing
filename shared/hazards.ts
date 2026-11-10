@@ -55,6 +55,19 @@ export function hazardsFor(trackId:string,time:number):Hazard[]{
   // Waves wash over the shore lane; crabs scuttle across the sand.
   [[.3,0],[.78,3.5]].forEach(([f,shift])=>{const c=cycle(7,shift,1.6,1.8);add('wave','playa',f,0,4.6,{active:c.active,warn:c.warn,phase:c.phase});});
   walker('crab','',.875,7.5,5.2,0,.9);walker('crab','',.895,7,4.4,2,.9,1);walker('crab','playa',.5,3.6,3.8,1,.9,2);
+ }else if(trackId==='isletas'){
+  // Lanchas cross the low causeways (amber light first; variant 10+ is drawn as a boat); from lap 2 a second one.
+  const boat=(f:number,period:number,shift:number,minLap:number,variant:number)=>{const c=cycle(period,shift,1.7,4.4);const t=c.active?((((time+shift)%period)+period)%period-1.7)/4.4:c.warn?0:1;const p=at(r,'',f,-26+52*t);out.push({id:id++,kind:'bus',x:p.x,y:p.y,z:p.z,yaw:p.yaw+Math.PI/2,radius:1.6,active:c.active,warn:c.warn,phase:t,lane:'',minLap,variant,len:3.4,solid:true});};
+  boat(.74,11.5,0,0,10);boat(.16,13,4,1,11);
+  // Waves wash over the pier; crabs cross between the mangroves.
+  {const c=cycle(7,1,1.6,1.8);add('wave','muelle',.32,0,4.2,{active:c.active,warn:c.warn,phase:c.phase});}
+  walker('crab','',.37,7,5,0,.9);walker('crab','',.61,7,4.4,2,.9,1);walker('crab','muelle',.78,3.4,3.8,1,.9,2);
+ }else if(trackId==='playland'){
+  // The little train crosses the course (variant 20+ is drawn as a train); fair-goers on painted crossings; loose
+  // beach balls among the bumper cars.
+  {const c=cycle(12,0,1.7,4.4),t=c.active?(((time%12)+12)%12-1.7)/4.4:c.warn?0:1,p=at(r,'',.30,-26+52*t);out.push({id:id++,kind:'bus',x:p.x,y:p.y,z:p.z,yaw:p.yaw+Math.PI/2,radius:1.6,active:c.active,warn:c.warn,phase:t,lane:'',minLap:0,variant:20,len:3.6,solid:true});}
+  [.245,.43,.655].forEach((f,i)=>walker('pedestrian','',f,8.4,8.5+i*.8,i*2.4,1.1,i+1));
+  for(const [k,f] of [[0,.42],[1,.6]] as const)add('ball','chocones',f,Math.sin(time*1.2+k*2.4)*3.2,1,{phase:Math.abs(Math.sin(time*2.8+k))*.5,variant:1});
  }
  return out;
 }

@@ -1304,7 +1304,56 @@ LANDMARKS = {"cristo": cristo, "catedral": catedral, "arbol-vida": arbol_vida, "
              "casa-playa-1": lambda: casa_playa(1, "casa-playa-1"), "casa-playa-2": lambda: casa_playa(2, "casa-playa-2"),
              "teja-playa": teja_playa, "palacio": palacio, "concha": concha, "cafeteria": cafeteria,
              "bar-lasalle": bar_lasalle}
-FILES = {"vegetation": list(VEGETATION), "cristo": ["cristo"],
+def poste():
+    """Poste de alumbrado de calle: fuste gris que se afina, brazo curvo con la luminaria (su lente brilla), cruceta con
+    aisladores y un transformador, como los de cualquier calle de Managua. El brazo sale hacia -x: con yaw = el rumbo
+    de la pista queda sobre la calle cuando el poste está a la derecha."""
+    B, root = _begin("poste")
+    grey, dark = L.mat("poste-fuste", "#66727a", 0.7), L.mat("poste-herraje", "#3d474e", 0.5)
+    _part(B, root, "poste-fuste", [prism(0.15, 7.4, 0, seg=10, radius_top=0.09), gbox(0.55, 0.35, 0.55, 0, 0.17, 0),
+                                    vtube([(0, 6.5, 0), (-0.55, 7.1, 0), (-1.5, 7.22, 0)], [0.06, 0.055, 0.045], seg=8)], grey)
+    _part(B, root, "poste-herraje", [gbox(0.85, 0.15, 0.36, -1.75, 7.2, 0), gbox(0.12, 0.12, 1.7, 0, 6.2, 0),
+                                      *[prism(0.05, 0.16, 6.26, seg=6, center=(0, z)) for z in (-0.72, 0, 0.72)],
+                                      prism(0.24, 0.7, 4.9, seg=10, center=(0.3, 0)), gbox(0.2, 0.08, 0.1, 0.12, 5.3, 0)], dark)
+    _part(B, root, "poste-luz", gbox(0.66, 0.05, 0.26, -1.78, 7.11, 0), L.mat("poste-luz", "#fff2c2", 0.2, emissive=True))
+    return _finish(B, root, 0.5, 1.0)
+
+
+LANDMARKS["poste"] = poste
+
+
+def cerro(seed=131):
+    """Cerro del horizonte: loma ancha con cárcavas y contorno irregular, de base plana (48 m de radio, 24 de alto).
+    Blanco: el juego le da el verde o el ocre de cada mundo, lo gira y lo estira para que no se repita."""
+    B, root = _begin("cerro")
+    R, H, rings, segs = 48.0, 24.0, 9, 24
+    bm = bmesh.new()
+    top = bm.verts.new(G(0, H, 0))
+    rows = []
+    for i in range(1, rings + 1):
+        t = i / rings
+        row = []
+        for j in range(segs):
+            a = 2 * math.pi * j / segs
+            mid = 4 * t * (1 - t)
+            ridge = 1 + mid * (0.26 * math.sin(3 * a + 1.3) + 0.16 * math.sin(7 * a + 0.4) + 0.09 * math.sin(11 * a + 2.1))
+            r = R * t * (1 + 0.12 * math.sin(2 * a + 0.7) + 0.06 * math.sin(5 * a + seed))
+            y = H * (1 - t ** 1.5) * ridge - (1.5 if i == rings else 0)
+            row.append(bm.verts.new(G(r * math.sin(a), y, r * math.cos(a))))
+        rows.append(row)
+    for j in range(segs):
+        bm.faces.new((top, rows[0][j], rows[0][(j + 1) % segs]))
+    for a_, b_ in zip(rows, rows[1:]):
+        for j in range(segs):
+            bm.faces.new((a_[j], b_[j], b_[(j + 1) % segs], a_[(j + 1) % segs]))
+    bmesh.ops.recalc_face_normals(bm, faces=bm.faces)
+    _part(B, root, "cerro-ladera", bm, L.mat("cerro", "#ffffff", 0.9), smooth=70)
+    return _finish(B, root, 0.75, 14.0)
+
+
+LANDMARKS["cerro"] = cerro
+
+FILES = {"vegetation": list(VEGETATION), "cristo": ["cristo"], "calle": ["poste"], "paisaje": ["cerro"],
          "managua": ["catedral", "arbol-vida", "palacio", "concha", "casa-m1", "casa-m2", "casa-m3", "casa-techo"],
          "oriental": ["chinamo", "lona"], "masaya": ["volcano"],
          "lasalle": ["aula-pb", "aula-pa", "aula-techo", "capilla", "porton-lasalle", "bus-escolar", "cafeteria", "bar-lasalle"],
