@@ -66,6 +66,23 @@ const menu_aventura:Score={title:'Pandilla al rescate',bpm:132,swing:0,root:261.
  A:{chords:[0,0,3,4,0,5,3,4],melody:'4.4 7.6 4.2 7.2 8.2|9.8 8.2 7.2 5.4|5.4 7.4 10.6 9.2|8.6 6.2 8.4 -.4|4.4 7.6 4.2 7.2 9.2|11.8 10.2 9.2 7.4|10.3 9.3 7.2 8.3 7.3 5.2|8.4 8.2 8.2 11.8'},
  B:{chords:[3,0,3,4,5,2,3,4],melody:'12.6 10.2 7.4 10.4|11.6 9.2 7.8|12.4 10.4 12.4 14.4|13.8 11.4 8.4|12.6 11.2 9.4 7.4|11.6 9.2 6.8|10.2 9.2 7.2 5.2 7.2 9.2 10.2 12.2|11.4 11.2 11.2 15.8'}}};
 
+// «Lancha en el Cocibolca»: sunny lake reggae — steel drum over organ skanks, easy and wide. G major.
+const is_lancha:Score={title:'Lancha en el Cocibolca',bpm:96,swing:.1,root:196,mode:MAJOR,groove:'reggae',lead:'steel',leadB:'organ',color:'organ',form:['A','A','B','A'],sections:{
+ A:{chords:[0,0,3,4,0,5,3,4],melody:'2.4 4.4 5.2 4.2 2.4|4.6 2.2 0.8|3.4 5.4 7.2 5.2 3.4|4.6 6.2 4.8|2.4 4.4 5.2 7.2 9.4|7.6 5.2 4.8|3.2 5.2 7.4 6.2 5.2 3.4|4.4 2.4 1.8'},
+ B:{chords:[5,3,0,4,5,3,4,0],melody:'9.6 7.2 5.4 7.4|10.6 8.2 7.8|9.4 7.4 4.4 7.4|8.8 6.4 4.4|9.6 7.2 5.4 9.4|10.4 12.4 10.8|8.2 9.2 11.4 9.2 8.2 6.4|7.16'}}};
+// «Isla por isla»: a bouncing cumbia for hopping between islets — accordion calls, marimba answers. D major.
+const is_cumbia:Score={title:'Isla por isla',bpm:104,swing:.06,root:146.83,mode:MAJOR,groove:'cumbia',lead:'accordion',leadB:'marimba',color:'marimba',form:['A','A','B','A'],sections:{
+ A:{chords:[0,4,0,4,3,0,4,0],melody:'0.2 2.2 4.2 2.2 4.4 7.4|6.2 4.2 1.2 4.2 6.8|0.2 2.2 4.2 7.2 9.4 7.4|8.2 6.2 4.2 6.2 8.8|5.2 7.2 10.4 9.2 7.2 5.4|4.2 7.2 9.4 7.8|6.2 8.2 11.4 8.2 6.2 4.4|7.8 -.8'},
+ B:{chords:[3,3,0,0,4,4,0,0],melody:'10.4 9.2 7.2 5.4 7.4|10.4 12.4 10.8|9.4 7.2 4.2 7.4 9.4|11.8 9.8|8.4 6.2 4.2 6.4 8.4|11.4 10.2 8.2 6.8|7.2 9.2 11.2 9.2 7.4 4.4|7.12 -.4'}}};
+// «Algodón de azúcar»: a fairground calliope gallop — organ pipes racing over a bouncy platformer beat. C major.
+const pl_algodon:Score={title:'Algodón de azúcar',bpm:140,swing:.1,root:130.81,mode:MAJOR,groove:'chipplat',lead:'organ',leadB:'chip',color:'chip',form:['A','A','B','A'],sections:{
+ A:{chords:[0,0,4,4,3,3,4,0],melody:'7.2 9.2 11.2 9.2 7.2 4.2 7.4|9.2 11.2 14.4 11.8|8.2 11.2 13.2 11.2 8.2 6.2 8.4|11.2 13.2 15.4 13.8|10.2 12.2 14.2 12.2 10.2 7.2 10.4|12.4 10.4 7.8|8.2 6.2 8.2 11.2 13.4 11.4|14.8 -.8'},
+ B:{chords:[5,5,3,3,1,4,0,4],melody:'12.4 11.4 9.4 7.4|9.6 7.2 5.8|10.4 9.4 7.4 5.4|7.6 5.2 3.8|8.4 10.4 12.4 10.4|11.4 13.4 15.8|14.2 13.2 11.2 9.2 7.4 9.4|11.8 8.8'}}};
+// «Rueda de Chicago»: night-fair disco — four on the floor, a glittering synth hook and brass in the chorus. F major.
+const pl_rueda:Score={title:'Rueda de Chicago',bpm:124,swing:0,root:174.61,mode:MAJOR,groove:'disco',lead:'synth',leadB:'brass',color:'pad',form:['A','A','B','A'],sections:{
+ A:{chords:[0,5,3,4,0,5,3,4],melody:'4.4 4.2 7.2 9.4 7.4|9.4 9.2 7.2 5.8|10.4 9.2 7.2 5.4 3.4|6.4 8.4 11.8|4.4 4.2 7.2 9.4 11.4|12.6 11.2 9.8|10.2 9.2 7.2 5.2 7.4 10.4|11.6 8.2 6.8'},
+ B:{chords:[3,4,5,0,3,4,0,0],melody:'14.8 12.4 10.4|13.8 11.4 8.4|12.6 11.2 9.4 7.4|11.8 9.8|14.4 12.4 10.4 12.4|15.4 13.4 11.8|14.2 12.2 11.2 9.2 7.8|7.12 -.4'}}};
+
 /** Every world rotates through its songs, one per race. */
 export const PLAYLISTS:Record<string,Score[]>={
  'la-salle':[ls_8bit,ls_conciencia,ls_liverpool],
@@ -74,6 +91,8 @@ export const PLAYLISTS:Record<string,Score[]>={
  'hipa-hipa':[hp_romance,hp_azulado,hp_scratch],
  'masaya':[ms_piedra,ms_elegido],
  'san-juan':[sj_estelar,sj_heroe],
+ isletas:[is_lancha,is_cumbia],
+ playland:[pl_rueda,pl_algodon],
  menu:[menu_aventura]
 };
 /** The first song of each world (kept for callers that only need one). */

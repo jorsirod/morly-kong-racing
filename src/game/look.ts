@@ -26,6 +26,9 @@ export const LOOKS:Record<string,Look>={
  'hipa-hipa':{top:'#05041a',mid:'#140a38',horizon:'#3a1a5e',hemiSky:'#c2b8ff',hemiGround:'#2b2048',sun:'#c9bcff',sunPower:.55,hemiPower:.85,saturation:30,contrast:1.12,exposure:1.08,stars:true,fogStart:240,fogEnd:620},
  masaya:{top:'#2b6fd0',mid:'#7ab0e6',horizon:'#ffd7ae',hemiSky:'#ffe9d2',hemiGround:'#bfae9b',sun:'#ffd7a0',sunPower:1.56,hemiPower:0.77,saturation:32,contrast:1.17,exposure:1.04,sunDisc:'#ffe2a6',fogStart:270,fogEnd:610},
  'san-juan':{top:'#0f7ee0',mid:'#3fc0f2',horizon:'#b6fbff',hemiSky:'#d2f2ff',hemiGround:'#d6d6bc',sun:'#ffe9b0',sunPower:1.56,hemiPower:0.83,saturation:38,contrast:1.15,exposure:1.05,sunDisc:'#fff8d6',fogStart:310,fogEnd:670},
+ isletas:{top:'#0c7fe2',mid:'#45c1f4',horizon:'#c4f6ff',hemiSky:'#d2f1ff',hemiGround:'#bfd6c6',sun:'#ffe9b0',sunPower:1.56,hemiPower:.83,saturation:40,contrast:1.15,exposure:1.05,sunDisc:'#fff8d6',fogStart:320,fogEnd:690},
+ // Play Land Park: the fair opens at dusk — violet sky, orange horizon, a low warm sun and the lights already on.
+ playland:{top:'#231553',mid:'#7a3f9a',horizon:'#ff9f6e',hemiSky:'#cdb8ff',hemiGround:'#a58a9a',sun:'#ffb37a',sunPower:1.25,hemiPower:.8,saturation:36,contrast:1.14,exposure:1.08,sunDisc:'#ffd9a0',fogStart:280,fogEnd:640},
 };
 export const lookFor=(id:string)=>LOOKS[id]??LOOKS['la-salle'];
 const lin=(hex:string)=>Color3.FromHexString(hex).toLinearSpace();

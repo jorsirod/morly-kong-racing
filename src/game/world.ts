@@ -16,6 +16,7 @@ import { buildCourse,type TrackStyle } from './worlds/course';
 import { buildLaSalle } from './worlds/lasalle';
 import { dressOriental,dressManagua,dressMasaya,dressSanJuan,managuaLandmarks,lavaRock } from './worlds/others';
 import { dressHipaClub } from './worlds/hipa';
+import { dressIsletas,dressPlayland } from './worlds/nuevas';
 import { Texture } from '@babylonjs/core/Materials/Textures/texture';
 import '@babylonjs/core/Meshes/Builders/ribbonBuilder';
 import '@babylonjs/core/Meshes/Builders/groundBuilder';
@@ -31,14 +32,18 @@ const STYLES:Record<string,TrackStyle>={
  'hipa-hipa':{road:'#2d4268',rough:'#5a4a6a',barrier:{body:'#24304f',top:'#ff5fb0',stripe:'#45e0ff',h:.8},skirt:'dirt',skirtColor:'#3a3550',shelf:7,ramp:'neon',lane:{barra:{kind:'neon',color:'#222'}},night:true},
  masaya:{road:'#4a4f5c',rough:'#5b5048',barrier:{body:'#5e5a52',top:'#7b746a',h:1.1,post:true},skirt:'rock',skirtColor:'#5d564d',shelf:16,ramp:'rock',lane:{cresta:{kind:'rock',color:'#4a4440'}}},
  'san-juan':{road:'#4a5568',rough:'#e3c98e',barrier:{body:'#c9a57a',top:'#f6efe1',stripe:'#4fb2c4',h:.9,post:true},skirt:'grass',skirtColor:'#9cb874',shelf:14,ramp:'wood',lane:{playa:{kind:'sand',color:'#ecd39a'}}},
+ isletas:{road:'#55606e',rough:'#b49964',barrier:{body:'#8a6a45',top:'#e2cf9a',stripe:'#3f8fa0',h:.8,post:true},skirt:'grass',skirtColor:'#6fae52',shelf:10,ramp:'wood',lane:{muelle:{kind:'planks',color:'#b08a5a'}}},
+ playland:{road:'#3f3b55',rough:'#6a5a7a',barrier:{body:'#f2efe6',top:'#e53b6e',stripe:'#ffd33d',h:.9},skirt:'dirt',skirtColor:'#7a6f80',shelf:9,ramp:'neon',lane:{chocones:{kind:'neon',color:'#222'}}},
 };
 
 export function buildWorld(scene:Scene,id:string,battle=false) {
  const def=track(id),route=routeFor(id),root=new TransformNode('world-'+id,scene);
  const kit=new Kit(scene,root,route),c=route.course,L=route.length;
  // Tiled procedural ground so the world never looks like a flat-coloured board.
- const groundKind=id==='masaya'?'rock':id==='oriental'?'dirt':id==='hipa-hipa'?'tile':'grass';
+ const groundKind=id==='masaya'?'rock':id==='oriental'||id==='playland'?'dirt':id==='hipa-hipa'?'tile':'grass';
  const base=MeshBuilder.CreateGround('ground',{width:1400,height:1400},scene);const tiles=id==='hipa-hipa'?160:120,groundMat=surfaceTexture(scene,groundKind,id==='la-salle'?'#7fb653':def.ground,tiles);base.material=groundMat;base.parent=root;base.position.y=-.2;
+ // Las Isletas: the ground is the lake; the land is the road's own shoulders and the islets (worlds/nuevas.ts).
+ if(id==='isletas')base.material=waterMat(scene,'#2f93b8',110,110);
  if(battle){box(scene,root,'arena',0,-.03,0,160,.15,130,'#bfaa79');for(const x of [-80,80])box(scene,root,'wall',x,1.2,0,1.2,2.5,132,'#d9bc77');for(const z of [-65,65])box(scene,root,'wall',0,1.2,z,160,2.5,1.2,'#d9bc77');}
  else {
   buildCourse(kit,route,id,STYLES[id]??STYLES['la-salle']);
@@ -69,7 +74,7 @@ export function buildWorld(scene:Scene,id:string,battle=false) {
    for(let i=0;i<24;i++){const a=i/24*Math.PI*2;sphere(scene,g,'crater-rock',Math.sin(a)*85,30,Math.cos(a)*85,16,'#657368',new Vector3(1,.6,1));}});cylinder(scene,root,'lava',0,30.1,battle?240:0,.15,105,'#d67b45').material=lavaMat(scene,6);const glow=scene.getMaterialByName('mat-#d67b45-false-1');if(glow)(glow as ReturnType<typeof material>).emissiveColor=(glow as ReturnType<typeof material>).diffuseColor.scale(.6);
   for(let i=0;i<35;i++){const a=i*2.4,x=Math.sin(a)*(220+i*3),z=Math.cos(a)*(220+i*3);if(kit.blocked(x,z,8))continue;lavaRock(kit,x,-1.2,z,(6+i%5)/1.6,new Vector3(1,.8,1),i*1.7,'#788678');}
   sign('CRÁTER SANTIAGO',45,181,46);for(let i=0;i<10;i++){const x=-215+i*8,z=-130;if(!kit.blocked(x,z,4))tree(x,z,0);}
- } else {
+ } else if(id==='san-juan'){
   box(scene,root,'ocean',0,-.15,-445,1400,.1,550,'#63b5c4').material=waterMat(scene,'#63b5c4',110,44);box(scene,root,'beach',0,-.1,-210,750,.1,75,'#e8cc92').material=surfaceTexture(scene,'sand','#e8cc92',60,6);
   for(let i=0;i<14;i++){const x=-190+i*29,z=-226;if(!kit.blocked(x,z,4))tree(x,z,0,true);}for(let i=0;i<8;i++){const x=-95+i*26,z=-262;if(!kit.blocked(x,z,8))building(x,z,20,13,['#df9a78','#e4cb8c','#9fbaba'][i%3],6);}
   box(scene,root,'pier',-55,1,-300,8,1,95,'#ad9067');for(let i=0;i<8;i++)box(scene,root,'pier-leg',-55,-2,-260-i*10,.4,7,.4,'#907955');
@@ -79,7 +84,7 @@ export function buildWorld(scene:Scene,id:string,battle=false) {
    const arms=box(scene,g,'christ-arms',0,cy+19-32.5,0,27,2.5,2.5,'#efebd4');arms.rotation.z=-.06;for(const x of [-14,14])sphere(scene,g,'christ-hands',x,cy+19-32.5,0,2.8,'#efebd4');});
   sign('CRISTO DE LA MISERICORDIA',cx,cz-16,cy+7);
  }
- if(!battle){const dress={oriental:dressOriental,managua:dressManagua,'hipa-hipa':dressHipaClub,masaya:dressMasaya,'san-juan':dressSanJuan}[id];dress?.(kit,route);}
+ if(!battle){const dress={oriental:dressOriental,managua:dressManagua,'hipa-hipa':dressHipaClub,masaya:dressMasaya,'san-juan':dressSanJuan,isletas:dressIsletas,playland:dressPlayland}[id];dress?.(kit,route);}
  if(!night){for(let i=0;i<7;i++){const cloud=new TransformNode('cloud',scene);cloud.parent=root;cloud.position.set(-250+i*75,48+(i%3)*5,-220);for(let k=0;k<3;k++)sphere(scene,cloud,'cloud-puff',k*8,Math.sin(k)*2,0,17,'#fff6df',new Vector3(1.15,.5,.7)).material=material(scene,'#fffaf0',true);}
  if(!battle)for(let d=20;d<L;d+=35){if(special(d))continue;const p=sample(route,d);if(id==='la-salle'&&p.x>140&&p.z>-75&&p.z<65)continue;for(const side of [-1,1]){const x=p.x+Math.cos(p.yaw)*(def.width*.85+4)*side,z=p.z-Math.sin(p.yaw)*(def.width*.85+4)*side;if(!kit.blocked(x,z,1.5))kit.tree(x,z,'bush',p.y,.95);const next=sample(route,d+15);if(Math.abs(Math.atan2(Math.sin(next.yaw-p.yaw),Math.cos(next.yaw-p.yaw)))>.15){const fx=p.x+Math.cos(p.yaw)*(def.width*.72+.7)*side,fz=p.z-Math.sin(p.yaw)*(def.width*.72+.7)*side;if(kit.onLane(fx,fz,1.5))continue;const sign=box(scene,root,'curve-arrow',fx,p.y+1.8,fz,2.2,1.1,.12,'#ffdc49');sign.rotation.y=p.yaw;const mark=textLabel(scene,root,side>0?'‹':'›',fx,p.y+1.8,fz,1.7,.9,'#1a355c','#ffdc49');if(mark)mark.rotation.y=p.yaw;cylinder(scene,root,'arrow-post',fx,p.y+.8,fz,1.6,.12,'#597080');}}}
  // The hills on the horizon (Blender model «cerro», white: tinted with each world's ground colour, turned and stretched).
@@ -87,7 +92,7 @@ export function buildWorld(scene:Scene,id:string,battle=false) {
   kit.prop('cerro',x,-.5,z,i*1.3,[1+(i%3)*.2,.75+(i%4)*.25,1+((i+1)%3)*.2],g=>{sphere(scene,g,'hill',0,8,0,90,def.ground,new Vector3(1,.45,1));},shade);}}
  // Street light posts (Blender model «poste») along the right-hand side; Managua places its own in others.ts.
  if(!battle&&(id==='la-salle'||id==='oriental'||id==='san-juan'))for(let d=12;d<L;d+=42){if(special(d))continue;const p=sample(route,d),o=def.width*.72+1.6,x=p.x+Math.cos(p.yaw)*o,z=p.z-Math.sin(p.yaw)*o;if(kit.onLane(x,z,2))continue;kit.prop('poste',x,p.y,z,p.yaw,1,g=>{kit.cyl('lamp-post',0,3.6,0,7.2,.22,'#4c5a63',undefined,g);kit.glow('lamp-head',-1.2,7.1,0,1.6,.25,.6,'#fff2c2',0,g);});}
- if(!battle&&!night)scatterDetail(kit,route,id);
+ if(!battle&&!night&&id!=='isletas')scatterDetail(kit,route,id);
  // Bake static primitives into a small set of material batches.
  // Pieces with a Blender model are merged inside their type's group, so the whole group can be swapped later.
  const propGroup=(m:Mesh)=>{for(let n=m.parent;n;n=n.parent)if(n.metadata?.propType)return n as TransformNode;return null;};
