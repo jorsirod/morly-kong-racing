@@ -42,6 +42,8 @@ type Actor={model:Car;vehicleId:string;characterId:string;shadow:TransformNode;l
  /** Face life: eye meshes for blinking, the head node, last cheer (a hit landed) and last flinch (got hit). */ face?:{eyes:AbstractMesh[];head?:TransformNode;nextBlink:number};cheer?:number;hurt?:number};
 /** ALF's little routine: what he is doing now and until when. */
 type AlfState={action:'idle'|'wave'|'look'|'cheer'|'hold';until:number;next:number};
+/** Side of the square of world the sun's shadow map covers, in metres. */
+const SHADOW_SPAN=130;
 const PLAYER_COLORS=['#f14d53','#459be9','#78ce50','#ffc63c','#bd76e5','#54d5d9'];
 import {savedQuality,reducedMotion,batterySaver,QUALITY,type Quality} from './renderer-settings';
 export {savedQuality,reducedMotion,type Quality};
@@ -110,9 +112,9 @@ export class RaceRenderer{
   this.scene.clearColor=Color4.FromHexString(look.horizon+'ff');this.scene.fogMode=Scene.FOGMODE_LINEAR;this.scene.fogStart=look.fogStart;this.scene.fogEnd=look.fogEnd;this.scene.fogColor=Color3.FromHexString(look.horizon);this.baseFog={start:look.fogStart,end:look.fogEnd,color:this.scene.fogColor.clone()};this.tunnelLight=null;
   skyDome(this.scene,look);
   const hemi=new HemisphericLight('sky',new Vector3(0,1,0),this.scene);hemi.intensity=look.hemiPower;hemi.groundColor=colors.hemiGround;hemi.diffuse=colors.hemiSky;
-  this.sun=new DirectionalLight('sun',new Vector3(-.45,-1,.4),this.scene);this.sun.position.set(-40,60,-40);this.sun.intensity=look.sunPower;this.sun.diffuse=colors.sun;this.sun.shadowMinZ=1;this.sun.shadowMaxZ=190;this.sun.shadowFrustumSize=75;
+  this.sun=new DirectionalLight('sun',new Vector3(-.72,-1,.34),this.scene);this.sun.position.set(-40,60,-40);this.sun.intensity=look.sunPower;this.sun.diffuse=colors.sun;this.sun.shadowMinZ=1;this.sun.shadowMaxZ=230;this.sun.shadowFrustumSize=SHADOW_SPAN;this.sun.direction.normalize();
   const size=QUALITY[this.quality].shadows;
-  if(!night&&size){this.shadowMap=new ShadowGenerator(size,this.sun);this.shadowMap.usePercentageCloserFiltering=true;this.shadowMap.filteringQuality=ShadowGenerator.QUALITY_LOW;this.shadowMap.bias=.002;this.shadowMap.normalBias=.035;this.shadowMap.setDarkness(.24);}
+  if(!night&&size){this.shadowMap=new ShadowGenerator(size,this.sun);this.shadowMap.usePercentageCloserFiltering=true;this.shadowMap.filteringQuality=ShadowGenerator.QUALITY_MEDIUM;this.shadowMap.bias=.0016;this.shadowMap.normalBias=.03;this.shadowMap.setDarkness(.42);this.casters=new WeakSet();}
   if(night)for(let i=0;i<3;i++){const light=new PointLight('club-'+i,new Vector3((i-1)*55,12,0),this.scene);light.diffuse=Color3.FromHexString(['#f262ac','#46dce6','#ffd249'][i]);light.intensity=2.3;light.range=110;}
  }
  async preload(state:GameState){const ids=[...new Set(state.players.map(p=>p.vehicleId))];await Promise.all(ids.map(async id=>{try{const asset=await LoadAssetContainerAsync('/models/'+id+'.glb',this.scene);paintFinish(this.scene,lookFor(this.trackId),asset.materials,this.quality!=='baja');this.assets.set(id,asset);}catch{/* Source geometry is the offline fallback. */}}));
@@ -125,6 +127,12 @@ export class RaceRenderer{
  private lod(parent:TransformNode,vehicleId:string,characterId:string){
   const root=new TransformNode('distant-car',this.scene);root.parent=parent;const v=vehicle(vehicleId),d=vehicleDynamics(vehicleId);box(this.scene,root,'lod-body',0,.92,0,d.halfWidth*2,.8,d.halfLength*2,v.color);box(this.scene,root,'lod-rear',0,1.7,-.6,d.halfWidth*1.7,.55,1.35,v.color);sphere(this.scene,root,'lod-driver',-.4,2.3,.2,.8,'#c38c6b');
   for(const x of [-d.halfWidth,d.halfWidth])for(const z of [-d.halfLength*.6,d.halfLength*.6]){const wheel=cylinder(this.scene,root,'lod-wheel',x,.45,z,.32,.9,'#202a39');wheel.rotation.z=Math.PI/2;}return root;
+ }
+ private casters=new WeakSet<AbstractMesh>();private casterScan=0;
+ /** Trees, buildings and monuments (the Blender pieces, which arrive after the world is built) cast shadows too. */
+ private castScenery(){
+  if(!this.shadowMap||this.casterScan++%45)return;
+  for(const m of this.world.getChildMeshes(false)){if(this.casters.has(m))continue;this.casters.add(m);if(!m.name.startsWith('prop-')||(m.material&&m.material.alpha<1))continue;this.shadowMap.addShadowCaster(m,false);}
  }
  resize=()=>this.engine.resize();
  /** Resolution divisor: the quality level, a notch lower in «modo fresco». */
@@ -426,7 +434,11 @@ export class RaceRenderer{
   else{if(this.camera.rotationQuaternion){this.camera.rotationQuaternion=null;this.camUp.set(0,1,0);}this.camera.setTarget(this.cam.look);}
   if(!tilted)this.camera.rotation.z=this.reduced?0:-me.turnRate*.01-me.driftDir*.018+Math.sin(state.tick)*shake*.12;
   const fov=.9+Math.max(0,Math.min(1,(speed-10)/12))*.06+(boost?me.boostLevel>=4?.13:.08:0)+this.cam.air*.05+cine*.06;this.camera.fov=lerp(this.camera.fov,fov,k(boost?7:3));
-  this.sun.position.set(me.x-35,me.y+60,me.z-40);
+  // The shadow map covers a square around the point the camera looks at (a bit ahead of the car), and moves in whole
+  // texels so the edges of the shadows do not crawl while driving.
+  {const d=this.sun.direction,ahead=18,cx=me.x+Math.sin(me.yaw)*ahead,cz=me.z+Math.cos(me.yaw)*ahead,step=SHADOW_SPAN/(QUALITY[this.quality].shadows||1024)*4;
+   this.sun.position.set(Math.round((cx-d.x*110)/step)*step,Math.round((me.y-d.y*110)/step)*step,Math.round((cz-d.z*110)/step)*step);}
+  this.castScenery();
  }
  dispose(){window.removeEventListener('resize',this.resize);window.visualViewport?.removeEventListener('resize',this.resize);this.observer?.disconnect();this.pipeline?.dispose();this.labelLayer?.remove();this.attacks.dispose();this.hazardView.dispose();this.birds.dispose();this.effects.dispose();this.assets.forEach(a=>a.dispose());this.shadowMap?.dispose();this.scene.dispose();this.engine.dispose();}
 }
