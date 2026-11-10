@@ -58,7 +58,7 @@ CHARS = {
     "cucukis": dict(shirt="#2f6fd0"), "raulin": dict(shirt="#58759d"),
 }
 IDS = list(LOOKS)
-TRIANGLES_MAX = 9000
+TRIANGLES_MAX = 10000
 
 
 def shade(h, f):
@@ -119,13 +119,13 @@ def cyl(x, y, z, h, dia, top=None, rot=None, seg=16):
     return bm
 
 
-def tube(points, radius, seg=10, r_end=None):
+def tube(points, radius, seg=8, r_end=None):
     """Tubo por una polilínea suavizada; el radio puede ir de `radius` a `r_end`. Puntas redondeadas."""
     pts = [Vector(p) for p in points]
     if len(pts) == 3:  # curva cuadrática por los tres puntos, como una ceja
         a, m, b = pts
         ctrl = 2 * m - (a + b) / 2
-        pts = [(1 - t) ** 2 * a + 2 * (1 - t) * t * ctrl + t * t * b for t in [i / 8 for i in range(9)]]
+        pts = [(1 - t) ** 2 * a + 2 * (1 - t) * t * ctrl + t * t * b for t in [i / 6 for i in range(7)]]
     r_end = radius if r_end is None else r_end
     bm = bmesh.new()
     rings = []
@@ -240,11 +240,12 @@ def _head(P, hair_blob=True):
     # Orejas: pabellón aplanado y un hueco más oscuro adentro.
     for x in (-1, 1):
         big = f["ears"] > .3
+        ear = min(f["ears"], .44)
         ex = x * .44 * hx + (x * .06 if big else 0)
-        P.soft(H, skin, sph(ex, 1.17, .01, f["ears"], (.55, 1, .8), rot=(0, x * -.35, x * -.25 if big else 0)))
-        P.add(H, shade(skin, .72), sph(ex + x * f["ears"] * .16, 1.17, .03, f["ears"] * .52, (.3, .8, .55), seg=10, rings=6))
+        P.soft(H, skin, sph(ex, 1.17, .01, ear, (.55, 1, .8), rot=(0, x * -.35, x * -.25 if big else 0)))
+        P.add(H, shade(skin, .72), sph(ex + x * ear * .16, 1.17, .03, ear * .52, (.3, .8, .55), seg=10, rings=6))
     # Nariz: punta, puente hasta el entrecejo y aletas.
-    n = f["nose"]
+    n = min(f["nose"], .4)  # la unión suave ya la hace ver grande
     ny, nz = 1.19 - (n - .25) * .25, .47 * hz + (n - .25) * .6
     if pid != "morly":  # Morly lleva hocico y nariz de mono
         P.soft(H, skin, sph(0, ny, nz, n, (.8, .95 if n > .35 else .8, 1.1)))
@@ -283,13 +284,13 @@ def _head(P, hair_blob=True):
     s = f["smile"]
     if s == "grin":
         P.add(H, dark, sph(0, 1.0, mz, .3, (1.35, .55, .25)))
-        P.add(H, teeth, box(0, 1.03, mz + .035, .3, .06, .025, bevel=.01), rough=.3)
+        P.add(H, teeth, box(0, 1.035, mz + .045, .3, .06, .045, bevel=.012), rough=.3)
     elif s == "wide":
         P.add(H, dark, sph(0, .99, mz, .34, (1.4, .45, .25)))
-        P.add(H, teeth, box(0, 1.015, mz + .035, .36, .05, .025, bevel=.01), rough=.3)
+        P.add(H, teeth, box(0, 1.02, mz + .045, .36, .055, .045, bevel=.012), rough=.3)
     elif s == "open":
         P.add(H, dark, sph(0, .98, mz, .27, (1.1, .85, .25)))
-        P.add(H, teeth, box(0, 1.035, mz + .04, .2, .05, .025, bevel=.01), rough=.3)
+        P.add(H, teeth, box(0, 1.04, mz + .05, .2, .05, .045, bevel=.012), rough=.3)
         P.add(H, "#d06470", sph(0, .94, mz + .03, .12, (1.2, .5, .3)))
     elif s == "smirk":
         P.add(H, dark, tube([(-.13, 1.0, mz + .03), (.02, .985, mz + .04), (.15, 1.03, mz + .02)], .03, r_end=.02))
