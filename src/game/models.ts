@@ -1,3 +1,4 @@
+import { dressPilot } from './pilots';
 import { Color3 } from '@babylonjs/core/Maths/math.color';
 import { Quaternion, Vector3 } from '@babylonjs/core/Maths/math.vector';
 import { MeshBuilder } from '@babylonjs/core/Meshes/meshBuilder';
@@ -110,6 +111,7 @@ export function pilotArms(driver:TransformNode){const n=driver.getChildTransform
 export function characterLook(id:string){return LOOKS[id]??LOOKS.semilla;}
 /** Height of the head centre above the driver socket, used to frame portraits. */
 export function headCenter(id:string){const f=characterLook(id);return 1.02+(.52+.3*f.height+f.neck-.8)+1.17;}
+export { preloadPilots } from './pilots';
 export function buildCharacter(scene:Scene,id:string,parent:TransformNode){
  const c=character(id),f=characterLook(c.id),root=new TransformNode('driver-'+id,scene);root.parent=parent;root.position.set(-.43,1.02,.2);
  const torsoH=1.15*f.height,shoulderY=.29+.2*f.height+.02,neckTop=.52+.3*f.height+f.neck;
@@ -216,7 +218,9 @@ export function buildCharacter(scene:Scene,id:string,parent:TransformNode){
   for(const [x,y,z,r] of [[-.18,.42,-1,.2],[.16,.12,-1,.24],[-.08,-.02,-1,.14],[.22,.5,1,.16],[-.2,.18,1,.18]] as number[][])sphere(scene,root,'cow-spot',x*f.width,backY+y-.1,z*.335*Math.max(.82,f.width),r,'#fbf6ea',new Vector3(1,.8,.25));
   textLabel(scene,root,'RAULÍN',0,backY+.38,backZ-.02,.42,.12,'#fbf6ea',c.shirt);
  }
- for(const a of [...arms,steering])mergeParts(a);mergeParts(root,true,[...arms,steering]);return root;
+ for(const a of [...arms,steering])mergeParts(a);mergeParts(root,true,[...arms,steering]);
+ // The Blender model (public/models/pilots) takes over when it is available; this code version is the fallback.
+ dressPilot(scene,c.id,root);return root;
 }
 export type AlfParts={head:TransformNode;armL:TransformNode;armR:TransformNode};
 export type VehicleModel={root:TransformNode;body:TransformNode;driverSocket:TransformNode;passengerSocket:TransformNode;alf?:TransformNode;alfParts?:AlfParts;wheels?:TransformNode[];frontWheels?:TransformNode[];driver?:TransformNode};

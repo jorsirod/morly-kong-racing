@@ -20,7 +20,7 @@ import {track,vehicle} from '../../shared/content';
 import {angle,clamp,lerp,routeFor,sample} from '../../shared/track';
 import {resolveVehicleCollision,vehicleDynamics,vehicleVelocity as vehicleVelocityOf} from '../../shared/dynamics';
 import type {GameState,PlayerState} from '../../shared/types';
-import {buildVehicle,buildCharacter,buildProjectile,addVehicleDecals,material,cylinder,sphere,box,textLabel,aimArm,pilotArms,type VehicleModel} from './models';
+import {preloadPilots,buildVehicle,buildCharacter,buildProjectile,addVehicleDecals,material,cylinder,sphere,box,textLabel,aimArm,pilotArms,type VehicleModel} from './models';
 import {buildWorld} from './world';
 import {INTRO} from '../../shared/simulation';
 import {stuntAt,stuntPose} from '../../shared/stunts';
@@ -39,7 +39,7 @@ type Car=VehicleModel;
 type Actor={model:Car;vehicleId:string;characterId:string;shadow:TransformNode;lod:TransformNode;steer:number;spin:number;label?:HTMLElement|null;
  driftYaw:number;hop:number;lastDrift:number;lastStun:number;spinStart:number;stunTotal:number;faded:boolean;meshes:AbstractMesh[];lastImpact:number;wobble:number;decals?:TransformNode|null;
  /** Race time of this pilot's last special (pose) and of the last landing (squash). */ cast:number;landed:number;lastAir:number;shield?:Mesh|null;roll:number;suspension:number;alf:AlfState;arms?:{l?:TransformNode;r?:TransformNode};
- /** Face life: eye meshes for blinking, the head node, last cheer (a hit landed) and last flinch (got hit). */ face?:{eyes:AbstractMesh[];head?:TransformNode;nextBlink:number};cheer?:number;hurt?:number};
+ /** Face life: eye meshes for blinking, the head node, last cheer (a hit landed) and last flinch (got hit). */ face?:{eyes:TransformNode[];head?:TransformNode;nextBlink:number;blender:boolean};cheer?:number;hurt?:number};
 /** ALF's little routine: what he is doing now and until when. */
 type AlfState={action:'idle'|'wave'|'look'|'cheer'|'hold';until:number;next:number};
 /** Side of the square of world the sun's shadow map covers, in metres. */
@@ -117,7 +117,7 @@ export class RaceRenderer{
   if(!night&&size){this.shadowMap=new ShadowGenerator(size,this.sun);this.shadowMap.usePercentageCloserFiltering=true;this.shadowMap.filteringQuality=ShadowGenerator.QUALITY_MEDIUM;this.shadowMap.bias=.0016;this.shadowMap.normalBias=.03;this.shadowMap.setDarkness(.42);this.casters=new WeakSet();}
   if(night)for(let i=0;i<3;i++){const light=new PointLight('club-'+i,new Vector3((i-1)*55,12,0),this.scene);light.diffuse=Color3.FromHexString(['#f262ac','#46dce6','#ffd249'][i]);light.intensity=2.3;light.range=110;}
  }
- async preload(state:GameState){const ids=[...new Set(state.players.map(p=>p.vehicleId))];await Promise.all(ids.map(async id=>{try{const asset=await LoadAssetContainerAsync('/models/'+id+'.glb',this.scene);paintFinish(this.scene,lookFor(this.trackId),asset.materials,this.quality!=='baja');this.assets.set(id,asset);}catch{/* Source geometry is the offline fallback. */}}));
+ async preload(state:GameState){const ids=[...new Set(state.players.map(p=>p.vehicleId))];await Promise.all([preloadPilots(this.scene,state.players.map(p=>p.characterId)),...ids.map(async id=>{try{const asset=await LoadAssetContainerAsync('/models/'+id+'.glb',this.scene);paintFinish(this.scene,lookFor(this.trackId),asset.materials,this.quality!=='baja');this.assets.set(id,asset);}catch{/* Source geometry is the offline fallback. */}})]);
   // Compile shaders before the curtain opens, and size the canvas to its final layout.
   try{await this.scene.whenReadyAsync();}catch{/* render anyway */}this.engine.resize();}
  private car(vehicleId:string,characterId:string):Car{
@@ -132,6 +132,8 @@ export class RaceRenderer{
  /** Trees, buildings and monuments (the Blender pieces, which arrive after the world is built) cast shadows too. */
  private castScenery(){
   if(!this.shadowMap||this.casterScan++%45)return;
+  // Cars too: the pilot's Blender model can replace the code one after the car was created.
+  for(const c of this.cars.values()){const meshes=c.model.body.getChildMeshes();if(meshes.length!==c.meshes.length||meshes.some(m=>!this.casters.has(m))){c.meshes=meshes;for(const m of meshes)if(!this.casters.has(m)){this.casters.add(m);this.shadowMap.addShadowCaster(m,false);}}}
   for(const m of this.world.getChildMeshes(false)){if(this.casters.has(m))continue;this.casters.add(m);if(!m.name.startsWith('prop-')||(m.material&&m.material.alpha<1))continue;this.shadowMap.addShadowCaster(m,false);}
  }
  resize=()=>this.engine.resize();
@@ -287,7 +289,7 @@ export class RaceRenderer{
   const label=p.id===id?null:this.makeLabel(p.nickname,color);
   const shadow=cylinder(this.scene,null,'contact-shadow',0,.01,0,.02,2.5,'#13263a');shadow.scaling.z=1.8;shadow.material=material(this.scene,'#13263a',false,.25);
   const lod=this.lod(model.root,p.vehicleId,p.characterId);lod.setEnabled(false);
-  for(const mesh of model.body.getChildMeshes())this.shadowMap?.addShadowCaster(mesh,false);
+  for(const mesh of model.body.getChildMeshes()){this.shadowMap?.addShadowCaster(mesh,false);this.casters.add(mesh);}
   return{model,vehicleId:p.vehicleId,characterId:p.characterId,shadow,lod,steer:0,spin:0,label,driftYaw:0,hop:1,lastDrift:0,lastStun:0,spinStart:-9,stunTotal:0,faded:false,meshes:model.body.getChildMeshes(),lastImpact:0,wobble:0,cast:-9,landed:-9,lastAir:0,shield:null,roll:0,suspension:0,alf:{action:'idle',until:0,next:4+p.color%3}};
  }
  /** Suspension, drift angle, hop, spin-outs, jumps, falls and pilot reactions. Purely visual. */
@@ -334,7 +336,9 @@ export class RaceRenderer{
    driver.position.y=lerp(driver.position.y,1.02+(celebrate?Math.abs(Math.sin(t*7))*.22:0)+(p.vy>0?.06:0)+pose*.55,k(14));
    driver.scaling.setAll(lerp(driver.scaling.x,1+pose*.22,k(14)));
    // Face: blinks every few seconds, squeezes the eyes when hit, looks at the closest rival nearby or back at whoever just got hit.
-   const face=c.face??(c.face={eyes:driver.getChildMeshes(false).filter(m=>/^(eye-white|iris|pupil|eye-glint)/.test(m.name)),head:driver.getChildTransformNodes(false).find(n=>n.name==='head-root'),nextBlink:t+1+Math.random()*3});
+   // (The Blender pilot hangs its eyes from one «eyes» node; it may arrive after the code-built pilot.)
+   const blender=!!driver.metadata?.blender;if(c.face&&c.face.blender!==blender){c.face=undefined;c.arms=undefined;}
+   const face=c.face??(c.face={eyes:blender?driver.getChildTransformNodes(false).filter(n=>n.name==='eyes'):driver.getChildMeshes(false).filter(m=>/^(eye-white|iris|pupil|eye-glint)/.test(m.name)),head:driver.getChildTransformNodes(false).find(n=>n.name==='head-root'),nextBlink:t+1+Math.random()*3,blender});
    const hurt=c.hurt!==undefined&&t-c.hurt<.9,cheer=c.cheer!==undefined&&t-c.cheer<.95&&!hurt;
    if(t>face.nextBlink+.12)face.nextBlink=t+2.2+((p.color*7.3+t*3.1)%1)*3.2;
    const closed=hurt||(t>face.nextBlink&&t<face.nextBlink+.12);for(const e of face.eyes)e.scaling.y=lerp(e.scaling.y,closed?.12:1,k(30));

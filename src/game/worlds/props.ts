@@ -34,7 +34,7 @@ export type PropSpot={type:string;x:number;y:number;z:number;yaw:number;scale:nu
  * same: the exporter stored base = 0.62 × linear colour and emissive = 0.55 × colour (scripts/blender/mklib.py).
  */
 const standard=new WeakMap<Material,StandardMaterial>();
-function toStandard(scene:Scene,src:Material|null){
+export function toStandard(scene:Scene,src:Material|null){
  if(!src)return null;const hit=standard.get(src);if(hit&&!hit.getScene().isDisposed)return hit;
  const pbr=src as PBRMaterial,base=pbr.albedoColor??Color3.White(),color=new Color3(base.r/.62,base.g/.62,base.b/.62).toGammaSpace();
  // «tex-<kind>-…»: the piece carries UVs in metres and takes the game's own surface texture (textures.ts).
