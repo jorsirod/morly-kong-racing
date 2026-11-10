@@ -1321,7 +1321,39 @@ def poste():
 
 LANDMARKS["poste"] = poste
 
-FILES = {"vegetation": list(VEGETATION), "cristo": ["cristo"], "calle": ["poste"],
+
+def cerro(seed=131):
+    """Cerro del horizonte: loma ancha con cárcavas y contorno irregular, de base plana (48 m de radio, 24 de alto).
+    Blanco: el juego le da el verde o el ocre de cada mundo, lo gira y lo estira para que no se repita."""
+    B, root = _begin("cerro")
+    R, H, rings, segs = 48.0, 24.0, 9, 24
+    bm = bmesh.new()
+    top = bm.verts.new(G(0, H, 0))
+    rows = []
+    for i in range(1, rings + 1):
+        t = i / rings
+        row = []
+        for j in range(segs):
+            a = 2 * math.pi * j / segs
+            mid = 4 * t * (1 - t)
+            ridge = 1 + mid * (0.26 * math.sin(3 * a + 1.3) + 0.16 * math.sin(7 * a + 0.4) + 0.09 * math.sin(11 * a + 2.1))
+            r = R * t * (1 + 0.12 * math.sin(2 * a + 0.7) + 0.06 * math.sin(5 * a + seed))
+            y = H * (1 - t ** 1.5) * ridge - (1.5 if i == rings else 0)
+            row.append(bm.verts.new(G(r * math.sin(a), y, r * math.cos(a))))
+        rows.append(row)
+    for j in range(segs):
+        bm.faces.new((top, rows[0][j], rows[0][(j + 1) % segs]))
+    for a_, b_ in zip(rows, rows[1:]):
+        for j in range(segs):
+            bm.faces.new((a_[j], b_[j], b_[(j + 1) % segs], a_[(j + 1) % segs]))
+    bmesh.ops.recalc_face_normals(bm, faces=bm.faces)
+    _part(B, root, "cerro-ladera", bm, L.mat("cerro", "#ffffff", 0.9), smooth=70)
+    return _finish(B, root, 0.75, 14.0)
+
+
+LANDMARKS["cerro"] = cerro
+
+FILES = {"vegetation": list(VEGETATION), "cristo": ["cristo"], "calle": ["poste"], "paisaje": ["cerro"],
          "managua": ["catedral", "arbol-vida", "palacio", "concha", "casa-m1", "casa-m2", "casa-m3", "casa-techo"],
          "oriental": ["chinamo", "lona"], "masaya": ["volcano"],
          "lasalle": ["aula-pb", "aula-pa", "aula-techo", "capilla", "porton-lasalle", "bus-escolar", "cafeteria", "bar-lasalle"],
