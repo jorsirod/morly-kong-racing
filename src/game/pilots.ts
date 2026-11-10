@@ -1,5 +1,5 @@
 import { LoadAssetContainerAsync } from '@babylonjs/core/Loading/sceneLoader';
-import { Matrix } from '@babylonjs/core/Maths/math.vector';
+import { Matrix, Quaternion } from '@babylonjs/core/Maths/math.vector';
 import { Mesh } from '@babylonjs/core/Meshes/mesh';
 import { TransformNode } from '@babylonjs/core/Meshes/transformNode';
 import { StandardMaterial } from '@babylonjs/core/Materials/standardMaterial';
@@ -42,8 +42,9 @@ function template(scene:Scene,id:string,nodes:TransformNode[]):Template|null{
   const parts:Mesh[]=[];
   for(const src of node.getChildren(n=>n instanceof Mesh&&(n as Mesh).getTotalVertices()>0,true) as Mesh[]){
    const m=src.clone('pilot-part',null,true,false);if(!m)continue;m.makeGeometryUnique();
+   m.parent=null; // a clone keeps its source's parent, and merging would bake that node's offset in again
    // glTF geometry is mirrored in x with respect to the game (see unmirror() in renderer.ts).
-   const local=src.computeWorldMatrix(true).multiply(node.computeWorldMatrix(true).clone().invert()).multiply(Matrix.Scaling(-1,1,1));
+   const local=Matrix.Compose(src.scaling,src.rotationQuaternion??Quaternion.FromEulerVector(src.rotation),src.position).multiply(Matrix.Scaling(-1,1,1));
    m.bakeTransformIntoVertices(local); // a mirroring bake flips the faces itself
    m.position.setAll(0);m.rotationQuaternion=null;m.rotation.setAll(0);m.scaling.setAll(1);
    // Colour = material colour × baked occlusion, as vertex colours.
