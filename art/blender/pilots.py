@@ -528,6 +528,14 @@ def export(pid, repo_root=None, out_path=None):
     previous = bpy.context.window.scene
     bpy.context.window.scene = scene
     objects = [root, *root.children_recursive]
+    # Los nombres de Blender son únicos en todo el archivo: el piloto que se exporta toma prestados los del contrato.
+    for o in objects:
+        base = o.name.split(".")[0]
+        if o.type == "EMPTY" and base in ("head-root", "eyes", "arm-left", "arm-right") and o.name != base:
+            other = bpy.data.objects.get(base)
+            if other is not None:
+                other.name = base + ".prestado"
+            o.name = base
     if out_path is None:
         out_path = os.path.join(repo_root, "public", "models", "pilots", pid + ".glb")
     os.makedirs(os.path.dirname(out_path), exist_ok=True)
